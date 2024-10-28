@@ -1,30 +1,12 @@
 # On a Raspberry Pi 4, create initial functions for the project
 
 import smbus
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 import time
+import pigpio
+from buzzer import *
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-GPIO.setup(27, GPIO.OUT)
-
-I2C_CHANNEL = 1
-
-class Buzzer:
-    def __init__(self, pin):
-        self.pin = pin
-        self.volume = 15
-
-        GPIO.setup(self.pin, GPIO.OUT)
-        self.pwm = GPIO.PWM(self.pin, 50)
-        self.pwm.start(0)
-    
-    def activate(self):
-        self.pwm.ChangeDutyCycle(self.volume)
-        time.sleep(2.0)
-        self.pwm.ChangeDutyCycle(0)
-        
-    
+I2C_CHANNEL = 1    
 
 
 # Scan I2C bus for devices
@@ -40,6 +22,7 @@ def scan_i2c():
     return devices
 
 if __name__ == '__main__':
-    print(scan_i2c())
-    Buzzer buzzer(12)
+
+    pi = pigpio.pi()
+    buzzer = Buzzer(pi, 12)
     buzzer.activate()
