@@ -10,10 +10,20 @@ GPIO.setup(27, GPIO.OUT)
 
 I2C_CHANNEL = 1
 
-def activate_buzzer():
-    GPIO.output(27, GPIO.HIGH)
-    time.sleep(2)
-    GPIO.output(27, GPIO.LOW)
+class Buzzer:
+    def __init__(self, pin):
+        self.pin = pin
+        self.volume = 15
+
+        GPIO.setup(self.pin, GPIO.OUT)
+        self.pwm = GPIO.PWM(self.pin, 50)
+        self.pwm.start(0)
+    
+    def activate(self):
+        self.pwm.ChangeDutyCycle(self.volume)
+        time.sleep(2.0)
+        self.pwm.ChangeDutyCycle(0)
+        
     
 
 
@@ -31,5 +41,5 @@ def scan_i2c():
 
 if __name__ == '__main__':
     print(scan_i2c())
-
-    activate_buzzer
+    Buzzer buzzer(12)
+    buzzer.activate()
