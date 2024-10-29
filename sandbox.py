@@ -28,6 +28,7 @@ if __name__ == '__main__':
     buzzer.activate()
     reward_led = LED(pi, 10, brightness=60)  
     house_led = LED(pi, 11, brightness=100)  
+    beam_break_sensor = BeamBreak(pin=18)
 
 
     buzzer.activate()
