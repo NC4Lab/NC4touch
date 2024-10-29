@@ -13,8 +13,8 @@ class I2CUtils:
         self.CMD_BLACK = 3
         self.CMD_RESET = 4
         self.CMD_IMG = 5
-        self.RIGHT_M0_ADDR = 0x04  # Updated right M0 address
-        self.LEFT_M0_ADDR = 0x14   # Updated left M0 address
+        self.RIGHT_M0_ADDR = 0x04  
+        self.LEFT_M0_ADDR = 0x14   
         self.dir_str = ['L', 'R']
         self.correct_dir = None
         self.bus = smbus.SMBus(1)  # 1 indicates /dev/i2c-1
