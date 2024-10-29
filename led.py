@@ -11,8 +11,8 @@ class LED:
         self.pi.set_PWM_range(pin, 100)
         self.deactivate()
 
-    def activate(self):
+    def activate_led(self):
         self.pi.set_PWM_dutycycle(self.pin, self.brightness)
 
-    def deactivate(self):
+    def deactivate_led(self):
         self.pi.set_PWM_dutycycle(self.pin, 0)
