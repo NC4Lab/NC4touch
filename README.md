@@ -142,6 +142,50 @@
    - **Interface Options > SPI**
    - Select **Enable**.
 
+## Setup User Permisions
+1. Add the User to the gpio and spi Groups
+   To ensure the user can access GPIO and SPI without sudo, run:
+   ```
+   sudo usermod -aG gpio,spi $(whoami)
+   ```
+2. Reboot the Raspberry Pi:
+   ```
+   sudo reboot
+   ```
+3. Check Group Membership
+   Verify that the user has been added to the gpio and spi groups:
+   ```
+   groups
+   ```
+   Ensure the output includes both gpio and spi.
+4. Test GPIO Pin Configuration:
+   This command outputs the current state of all GPIO pins, showing whether they are configured as inputs or outputs, and their current values.
+   ```
+   raspi-gpio get
+   raspi-gpio set 18 op
+   raspi-gpio set 18 dh
+   raspi-gpio set 18 dl
+   ```
+   Check for errors.
+5. Check SPI Setup
+   Check if the SPI device files are available:
+   ```
+   ls /dev/spi*
+   ```
+   Output should show:
+   ```
+   /dev/spidev0.0
+   /dev/spidev0.1
+   ```
+   Check the status of the SPI kernel module:
+   ```
+   lsmod | grep spi
+   ```
+   The output should include lines like:
+   ```
+   spi_bcm2835            20480  0
+   ```
+
 ## Setup access to GitHub
 
 1. Generate a new SSH key:
@@ -212,7 +256,7 @@
    ```
 2. Install Required Python and System Packages:
    ```
-   sudo apt install python3 python3-pip python3-venv python3-dev build-essential -y
+   sudo apt install python3 python3-pip python3-venv python3-dev build-essential python3-rpi.gpio -y
    ```
 3. Install the Virtual Environment Tool
    ```
@@ -226,7 +270,7 @@
    ```
 5. Activate the Virtual Environment
    ```
-   source venv/bin/activate
+   
    ```
 6. Install Luma Specific Packages:
    ```
