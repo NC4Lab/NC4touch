@@ -1,5 +1,3 @@
-# MSRRA
-
 # Setting Up Raspberry Pi OS with SSH and VS Code Remote Development
 
 ## Install Raspberry Pi OS
@@ -248,3 +246,16 @@
    pip install -r requirements.txt
    ```
    - Rerun the 'Create' command when libraries are modified.
+
+# Pin Mapping
+
+## Pi to LCD
+| **LCD Pin**   | **Raspberry Pi GPIO Pin**                     | **Description**            |
+|---------------|-----------------------------------------------|----------------------------|
+| **VCC**   | Pin 1 or Pin 17 (3.3V)                       | Power supply for the LCD   |
+| **GND**   | Pin 6 or Pin 9 (GND)                         | Ground                     |
+| **MOSI**  | Pin 19 (GPIO 10, MOS0)                       | SPI data from Pi to LCD    |
+| **SCLK**  | Pin 23 (GPIO 11, SCLK)                       | SPI clock                  |
+| **CS**    | Pin 24 (GPIO 8, CE0)                         | SPI chip select            |
+| **DC**    | Custom (e.g., GPIO 25 on Pin 22, IO25)       | Data/Command signal        |
+| **RES**   | Custom (e.g., GPIO 24 on Pin 18, IO24)       | Reset signal               |
