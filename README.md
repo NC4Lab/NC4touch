@@ -337,27 +337,33 @@
    ```
 9. Close the VS Code instance when you are done.  
 
-# Setup the Platform IO extension
+# Enabling additional I2C busses on the Pi
 
-1. Install the Platform IO extension.
-
-2. Update your Raspberry Pi’s package manager:
+1. Edit the Configuration File: Open the config.txt file:
    ```
-   sudo apt update && sudo apt upgrade -y
+   /boot/firmware/config.txt
    ```
 
-3. Install Python 3 (if not already installed) and pip:
+2. Add the Following Lines to enable additional buses 3 and 4 after `dtparam=i2c_arm=on`:
    ```
-   sudo apt install python3 python3-pip -y
+   dtoverlay=i2c3              # Enables I²C Bus 3
+   dtoverlay=i2c4              # Enables I²C Bus 4
    ```
 
-4. Install the PlatformIO Core CLI:
+3. Save and Exit: Save the file (Ctrl+O, Enter, Ctrl+X)
+4. Reboot:
    ```
-   pip3 install platformio
+   sudo reboot
    ```
-5. Verify the installation:
+5. Varify the busses by listing them:
    ```
-   pio --version
+   ls /dev/i2c-*
+   ```
+   You should see:
+   ```
+   /dev/i2c-1
+   /dev/i2c-3 (or some other number sufix)
+   /dev/i2c-4 (or some other number sufix)
    ```
 
 
@@ -422,17 +428,20 @@ Run setup.sh:
 # Pin Mapping
 
 ## Pi to LCD
-| **LCD Pin**   | **Raspberry Pi GPIO Pin**                     | **Description**            |
-|---------------|-----------------------------------------------|----------------------------|
-| **VCC**       | Pin 1 or Pin 17 (3.3V)                       | Power supply for the LCD   |
-| **GND**       | Pin 6 or Pin 9 (GND)                         | Ground                     |
-| **MOSI**      | Pin 19 (GPIO 10, MOSI)                       | SPI data from Pi to LCD    |
-| **SCLK**      | Pin 23 (GPIO 11, SCLK)                       | SPI clock                  |
-| **CS**        | Pin 24 (GPIO 8, CE0)                         | SPI chip select            |
-| **DC**        | Pin 22 (GPIO 25)                             | Data/Command signal        |
-| **RES**       | Pin 18 (GPIO 24)                             | Reset signal               |
-| **SDA**       | Pin 3 (GPIO 2, SDA)                          | LCD_0 I2C data for touch control |
-| **SCL**       | Pin 5 (GPIO 3, SCL)                          | LCD_0 I2C clock for touch control|
-| **SDA**       | Pin 3 (GPIO 4, SDA)                          | LCD_1 I2C data for touch control |
-| **SCL**       | Pin 5 (GPIO 5, SCL)                          | LCD_1 I2C clock for touch control|
-| **Backlight** | Custom (optional, e.g., GPIO 18 or 12)        | Backlight control (if needed) |
+| **LCD Pin**     | **Raspberry Pi GPIO Pin**                    | **Description**            
+|-----------------|----------------------------------------------|----------------------------
+| **VCC**         | Pin 1 or Pin 17 (3.3V)                       | Shared Power supply for the LCD   
+| **GND**         | Pin 6 or Pin 9 (GND)                         | Shared Ground                     
+| **DC**          | Pin 22 (GPIO 25)                             | Shared Data/Command signal        
+| **RES**         | Pin 18 (GPIO 24)                             | Shared Reset signal               
+| **Backlight**   | Custom (GPIO 18)                             | Shared Backlight control          
+| **MOSI**        | Pin 19 (GPIO 10, MOSI)                       | Shared SPI data from Pi to LCD    
+| **SCLK**        | Pin 23 (GPIO 11, SCLK)                       | Shared SPI clock                  
+| **CS**          | Pin 24 (GPIO 8, CE0)                         | LCD_0 SPI chip select             
+| **INT**         | Pin 11 (GPIO 17, SCLK)                       | LCD_0 Touch interrupt              
+| **SDA**         | Pin 3 (GPIO 2, SDA)                          | LCD_0 I2C data for touch control  
+| **SCL**         | Pin 5 (GPIO 3, SCL)                          | LCD_0 I2C clock for touch control 
+| **SDA**         | Pin 3 (GPIO 4, SDA)                          | LCD_1 I2C data for touch control  
+| **SCL**         | Pin 5 (GPIO 5, SCL)                          | LCD_1 I2C clock for touch control 
+| **SDA**         | Pin 3 (GPIO 8, SDA)                          | LCD_2 I2C data for touch control  
+| **SCL**         | Pin 5 (GPIO 9, SCL)                          | LCD_2 I2C clock for touch control 
