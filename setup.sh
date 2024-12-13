@@ -7,7 +7,7 @@ sudo apt install i2c-tools libi2c-dev
 sudo apt install libgpiod-dev
 
 # Build and install the ILI9488 driver
-cd src/lcd/ili9488
+cd /home/nc4/TouchscreenApparatus/src/lcd/ili9488
 make
 sudo cp ili9488.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/
 sudo depmod -a
@@ -15,9 +15,11 @@ sudo depmod -a
 # Set up device tree overlay
 cd /home/nc4/TouchscreenApparatus/src/lcd/ili9488/rpi-overlays
 sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili-9488.dtbo ili-9488.dts
-echo "dtoverlay=ili-9488-overlay" | sudo tee -a /boot/config.txt
-echo "dtparam=speed=62000000" | sudo tee -a /boot/config.txt
-echo "dtparam=rotation=90" | sudo tee -a /boot/config.txt
+
+# Add to /boot/config.txt 
+grep -qxF "dtoverlay=ili-9488-overlay" /boot/config.txt || echo "dtoverlay=ili-9488-overlay" | sudo tee -a /boot/config.txt
+grep -qxF "dtparam=speed=62000000" /boot/config.txt || echo "dtparam=speed=62000000" | sudo tee -a /boot/config.txt
+grep -qxF "dtparam=rotation=90" /boot/config.txt || echo "dtparam=rotation=90" | sudo tee -a /boot/config.txt
 
 # Reboot
 sudo reboot
