@@ -1,3 +1,7 @@
+// cd /home/nc4/TouchscreenApparatus/tests
+// g++ -o lcd_test lcd_test.cpp -lgpiod
+// sudo ./lcd_test
+
 #include <iostream>
 #include <fstream>
 #include <unistd.h> // for usleep

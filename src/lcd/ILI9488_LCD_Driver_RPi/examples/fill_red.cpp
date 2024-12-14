@@ -1,7 +1,8 @@
 // cd /home/nc4/TouchscreenApparatus/src/lcd/ILI9488_LCD_Driver_RPi
 // g++ -o fill_red examples/fill_red.cpp src/lcdscreen.cpp -I./headers -lpigpio -pthread
 // sudo ./fill_red
-// sudo pigpiod
+// sudo systemctl start pigpiod
+// sudo systemctl stop pigpiod
 
 #include <unistd.h>
 #include "LCDScreen.h"
@@ -23,9 +24,10 @@ enum Color : unsigned int
 int main()
 {
     // Initialize the pigpio library
-    if (gpioInitialise() < 0)
+    int init_result = gpioInitialise();
+    printf("gpioInitialise() result: %d\n", init_result);
+    if (init_result < 0)
     {
-        // Initialization failed
         printf("pigpio initialization failed\n");
         return 1; // Exit with an error code
     }
@@ -68,10 +70,13 @@ int main()
     delete lcd1;
     delete drawBuffer;
 
-    gpioTerminate();
+    usleep(10000000); // Wait 
 
     // Set the backlight pin low
     gpioWrite(BACKLIGHT_PIN, 0);
+
+    // Terminate the session
+    gpioTerminate();
 
     return 0;
 }

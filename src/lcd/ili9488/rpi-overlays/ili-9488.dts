@@ -49,9 +49,9 @@
 				spi-max-frequency = <128000000>;
 
 				rotation = <0>;
-				reset-gpios = <&gpio 23 0>;
-				dc-gpios = <&gpio 25 0>;
-				backlight = <&backlight>;
+				reset-gpios = <23 0>;  // Direct reference to GPIO 23
+				dc-gpios = <25 0>;     // Direct reference to GPIO 25
+				backlight = <22>;      // Direct reference to GPIO 22 for backlight
 			};
 		};
 	};

@@ -5,7 +5,7 @@
 #include <gpiod.h>  // for GPIO control
 
 #define FRAMEBUFFER_DEVICE "/dev/fb0"
-#define BACKLIGHT_PIN 22 // GPIO 22 for backlight control
+#define BACKLIGHT_PIN 22 
 
 void set_backlight(bool state)
 {
