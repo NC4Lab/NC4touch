@@ -2,16 +2,33 @@ import os
 
 class LCD:
     """
-    Class to manage image display on an LCD framebuffer device using 'fbi'.
+    Class to manage image display on an LCD framebuffer device using 'fbi'
+    and control the backlight via the Linux backlight interface.
     """
+    BACKLIGHT_PATH = "/sys/class/backlight/soc:backlight/brightness"
+
     def __init__(self, framebuffer_device="/dev/fb0", image_dir="assets/images"):
         """
         Initialize the LCD class with framebuffer device and image directory.
-        :param framebuffer_device: Path to the framebuffer device.
-        :param image_dir: Directory where image assets are stored.
         """
         self.framebuffer_device = framebuffer_device
         self.image_dir = image_dir
+
+    def set_backlight(self, state):
+        """
+        Turn the backlight ON or OFF using the backlight interface.
+        :param state: True to turn on, False to turn off.
+        """
+        value = "1" if state else "0"
+        if os.path.exists(self.BACKLIGHT_PATH):
+            try:
+                with open(self.BACKLIGHT_PATH, "w") as f:
+                    f.write(value)
+                print(f"Backlight {'ON' if state else 'OFF'}")
+            except PermissionError:
+                print("Error: Run the script with 'sudo' to control the backlight.")
+        else:
+            print("Error: Backlight control path not found.")
 
     def load_image(self, filename):
         """
@@ -28,12 +45,17 @@ class LCD:
 
         print(f"Displaying image: {image_path}")
         # Command to display the image using 'fbi'
-        command = f"sudo fbi -d {self.framebuffer_device} -T 1 --noverbose {image_path}"
-        os.system(command)
+        os.system(f"sudo fbi -d {self.framebuffer_device} -T 1 --noverbose {image_path}")
+
+        # Turn the backlight on
+        self.set_backlight(True)
 
     def clear_screen(self):
         """
         Clears the framebuffer display.
         """
+        # Turn the backlight off
+        self.set_backlight(False)
+
         print("Clearing framebuffer display...")
         os.system(f"sudo fbi -d {self.framebuffer_device} -T 1 --noverbose --blank 0")

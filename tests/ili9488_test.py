@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
         # Display image
         display_image(image_path)
-        time.sleep(2)  # Delay between images
+        time.sleep(2.5)  # Delay between images
 
     # Clear framebuffer (optional)
     clear_framebuffer()

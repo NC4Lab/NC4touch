@@ -42,7 +42,7 @@ declare -a SYSTEM_PACKAGES=(
     "libi2c-dev"
     "libgpiod-dev"
     "gpiod"
-    "pigpio"  # Temporary dependency
+    "pigpio"  
 )
 
 for package in "${SYSTEM_PACKAGES[@]}"; do
@@ -69,7 +69,7 @@ done
 
 echo "==== Building and Installing the ILI9488 Driver ===="
 # Build and install the ILI9488 driver
-ILI9488_DIR="/home/nc4/TouchscreenApparatus/src/lcd/ili9488"
+ILI9488_DIR="/home/nc4/TouchscreenApparatus/src/drivers/ili9488"
 if [ -d "$ILI9488_DIR" ]; then
     cd "$ILI9488_DIR"
     make
@@ -82,14 +82,9 @@ fi
 
 echo "==== Setting Up Device Tree Overlay ===="
 # Compile and install the device tree overlay
-DT_OVERLAY_DIR="/home/nc4/TouchscreenApparatus/src/lcd/ili9488/rpi-overlays"
-if [ -d "$DT_OVERLAY_DIR" ]; then
-    cd "$DT_OVERLAY_DIR"
-    sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili-9488.dtbo ili-9488.dts
-else
-    echo "Error: Device tree overlays directory not found at $DT_OVERLAY_DIR"
-    exit 1
-fi
+DT_OVERLAY_DIR="/home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays"
+cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays
+sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili-9488.dtbo ili-9488.dts
 
 echo "==== Adding Configuration to /boot/firmware/config.txt ===="
 # Add necessary configuration entries

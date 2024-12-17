@@ -419,7 +419,7 @@
 3. Build the driver
   
    ```
-   cd /home/nc4/TouchscreenApparatus/src/lcd/ili9488
+   cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488
    ```
    ```
    make
@@ -449,7 +449,7 @@
    
    Navigate to the directory containing the ili-9488.dts file:
    ```
-   cd /home/nc4/TouchscreenApparatus/src/lcd/ili9488/rpi-overlays
+   cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays
    ```
    
    Compile the overlay file to a .dtbo binary:
@@ -673,22 +673,20 @@ Run setup.sh:
 |              | GND             | Pin 6 or Pin 9 (GND)         | Shared Ground                   |
 |              | MOSI            | Pin 19 (GPIO 10, MOSI)       | Shared SPI data                 |
 |              | SCLK            | Pin 23 (GPIO 11, SCLK)       | Shared SPI clock                |
+|              | Backlight       | Pin 12 (GPIO 18)             | Shared Backlight control        |
 | **LCD_0**    | CS              | Pin 24 (GPIO 8, CE0)         | LCD_0 SPI Chip Select           |
 |              | DC              | Pin 22 (GPIO 25)             | LCD_0 Data/Command signal       |
 |              | RES             | Pin 18 (GPIO 24)             | LCD_0 Reset signal              |
-|              | Backlight       | Pin 12 (GPIO 18)             | LCD_0 Backlight control         |
 |              | SDA             | Pin 3 (GPIO 2, SDA)          | LCD_0 I2C data for touch        |
 |              | SCL             | Pin 5 (GPIO 3, SCL)          | LCD_0 I2C clock for touch       |
 | **LCD_1**    | CS              | Pin 26 (GPIO 7, CE1)         | LCD_1 SPI Chip Select           |
 |              | DC              | Pin 13 (GPIO 27)             | LCD_1 Data/Command signal       |
 |              | RES             | Pin 16 (GPIO 23)             | LCD_1 Reset signal              |
-|              | Backlight       | Pin 33 (GPIO 13)             | LCD_1 Backlight control         |
 |              | SDA             | Pin 3 (GPIO 2, SDA)          | LCD_1 I2C data for touch        |
 |              | SCL             | Pin 5 (GPIO 3, SCL)          | LCD_1 I2C clock for touch       |
 | **LCD_2**    | CS              | Pin 7 (GPIO 4)               | LCD_2 SPI Chip Select           |
 |              | DC              | Pin 29 (GPIO 5)              | LCD_2 Data/Command signal       |
 |              | RES             | Pin 31 (GPIO 6)              | LCD_2 Reset signal              |
-|              | Backlight       | Pin 32 (GPIO 12)             | LCD_2 Backlight control         |
 |              | SDA             | Pin 3 (GPIO 2, SDA)          | LCD_2 I2C data for touch        |
 |              | SCL             | Pin 5 (GPIO 3, SCL)          | LCD_2 I2C clock for touch       |
 
