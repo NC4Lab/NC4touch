@@ -3,8 +3,8 @@ import time
 
 # Paths to images
 IMAGE_PATHS = [
-    "/home/nc4/TouchscreenApparatus/tests/A01.bmp",
-    "/home/nc4/TouchscreenApparatus/tests/B01.bmp"
+    "/home/nc4/TouchscreenApparatus/assets/images/A01.bmp",
+    "/home/nc4/TouchscreenApparatus/assets/images/B01.bmp"
 ]
 
 # Framebuffer device

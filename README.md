@@ -652,13 +652,13 @@ Run setup.sh:
 |-----------------|----------------------------------------------|----------------------------
 | **VCC**         | Pin 1 or Pin 17 (3.3V)                       | Shared Power supply for the LCD   
 | **GND**         | Pin 6 or Pin 9 (GND)                         | Shared Ground                     
-| **DC**          | Pin 22 (GPIO 25)                             | Shared Data/Command signal        
-| **RES**         | Pin 18 (GPIO 23)                             | Shared Reset signal               
-| **Backlight**   | Pin 15 (GPIO 22)                             | Shared Backlight control          
 | **MOSI**        | Pin 19 (GPIO 10, MOSI)                       | Shared SPI data from Pi to LCD    
 | **SCLK**        | Pin 23 (GPIO 11, SCLK)                       | Shared SPI clock                  
 | **CS**          | Pin 24 (GPIO 8, CE0)                         | LCD_0 SPI chip select             
-| **INT**         | Pin 11 (GPIO 17, SCLK)                       | LCD_0 Touch interrupt              
+| **DC**          | Pin 22 (GPIO 25)                             | Shared Data/Command signal        
+| **RES**         | Pin 18 (GPIO 23)                             | Shared Reset signal               
+| **Backlight**   | Pin 15 (GPIO 22)                             | Shared Backlight control 
+| **INT**         | Pin 11 (GPIO 17, SCLK)                       | LCD_0 Touch interrupt             
 | **SDA**         | Pin 3 (GPIO 2, SDA)                          | LCD_0 I2C data for touch control  
 | **SCL**         | Pin 5 (GPIO 3, SCL)                          | LCD_0 I2C clock for touch control 
 | **SDA**         | Pin 3 (GPIO 4, SDA)                          | LCD_1 I2C data for touch control  
