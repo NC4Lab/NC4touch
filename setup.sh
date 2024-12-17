@@ -56,7 +56,7 @@ done
 
 echo "==== Checking and Installing Python Libraries ===="
 # Python libraries
-declare -a PYTHON_LIBRARIES=("gpiod" "numpy" "Pillow")
+declare -a PYTHON_LIBRARIES=("gpiod" "numpy")
 
 for lib in "${PYTHON_LIBRARIES[@]}"; do
     if is_python_lib_installed "$lib"; then
@@ -87,13 +87,13 @@ echo "==== Setting Up Device Tree Overlay ===="
 # Compile and install the device tree overlay
 DT_OVERLAY_DIR="/home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays"
 cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays
-sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili-9488.dtbo ili-9488.dts
+sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili9488.dtbo ili9488.dts
 
-echo "==== Adding Configuration to /boot/firmware/config.txt ===="
-# Add necessary configuration entries
-add_to_config "dtoverlay=ili-9488-overlay"
-add_to_config "dtparam=speed=62000000"
-add_to_config "dtparam=rotation=90"
+# echo "==== Adding Configuration to /boot/firmware/config.txt ===="
+# # Add necessary configuration entries
+# add_to_config "dtoverlay=ili9488"
+# add_to_config "dtparam=speed=62000000"
+# add_to_config "dtparam=rotation=90"
 
 echo "==== Setup Complete. Rebooting Now ===="
 sudo reboot

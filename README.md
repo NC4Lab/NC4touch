@@ -447,14 +447,14 @@
 
 5. Set up the device tree overlay
    
-   Navigate to the directory containing the ili-9488.dts file:
+   Navigate to the directory containing the ili9488.dts file:
    ```
    cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays
    ```
    
    Compile the overlay file to a .dtbo binary:
    ```
-   sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili-9488.dtbo ili-9488.dts
+   sudo dtc -@ -I dts -O dtb -o /boot/overlays/ili9488.dtbo ili9488.dts
    ```
    
    Edit the config.txt file to include the overlay and set SPI parameters:
@@ -465,7 +465,7 @@
    Add the following lines to the end:
    ```
    # ili9488 overlay and SPI parameters
-   dtoverlay=ili-9488
+   dtoverlay=ili9488
    dtparam=speed=62000000
    dtparam=rotation=90
    ```
@@ -481,15 +481,15 @@
    ```
    Expected outcomes: Should see `Initialized ili9488` 
    
-   Run the following command to ensure the ili-9488 was successfully loaded:
+   Run the following command to ensure the ili9488 overlay was successfully loaded:
    ```
-   ls /proc/device-tree/overlays/ili-9488
+   ls /proc/device-tree/overlays/ili9488
    ```
    Expected outcomes: the directory exists and contains files like `status` and `name.
    
    Check for errors in the .dtbo
    ```
-   sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/ili-9488.dtbo
+   sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/ili9488.dtbo
    ```
 
 6. Temporarily reinable HDMI to use a monitor 
@@ -503,7 +503,7 @@
    
    Comment out the line:
    ```
-   #dtoverlay=ili-9488
+   #dtoverlay=ili9488
    ```
   
    Change this back when you need to use the ILI9488 driver.
@@ -526,7 +526,7 @@
    ```
    ```
    # ili9488 overlay and SPI parameters
-   dtoverlay=ili-9488
+   dtoverlay=ili9488
    dtparam=speed=62000000
    dtparam=rotation=90
    ```
@@ -560,13 +560,13 @@
 
 - Manually load the overlay at runtime to get immediate feedback:
    ```
-   sudo dtoverlay ili-9488
+   sudo dtoverlay ili9488
    dmesg | tail -50
    ```
 
 - Decompile the .dtbo to a .dts
    ```
-   sudo dtc -I dtb -O dts -o /home/nc4/TouchscreenApparatus/debug/ili-9488.dts /boot/overlays/ili-9488.dtbo
+   sudo dtc -I dtb -O dts -o /home/nc4/TouchscreenApparatus/debug/ili9488.dts /boot/overlays/ili9488.dtbo
    ```
 
 - Turn the backlight on (maximum brightness):
@@ -579,7 +579,7 @@
    ```
 - Draw an image to the fb0 buffer:
    ```
-   sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/tests/A01.bmp
+   sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/assets/images/A01.bmp
    ```
 
 - Check for SPI 
@@ -645,26 +645,7 @@ Run setup.sh:
    sudo ./setup.sh
    ```
 
-# Pin Mapping
-
-## Pi to LCD
-| **LCD Pin**     | **Raspberry Pi GPIO Pin**                    | **Description**            
-|-----------------|----------------------------------------------|----------------------------
-| **VCC**         | Pin 1 or Pin 17 (3.3V)                       | Shared Power supply for the LCD   
-| **GND**         | Pin 6 or Pin 9 (GND)                         | Shared Ground                     
-| **MOSI**        | Pin 19 (GPIO 10, MOSI)                       | Shared SPI data from Pi to LCD    
-| **SCLK**        | Pin 23 (GPIO 11, SCLK)                       | Shared SPI clock                 
-| **DC**          | Pin 22 (GPIO 25)                             | LCD_0 Data/Command signal        
-| **RES**         | Pin 18 (GPIO 23)                             | LCD_0 Reset signal               
-| **Backlight**   | Pin 15 (GPIO 22)                             | LCD_0 Backlight control 
-| **CS**          | Pin 24 (GPIO 8, CE0)                         | LCD_0 SPI chip select 
-| **INT**         | Pin 11 (GPIO 17, SCLK)                       | LCD_0 Touch interrupt             
-| **SDA**         | Pin 3 (GPIO 2, SDA)                          | LCD_0 I2C data for touch control  
-| **SCL**         | Pin 5 (GPIO 3, SCL)                          | LCD_0 I2C clock for touch control 
-| **SDA**         | Pin 3 (GPIO 4, SDA)                          | LCD_1 I2C data for touch control  
-| **SCL**         | Pin 5 (GPIO 5, SCL)                          | LCD_1 I2C clock for touch control 
-| **SDA**         | Pin 3 (GPIO 8, SDA)                          | LCD_2 I2C data for touch control  
-| **SCL**         | Pin 5 (GPIO 9, SCL)                          | LCD_2 I2C clock for touch control   
+# Pin Mapping  
 
 
 | **LCD**      | **LCD Pin**     | **Raspberry Pi GPIO Pin**    | **Description**                |
