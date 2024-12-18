@@ -422,6 +422,9 @@
    cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488
    ```
    ```
+   make clean || true
+   ```
+   ```
    make
    ```
    
@@ -510,7 +513,17 @@
 
 # Uninstall the ili9488 driver
 
-1. Remove the Driver File
+1. Unload the driver
+   ```
+   sudo rmmod ili9488
+   ```
+
+2. If you encounter "module is in use", run:
+   ```
+   sudo modprobe -r ili9488
+   ```
+
+2. Remove the Driver File
    ```
    sudo rm /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/ili9488.ko
    ```
