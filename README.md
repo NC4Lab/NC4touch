@@ -552,7 +552,14 @@ sudo depmod
 ## Clear any cached kernel module information
 ```
 sudo modprobe -c | grep ili9488
-``` "spi0.0" | sudo tee /sys/bus/spi/drivers/ili9488/unbind
+```
+``` 
+"spi0.0" | sudo tee /sys/bus/spi/drivers/ili9488/unbind
+```
+
+Rebuild the Initramfs:
+```
+sudo update-initramfs -u
 ```
 
 ## Remove the overlay
@@ -609,6 +616,7 @@ ls -l /sys/bus/spi/devices/spi0.1/driver
 Search for Residual Configurations
 ```
 grep -i 'ili9488' /boot/config.txt
+```
 ```
 grep -ril 'ili9488' /boot/
 ```
