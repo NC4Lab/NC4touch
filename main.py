@@ -11,7 +11,7 @@ import time
 
 if __name__ == "__main__":
     # Initialize the LCD class
-    lcd = LCD(framebuffer_device="/dev/fb0", image_dir="assets/images")
+    lcd = LCD(framebuffer_device="/dev/fb0", image_dir="data/images")
 
     # List of images to display
     images = ["A01.bmp", "B01.bmp"]

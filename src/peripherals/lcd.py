@@ -7,7 +7,7 @@ class LCD:
     """
     BACKLIGHT_PATH = "/sys/class/backlight/soc:backlight/brightness"
 
-    def __init__(self, framebuffer_device="/dev/fb0", image_dir="assets/images"):
+    def __init__(self, framebuffer_device="/dev/fb0", image_dir="data/images"):
         """
         Initialize the LCD class with framebuffer device and image directory.
         """
