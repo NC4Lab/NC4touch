@@ -125,6 +125,11 @@ Load the module:
 sudo modprobe nc4_ili9488
 ```
 
+Check if the module is loaded:
+```
+lsmod | grep nc4_ili9488
+```
+
 Check dmesg for logs:
 ```
 dmesg | grep nc4_ili9488
@@ -136,6 +141,11 @@ If successful, you should see something like:
 To load the driver at every boot, add "nc4_ili9488" to /etc/modules or create a file in /etc/modules-load.d/:
 ```
 echo nc4_ili9488 | sudo tee /etc/modules-load.d/nc4_ili9488.conf
+```
+
+Reboot:
+```
+sudo reboot
 ```
 
 ## Testing the driver
