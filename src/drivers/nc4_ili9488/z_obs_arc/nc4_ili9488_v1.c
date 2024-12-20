@@ -3,15 +3,6 @@
 // Supports multiple panels (initially two), easy to extend to a third.
 // Name: nc4_ili9488
 // License: GPL
-//
-// This version integrates backlight handling similar to ili9488.c, using the
-// backlight subsystem instead of directly toggling a GPIO for the backlight.
-// It also ensures that spi-max-frequency is respected as provided by the
-// device tree overlay, and that dc/reset/backlight properties are all read
-// from the device tree.
-//
-// Each panel defined in the overlay will produce a framebuffer device
-// (/dev/fbN), supporting multiple panels on the same SPI bus with unique chip selects.
 
 #include <linux/module.h>
 #include <linux/spi/spi.h>
@@ -22,7 +13,6 @@
 #include <linux/uaccess.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
-#include <linux/backlight.h>
 
 /* Driver version for reference in logs */
 #define ILI9488_DRIVER_VERSION "v1.0.3"
@@ -30,32 +20,32 @@
 #define NC4_ILI9488_NAME "nc4_ili9488"
 #define LCD_WIDTH   320
 #define LCD_HEIGHT  480
-// We will use 24-bit color in FB, and send RGB888. Display uses 18-bit internally,
-// but we discard LSBs when sending RGB888 data.
+// We will use 24-bit color in FB, and send RGB888. Display uses 18-bit but we discard LSBs.
 
 struct nc4_ili9488_panel {
 	struct spi_device *spi;
 	struct fb_info *info;
-	u8 *buffer; // Framebuffer memory
+	u8 *buffer; // Framebuffer RAM
 	size_t buffer_size;
 
 	struct gpio_desc *reset_gpio;
 	struct gpio_desc *dc_gpio;
+	struct gpio_desc *bl_gpio;
 
-	// Instead of a bl_gpio, we now have a backlight device as per ili9488.c
-	struct backlight_device *backlight;
+	bool backlight_enabled;
 
 	u32 bus_speed_hz;
 
+	// For easy extension if adding more panels:
 	u16 width;
 	u16 height;
 };
 
-// Forward declarations
+// We can store per-panel data in driver data
 static int nc4_ili9488_init_panel(struct nc4_ili9488_panel *panel);
 static int nc4_ili9488_update_display(struct nc4_ili9488_panel *panel);
 
-// Send a command (DC = low)
+// Send command (DC = low)
 static int nc4_ili9488_write_cmd(struct nc4_ili9488_panel *panel, u8 cmd)
 {
 	gpiod_set_value_cansleep(panel->dc_gpio, 0);
@@ -81,7 +71,7 @@ static int nc4_ili9488_init_panel(struct nc4_ili9488_panel *panel)
 	int ret;
 
 	dev_info(&panel->spi->dev, "Resetting panel for ILI9488 driver %s\n", ILI9488_DRIVER_VERSION);
-	// Hardware Reset sequence
+	// Hardware Reset
 	gpiod_set_value_cansleep(panel->reset_gpio, 1);
 	mdelay(5);
 	gpiod_set_value_cansleep(panel->reset_gpio, 0);
@@ -95,7 +85,7 @@ static int nc4_ili9488_init_panel(struct nc4_ili9488_panel *panel)
 		goto err;
 	mdelay(120);
 
-	// Pixel Format Set (0x3A) - 0x66 for 18-bit mode
+	// Pixel Format Set (0x3A) - Set to 0x66 for 18-bit
 	ret = nc4_ili9488_write_cmd(panel, 0x3A);
 	if (ret)
 		goto err;
@@ -103,7 +93,7 @@ static int nc4_ili9488_init_panel(struct nc4_ili9488_panel *panel)
 	if (ret)
 		goto err;
 
-	// Memory Access Control (0x36) - e.g. 0x48 for a certain orientation
+	// Memory Access Control (0x36) - for portrait (example: 0x48)
 	ret = nc4_ili9488_write_cmd(panel, 0x36);
 	if (ret)
 		goto err;
@@ -177,20 +167,21 @@ static int nc4_ili9488_update_display(struct nc4_ili9488_panel *panel)
 	return ret;
 }
 
-// The fb_blank() callback now uses backlight_enable() / backlight_disable()
-// instead of directly toggling GPIOs.
 static int nc4_ili9488_blank(int blank, struct fb_info *info)
 {
 	struct nc4_ili9488_panel *panel = info->par;
-
-	if (!panel->backlight)
+	if (!panel->bl_gpio)
 		return 0;
 
 	if (blank) {
-		backlight_disable(panel->backlight);
+		// Turn backlight off
+		gpiod_set_value_cansleep(panel->bl_gpio, 0);
+		panel->backlight_enabled = false;
 		dev_info(&panel->spi->dev, "Backlight off\n");
 	} else {
-		backlight_enable(panel->backlight);
+		// Turn backlight on
+		gpiod_set_value_cansleep(panel->bl_gpio, 1);
+		panel->backlight_enabled = true;
 		dev_info(&panel->spi->dev, "Backlight on\n");
 	}
 	return 0;
@@ -206,7 +197,7 @@ static struct fb_ops nc4_ili9488_fbops = {
 	.fb_blank = nc4_ili9488_blank,
 };
 
-// After any write, we call full update (simple implementation)
+// After any write, we call full update (for simplicity)
 static void nc4_ili9488_flush(struct fb_info *info)
 {
 	struct nc4_ili9488_panel *panel = info->par;
@@ -228,7 +219,7 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 
 	panel->spi = spi;
 
-	// Parse device tree gpios
+	// Parse device tree
 	panel->dc_gpio = devm_gpiod_get(dev, "dc", GPIOD_OUT_LOW);
 	if (IS_ERR(panel->dc_gpio)) {
 		dev_err(dev, "Failed to get DC GPIO\n");
@@ -241,18 +232,20 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		return PTR_ERR(panel->reset_gpio);
 	}
 
-	// Find backlight device from Device Tree
-	panel->backlight = devm_of_find_backlight(dev);
-	if (IS_ERR(panel->backlight)) {
-		dev_err(dev, "Failed to find backlight\n");
-		return PTR_ERR(panel->backlight);
+	// Backlight may be shared, but we just request it for each panel
+	// (If it's truly shared, just provide same GPIO and it's harmless)
+	panel->bl_gpio = devm_gpiod_get_optional(dev, "backlight", GPIOD_OUT_LOW);
+	if (IS_ERR(panel->bl_gpio)) {
+		dev_err(dev, "Failed to get Backlight GPIO\n");
+		return PTR_ERR(panel->bl_gpio);
 	}
 
 	// Set SPI mode and speed
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
 	if (device_property_read_u32(dev, "spi-max-frequency", &panel->bus_speed_hz))
-		panel->bus_speed_hz = 4000000; // default if property not found
+		panel->bus_speed_hz = 4000000; // default if not found
+
 	spi->max_speed_hz = panel->bus_speed_hz;
 
 	ret = spi_setup(spi);
@@ -263,7 +256,7 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 
 	panel->width = LCD_WIDTH;
 	panel->height = LCD_HEIGHT;
-	panel->buffer_size = panel->width * panel->height * 3; // RGB888 = 3 bytes/pixel
+	panel->buffer_size = panel->width * panel->height * 3; // RGB888 (3 bytes/pixel)
 
 	// Allocate framebuffer
 	info = framebuffer_alloc(0, dev);
@@ -314,7 +307,7 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	// Turn backlight on initially
+	// Turn backlight on
 	nc4_ili9488_blank(FB_BLANK_UNBLANK, info);
 
 	// Initial update
@@ -363,3 +356,6 @@ module_spi_driver(nc4_ili9488_driver);
 MODULE_DESCRIPTION("nc4_ili9488 fbdev driver for ILI9488 LCD panels " ILI9488_DRIVER_VERSION);
 MODULE_AUTHOR("YourNameHere");
 MODULE_LICENSE("GPL");
+
+
+

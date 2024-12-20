@@ -1,42 +1,124 @@
-// nc4_ili9488-overlay.dts
+/*
+ * Enhanced Device Tree overlay for ILI9488
+ * Modified to support two displays (panel0@0 and panel1@1)
+ *
+ * Notes:
+ * - This overlay enables SPI0 and configures two ILI9488 devices on CE0 and CE1.
+ * - Each display node uses a unique DC and RESET GPIO line.
+ * - Both displays share the same SPI lines (MOSI, SCLK) and the same backlight.
+ * - The "panel0_pins" and "panel1_pins" pinctrl groups are used to set these GPIOs as outputs.
+ */
+
 /dts-v1/;
 /plugin/;
 
 / {
-    compatible = "brcm,bcm2835";
+	compatible = "brcm,bcm2835";
 
-    fragment@0 {
-        target = <&spi0>;
-        __overlay__ {
-            status = "okay";
-            #address-cells = <1>;
-            #size-cells = <0>;
+	/* Fragment to enable SPI0 hardware */
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
 
-            panel0: panel0@0 {
-                compatible = "nc4,ili9488";
-                reg = <0>; /* chip select LCD_0 */
-                dc-gpios = <&gpio 25 0>;
-                reset-gpios = <&gpio 24 0>;
-                backlight-gpios = <&gpio 18 0>;
-                spi-max-frequency = <4000000>;
-            };
+	/* Fragment to disable the default spidev0 device */
+	fragment@1 {
+		target = <&spidev0>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
 
-            panel1: panel1@1 {
-                compatible = "nc4,ili9488";
-                reg = <1>; /* chip select LCD_1 */
-                dc-gpios = <&gpio 27 0>;
-                reset-gpios = <&gpio 23 0>;
-                backlight-gpios = <&gpio 18 0>;
-                spi-max-frequency = <4000000>;
-            };
-        };
-    };
+	/* Fragment for the first display's pins (LCD_0):
+	 * GPIO24 = RESET (out)
+	 * GPIO25 = DC (out)
+	 * GPIO18 = Backlight (out, shared)
+	 */
+	fragment@2 {
+		target = <&gpio>;
+		__overlay__ {
+			panel0_pins: panel0_pins {
+				brcm,pins = <24 25 18>;
+				brcm,function = <1 1 1>; /* set as output */
+			};
+		};
+	};
 
-    fragment@1 {
-        target = <&spidev0>;
-        __overlay__ {
-            status = "disabled";
-        };
-    };
+	/* Fragment for the first ILI9488 device node (LCD_0) on SPI0 CE0 */
+	fragment@3 {
+		target = <&spi0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
 
+			panel0: panel0@0 {
+				compatible = "nc4,ili9488";
+				pinctrl-names = "default";
+				pinctrl-0 = <&panel0_pins>;
+
+				reg = <0>; /* CE0 line */
+				spi-max-frequency = <4000000>;
+
+				/* Using project-specific GPIOs from original snippet */
+				reset-gpios = <&gpio 24 0>;
+				dc-gpios = <&gpio 25 0>;
+				backlight = <&backlight>;
+			};
+		};
+	};
+
+	/* Fragment defining the backlight control, shared by all displays */
+	fragment@4 {
+		target-path = "/soc";
+		__overlay__ {
+			backlight: backlight {
+				compatible = "gpio-backlight";
+				gpios = <&gpio 18 0>;
+			};
+		};
+	};
+
+	/* Fragment for the second display's pins (LCD_1):
+	 * GPIO23 = RESET (out)
+	 * GPIO27 = DC (out)
+	 * Backlight is shared (GPIO18)
+	 */
+	fragment@5 {
+		target = <&gpio>;
+		__overlay__ {
+			panel1_pins: panel1_pins {
+				brcm,pins = <23 27>;
+				brcm,function = <1 1>; /* set as output */
+			};
+		};
+	};
+
+	/* Fragment for the second ILI9488 device node (LCD_1) on SPI0 CE1 */
+	fragment@6 {
+		target = <&spi0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			panel1: panel1@1 {
+				compatible = "nc4,ili9488";
+				pinctrl-names = "default";
+				pinctrl-0 = <&panel1_pins>;
+
+				reg = <1>; /* CE1 line */
+				spi-max-frequency = <4000000>;
+
+				reset-gpios = <&gpio 23 0>;
+				dc-gpios = <&gpio 27 0>;
+				backlight = <&backlight>;
+			};
+		};
+	};
+
+	/* Override parameters for speed if needed */
+	__overrides__ {
+		speed = <&panel0>,"spi-max-frequency:0", <&panel1>,"spi-max-frequency:0";
+	};
 };

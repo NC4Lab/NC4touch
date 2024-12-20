@@ -38,6 +38,14 @@ Compile the overlay file to a .dtbo binary:
 ```
 sudo dtc -@ -I dts -O dtb -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
 ```
+```
+sudo dtc -@ -f -I dts -O dtb -Wunit_address_vs_reg -Wavoid_unnecessary_addr_size -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
+```
+
+Check for the nc4_ili9488.dtbo
+```
+ls /boot/overlays/*ili9488*
+```
 
 Print the contents o /boot/firmware/config.txt:
 ```
@@ -52,9 +60,8 @@ sudo reboot
 All commands:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
-sudo dtc -@ -I dts -O dtb -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
+sudo dtc -@ -f -I dts -O dtb -Wunit_address_vs_reg -Wavoid_unnecessary_addr_size -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
 cat /boot/firmware/config.txt
-sudo reboot
 ```
 
 ## Build the driver
@@ -105,11 +112,6 @@ Update module dependencies:
 sudo depmod -a
 ```
 
-Confirm that the driver is available:
-```
-modinfo nc4_ili9488
-```
-
 All commands:
 ```
 sudo mkdir -p /lib/modules/$(uname -r)/extra
@@ -120,12 +122,12 @@ modinfo nc4_ili9488
 
 ## Load and install the driver:
 
-Load the module:
+Load the driver:
 ```
 sudo modprobe nc4_ili9488
 ```
 
-Check if the module is loaded:
+Verify the driver is loaded:
 ```
 lsmod | grep nc4_ili9488
 ```
@@ -137,6 +139,11 @@ dmesg | grep nc4_ili9488
 If successful, you should see something like:
 - "nc4_ili9488 panel registered at /dev/fb0"
 - "nc4_ili9488 panel registered at /dev/fb1"
+
+Reboot the system:
+```
+sudo reboot
+```
 
 To load the driver at every boot, add "nc4_ili9488" to /etc/modules or create a file in /etc/modules-load.d/:
 ```
@@ -155,11 +162,22 @@ Increase the console log level (Optional):
 sudo dmesg -n 8
 ```
 
+Check if overlay was successfully loaded:
+```
+ls /proc/device-tree/overlays/nc4_ili9488
+```
+
+Check if module is loaded:
+```
+lsmod | grep nc4_ili9488
+```
+
 Verify the overlay's boot application using:
 ```
 dmesg | grep -i 'nc4_ili9488'
 ```
 Expected outcomes: Should see `Initialized nc4_ili9488` along with any error messages
+
 If this fails try unloading and reloading the module
 ```
 sudo rmmod nc4_ili9488
@@ -175,6 +193,19 @@ Expected outcomes: the directory exists and contains files like `status` and `na
 
 Check for errors in the .dtbo
 ```
+sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/nc4_ili9488.dtbo
+```
+
+All commands:
+```
+sudo dmesg -n 8
+ls /proc/device-tree/overlays/nc4_ili9488
+lsmod | grep nc4_ili9488
+dmesg | grep -i 'nc4_ili9488'
+sudo rmmod nc4_ili9488
+sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
+dmesg | grep -i 'nc4_ili9488'
+ls /proc/device-tree/overlays/nc4_ili9488
 sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/nc4_ili9488.dtbo
 ```
 
@@ -227,14 +258,21 @@ cat /sys/firmware/devicetree/base/aliases/gpio
 
 ### Manual Commands
 
-Manually load the module at runtime to get immediate feedback::
+Manually load the module at runtime:
 ```
 sudo modprobe nc4_ili9488
 ```
 
-Manually load the overlay at runtime to get immediate feedback:
+Manually unload the module at runtime:
+```
+sudo rmmod nc4_ili9488
+```
+
+Manually load the overlay at runtime:
 ```
 sudo dtoverlay nc4_ili9488
+```
+```
 dmesg | tail -50
 ```
 
@@ -264,10 +302,18 @@ sudo find / -type f -name "*nc4_ili9488*" 2>/dev/null
 ```
 sudo grep -rli "nc4_ili9488" / 2>/dev/null
 ```
+```
+find / -type f -name "*nc4_ili9488*" -exec dirname {} \; | sort -u
+```
 
 ### Search within subfolders for files that contain a given string
 ```
 sudo grep -rli "nc4_ili9488" /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/ 2>/dev/null
+```
+
+### Search for folders with a given string
+```
+sudo find / -type d -name "*overlays*"
 ```
 
 ### Other
@@ -277,80 +323,56 @@ Decompile the .dtbo to a .dts
 sudo dtc -I dtb -O dts -o /home/nc4/TouchscreenApparatus/debug/nc4_ili9488.dts /boot/overlays/nc4_ili9488.dtbo
 ```
 
-# Uninstall the nc4_ili9488 driver
+## Uninstall the nc4_ili9488 Driver
 
-## Unload the driver
+###  Unload the driver
 ```
-sudo rmmod nc4_ili9488
-```
-If you encounter "module is in use", run:
-```
-sudo modprobe -r nc4_ili9488
+sudo rmmod nc4_ili9488 || sudo modprobe -r nc4_ili9488
 ```
 
-## Remove the Driver File
+###  Remove the driver file
 ```
-sudo rm sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
-```
-
-## Update Module Dependencies
-```
-sudo depmod
-```
-
-## Clear any cached kernel module information
-```
-sudo modprobe -c | grep nc4_ili9488
-```
-``` 
-"spi0.0" | sudo tee /sys/bus/spi/drivers/nc4_ili9488/unbind
-```
-
-## Rebuild the Initramfs (Critical!):
-```
-sudo update-initramfs -u
-```
-
-## Remove the overlay
-```
-sudo rm /boot/firmware/overlays/nc4_ili9488.dtbo
-```
-
-## Comment out line in config.txt:
-```
-sudo nano /boot/firmware/config.txt
-```
-```
-dtoverlay=nc4_ili9488
-```
-
-## Confirm the kernel module no longer loaded
-```
-lsmod | grep nc4_ili9488
-```
-
-## Power off
-```
-sudo poweroff
-```
-
-## All commands:
-```
-sudo rmmod nc4_ili9488
-sudo modprobe -r nc4_ili9488
 sudo rm /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
-sudo depmod
-sudo modprobe -c | grep nc4_ili9488
-"spi0.0" | sudo tee /sys/bus/spi/drivers/nc4_ili9488/unbind
-sudo update-initramfs -u
-sudo rm /boot/firmware/overlays/nc4_ili9488.dtbo
-sudo nano /boot/firmware/config.txt
-dtoverlay=nc4_ili9488
-lsmod | grep nc4_ili9488
-sudo poweroff
 ```
 
-## Unplig and replug the power
+###  Update module dependencies
+```
+sudo depmod -a
+```
+
+###  Ensure the device is unbound (if still bound)
+```
+echo "spi0.0" | sudo tee /sys/bus/spi/drivers/nc4_ili9488/unbind
+```
+
+###  Remove the overlay file
+```
+sudo rm /boot/overlays/nc4_ili9488.dtbo
+```
+
+###  Update /boot/firmware/config.txt to remove overlay
+```
+sudo nano /boot/firmware/config.txt
+```
+Remove or comment out the following lines:
+```
+# dtoverlay=nc4_ili9488
+# dtdebug=on
+```
+
+### Rebuild the initramfs (if required by your system)
+```
+sudo update-initramfs -u
+```
+
+### Confirm the driver is not loaded
+```
+lsmod | grep nc4_ili9488
+```
+```
+dmesg | grep -i ili9488
+```
+
 
 ## Verify Removal
 ```

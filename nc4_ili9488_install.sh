@@ -16,6 +16,7 @@ echo "Installing driver..."
 sudo mkdir -p /lib/modules/$(uname -r)/extra/
 sudo cp nc4_ili9488.ko /lib/modules/$(uname -r)/extra/
 sudo depmod -a
+modinfo nc4_ili9488
 echo "Driver successfully built and installed."
 echo "Rebuild the Initramfs..."
 sudo update-initramfs -u
