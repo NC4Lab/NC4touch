@@ -148,27 +148,41 @@ Reboot:
 sudo reboot
 ```
 
-## Testing the driver
-
-After loading the driver, you should have /dev/fb0 and /dev/fb1 for each panel.
-
-Turn the backlight on (it should be on by default after initialization):
-It should happen automatically due to fb_blank call in the driver.
-
-Test with an image:
+## Run checks
+    
+Increase the console log level (Optional):
 ```
-sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/data/images/C01.png
+sudo dmesg -n 8
 ```
-You should see the image on the first panel.
 
-For the second panel:
-sudo fbi -d /dev/fb1 -T 1 /home/nc4/TouchscreenApparatus/data/images/C01.png
+Verify the overlay's boot application using:
+```
+dmesg | grep -i 'nc4_ili9488'
+```
+Expected outcomes: Should see `Initialized nc4_ili9488` along with any error messages
+If this fails try unloading and reloading the module
+```
+sudo rmmod nc4_ili9488
+sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
+dmesg | grep -i 'nc4_ili9488'
+```
 
-The "-T 1" tells fbi to use the first virtual console.
+Run the following command to ensure the nc4_ili9488 overlay was successfully loaded:
+```
+ls /proc/device-tree/overlays/nc4_ili9488
+```
+Expected outcomes: the directory exists and contains files like `status` and `name.
+
+Check for errors in the .dtbo
+```
+sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/nc4_ili9488.dtbo
+```
 
 ## Debugging
 
-If the display is blank or distorted, check the kernel log:
+### System checks
+
+Check driver kernel log:
 ```
 dmesg | grep nc4_ili9488
 ```
@@ -176,14 +190,184 @@ Check that:
 - SPI wiring and GPIO assignments match your hardware.
 - Your image matches the resolution. fbi will scale or crop as needed.
 
-## Adding a third panel:
- - To add a third panel later, edit nc4_ili9488-overlay.dts and add another node:
-panel2@2 {
-compatible = "nc4,ili9488";
-reg = <2>;
-dc-gpios = <&gpio YOUR_DC_GPIO 0>;
-reset-gpios = <&gpio YOUR_RESET_GPIO 0>;
-backlight-gpios = <&gpio 18 0>;
-spi-max-frequency = <4000000>;
-};
- - Re-compile the DT overlay and reboot. The driver will auto-register the new panel as /dev/fb2.
+Check Kernel Logs for Overlay Errors
+```
+dmesg | grep -i 'overlay'
+```
+
+Verify the overlay's boot application using:
+```
+dmesg | grep -i 'nc4_ili9488'
+```
+
+Check active frame buffers
+```
+ls /dev/fb*
+```
+
+Check for SPI 
+```
+ls /dev/spi*
+```
+
+Directly Inspect the Alias Mapping: Run:
+```
+cat /sys/firmware/devicetree/base/aliases/gpio
+```
+
+### Manual Commands
+
+Manually load the overlay at runtime to get immediate feedback:
+```
+sudo dtoverlay nc4_ili9488
+dmesg | tail -50
+```
+
+Turn the backlight on (maximum brightness):
+```
+echo 1 | sudo tee /sys/class/backlight/soc:backlight/brightness
+```
+
+Turn the backlight off:
+```
+echo 0 | sudo tee /sys/class/backlight/soc:backlight/brightness
+```
+
+Draw an image to the fb0 buffer:
+```
+sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/data/images/A01.bmp
+```
+
+### General
+
+### Search for a specific file that matches a string:
+```
+sudo find / -type f -name "*nc4_ili9488*" 2>/dev/null
+```
+
+### Search all files that contain a given string
+```
+sudo grep -rli "nc4_ili9488" / 2>/dev/null
+```
+
+### Search within subfolders for files that contain a given string
+```
+sudo grep -rli "nc4_ili9488" /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/ 2>/dev/null
+```
+
+### Other
+
+Decompile the .dtbo to a .dts
+```
+sudo dtc -I dtb -O dts -o /home/nc4/TouchscreenApparatus/debug/nc4_ili9488.dts /boot/overlays/nc4_ili9488.dtbo
+```
+
+# Uninstall the nc4_ili9488 driver
+
+## Unload the driver
+```
+sudo rmmod nc4_ili9488
+```
+If you encounter "module is in use", run:
+```
+sudo modprobe -r nc4_ili9488
+```
+
+## Remove the Driver File
+```
+sudo rm sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
+```
+
+## Update Module Dependencies
+```
+sudo depmod
+```
+
+## Clear any cached kernel module information
+```
+sudo modprobe -c | grep nc4_ili9488
+```
+``` 
+"spi0.0" | sudo tee /sys/bus/spi/drivers/nc4_ili9488/unbind
+```
+
+## Rebuild the Initramfs (Critical!):
+```
+sudo update-initramfs -u
+```
+
+## Remove the overlay
+```
+sudo rm /boot/firmware/overlays/nc4_ili9488.dtbo
+```
+
+## Comment out line in config.txt:
+```
+sudo nano /boot/firmware/config.txt
+```
+```
+dtoverlay=nc4_ili9488
+```
+
+## Confirm the kernel module no longer loaded
+```
+lsmod | grep nc4_ili9488
+```
+
+## Power off
+```
+sudo poweroff
+```
+
+## All commands:
+```
+sudo rmmod nc4_ili9488
+sudo modprobe -r nc4_ili9488
+sudo rm /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
+sudo depmod
+sudo modprobe -c | grep nc4_ili9488
+"spi0.0" | sudo tee /sys/bus/spi/drivers/nc4_ili9488/unbind
+sudo update-initramfs -u
+sudo rm /boot/firmware/overlays/nc4_ili9488.dtbo
+sudo nano /boot/firmware/config.txt
+dtoverlay=nc4_ili9488
+lsmod | grep nc4_ili9488
+sudo poweroff
+```
+
+## Unplig and replug the power
+
+## Verify Removal
+```
+modinfo nc4_ili9488
+```
+
+Check for Residual Entries in /proc/device-tree:
+```
+grep -ril 'nc4_ili9488' /proc/device-tree/
+```
+
+Verify No Kernel Logs Reference:
+```
+dmesg | grep -i 'nc4_ili9488'
+```
+Expected outcome: No references to nc4_ili9488 in the logs.
+
+Check for Residual SPI Driver Bindings for each SPI device:
+```
+ls -l /sys/bus/spi/devices/spi0.0/driver
+ls -l /sys/bus/spi/devices/spi0.1/driver
+```
+
+Search for Residual Configurations
+```
+grep -i 'nc4_ili9488' /boot/config.txt
+```
+```
+grep -ril 'nc4_ili9488' /boot/
+```
+
+Confirm No Residual Modules in /lib/modules
+```
+find /lib/modules/$(uname -r)/ -name '*nc4_ili9488*'
+```
