@@ -64,6 +64,11 @@ Go to the driver directory:
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
 ```
 
+Do a build clean (Optional)
+```
+make clean || true
+```
+
 In the driver directory run:
 ```
 make
@@ -78,6 +83,7 @@ ls nc4_ili9488.ko
 All commands:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
+make clean || true
 make
 ls nc4_ili9488.ko
 ```

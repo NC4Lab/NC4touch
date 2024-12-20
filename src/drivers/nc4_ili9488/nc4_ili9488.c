@@ -330,25 +330,25 @@ static void nc4_ili9488_remove(struct spi_device *spi)
 }
 
 static const struct of_device_id nc4_ili9488_of_match[] = {
-    { .compatible = "nc4,ili9488" },
-    {}
+	{ .compatible = "nc4_ili9488", },
+	{}
 };
 MODULE_DEVICE_TABLE(of, nc4_ili9488_of_match);
 
 static const struct spi_device_id nc4_ili9488_id[] = {
-    { "nc4,ili9488", 0 },
+    { "nc4_ili9488", 0 },
     {}
 };
 MODULE_DEVICE_TABLE(spi, nc4_ili9488_id);
 
 static struct spi_driver nc4_ili9488_driver = {
-    .driver = {
-        .name = NC4_ILI9488_NAME,
-        .of_match_table = of_match_ptr(nc4_ili9488_of_match),
-    },
-    .probe = nc4_ili9488_probe,
-    .remove = nc4_ili9488_remove,
-    .id_table = nc4_ili9488_id,
+	.driver = {
+		.name = NC4_ILI9488_NAME,
+		.of_match_table = of_match_ptr(nc4_ili9488_of_match),
+	},
+	.probe = nc4_ili9488_probe,
+	.remove = nc4_ili9488_remove,
+	.id_table = nc4_ili9488_id,
 };
 
 module_spi_driver(nc4_ili9488_driver);
@@ -356,3 +356,34 @@ module_spi_driver(nc4_ili9488_driver);
 MODULE_DESCRIPTION("nc4_ili9488 fbdev driver for ILI9488 LCD panels " ILI9488_DRIVER_VERSION);
 MODULE_AUTHOR("YourNameHere");
 MODULE_LICENSE("GPL");
+
+
+
+
+
+
+
+// static const struct of_device_id nc4_ili9488_of_match[] = {
+// 	{ .compatible = "nc4,ili9488", },
+// 	{}
+// };
+// MODULE_DEVICE_TABLE(of, nc4_ili9488_of_match);
+
+// static struct spi_driver nc4_ili9488_driver = {
+// 	.driver = {
+// 		.name = NC4_ILI9488_NAME,
+// 		.of_match_table = of_match_ptr(nc4_ili9488_of_match),
+// 	},
+// 	.probe = nc4_ili9488_probe,
+// 	.remove = nc4_ili9488_remove,
+// };
+
+// module_spi_driver(nc4_ili9488_driver);
+
+// MODULE_DESCRIPTION("nc4_ili9488 fbdev driver for ILI9488 LCD panels");
+// MODULE_AUTHOR("YourNameHere");
+// MODULE_LICENSE("GPL");
+
+
+
+

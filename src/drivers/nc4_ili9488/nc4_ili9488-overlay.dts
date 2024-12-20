@@ -13,7 +13,7 @@
             #size-cells = <0>;
 
             panel0: panel0@0 {
-                compatible = "nc4,ili9488";
+                compatible = "nc4_ili9488";
                 reg = <0>; /* chip select LCD_0 */
                 dc-gpios = <&gpio 25 0>;
                 reset-gpios = <&gpio 24 0>;
@@ -22,7 +22,7 @@
             };
 
             panel1: panel1@1 {
-                compatible = "nc4,ili9488";
+                compatible = "nc4_ili9488";
                 reg = <1>; /* chip select LCD_1 */
                 dc-gpios = <&gpio 27 0>;
                 reset-gpios = <&gpio 23 0>;
