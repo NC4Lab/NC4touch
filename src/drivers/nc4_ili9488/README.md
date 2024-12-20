@@ -64,6 +64,11 @@ Go to the driver directory:
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
 ```
 
+Do a build clean (Optional)
+```
+make clean || true
+```
+
 In the driver directory run:
 ```
 make
@@ -78,6 +83,7 @@ ls nc4_ili9488.ko
 All commands:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
+make clean || true
 make
 ls nc4_ili9488.ko
 ```
@@ -119,6 +125,11 @@ Load the module:
 sudo modprobe nc4_ili9488
 ```
 
+Check if the module is loaded:
+```
+lsmod | grep nc4_ili9488
+```
+
 Check dmesg for logs:
 ```
 dmesg | grep nc4_ili9488
@@ -130,6 +141,11 @@ If successful, you should see something like:
 To load the driver at every boot, add "nc4_ili9488" to /etc/modules or create a file in /etc/modules-load.d/:
 ```
 echo nc4_ili9488 | sudo tee /etc/modules-load.d/nc4_ili9488.conf
+```
+
+Reboot:
+```
+sudo reboot
 ```
 
 ## Testing the driver

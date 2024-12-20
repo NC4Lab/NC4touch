@@ -743,12 +743,17 @@ sudo grep -rli "ili9488" /home/nc4/TouchscreenApparatus/src/drivers/ili9488/ 2>/
    ```
    Rerun the 'Create' command when libraries are modified.
 
-# Setting up C++
+# Random
 
-Run setup.sh:
+Connect to my hotspot:
    ```
-   sudo ./setup.sh
-   ```
+sudo nmcli dev wifi connect "poserguru_s24" password "funkstar"
+```
+
+Varify:
+```
+nmcli connection show --active
+```
 
 # Pin Mapping  
 
