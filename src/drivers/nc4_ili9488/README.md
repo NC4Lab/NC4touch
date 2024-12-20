@@ -2,7 +2,7 @@
 
 ## Install dependencies
 
-- Make sure you have installed kernel headers and build tools:
+### Make sure you have installed kernel headers and build tools:
 ```
 sudo apt-get update
 ```
@@ -13,7 +13,7 @@ The "fbi" tool is used for testing by showing images on the framebuffer.
 
 ## Set up the device tree overlay
 
-Add the following lines to to /boot/firmware/config.txt:
+### Add the following lines to to /boot/firmware/config.txt:
 ```
 sudo nano /boot/firmware/config.txt
 ```
@@ -29,12 +29,12 @@ Confirm this line is also present in config.txt:
 dtparam=spi=on
 ```
 
-Go to the driver directory:
+### Go to the driver directory:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
 ```
 
-Compile the overlay file to a .dtbo binary:
+### Compile the overlay file to a .dtbo binary:
 ```
 sudo dtc -@ -I dts -O dtb -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
 ```
@@ -42,22 +42,22 @@ sudo dtc -@ -I dts -O dtb -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay
 sudo dtc -@ -f -I dts -O dtb -Wunit_address_vs_reg -Wavoid_unnecessary_addr_size -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
 ```
 
-Check for the nc4_ili9488.dtbo
+### Check for the nc4_ili9488.dtbo
 ```
 ls /boot/overlays/*ili9488*
 ```
 
-Print the contents o /boot/firmware/config.txt:
+### Print the contents o /boot/firmware/config.txt:
 ```
 cat /boot/firmware/config.txt
 ```
 
-Reboot if you are stopping here:
+### Reboot if you are stopping here:
 ```
 sudo reboot
 ```
 
-All commands:
+### All commands:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
 sudo dtc -@ -f -I dts -O dtb -Wunit_address_vs_reg -Wavoid_unnecessary_addr_size -o /boot/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
@@ -66,28 +66,32 @@ cat /boot/firmware/config.txt
 
 ## Build the driver
 
-Go to the driver directory:
+### Go to the driver directory:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
 ```
 
-Do a build clean (Optional)
+### Do a build clean (Optional)
 ```
 make clean || true
 ```
 
-In the driver directory run:
+### In the driver directory run:
 ```
 make
 ```
+### (Alternative) installs the compiled kernel module into the system's kernel modules directory:
+```
+sudo make -C /lib/modules/$(uname -r)/build M=$(pwd) modules_install
+```
 If successful, this produces nc4_ili9488.ko
 
-Verify the file was created:
+### Verify the file was created:
 ```
 ls nc4_ili9488.ko
 ```
 
-All commands:
+### All commands:
 ```
 cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
 make clean || true
@@ -97,33 +101,33 @@ ls nc4_ili9488.ko
 
 ## Install the driver
 
-Create the /lib/modules/$(uname -r)/extra if needed:
+### Create the /lib/modules/$(uname -r)/extra if needed:
 ```
 sudo mkdir -p /lib/modules/$(uname -r)/extra
 ```
 
-Copy the driver to it:
+### Copy the driver to it:
 ```
 sudo cp nc4_ili9488.ko /lib/modules/$(uname -r)/extra/
 ```
 
-Ensure proper permissions for the driver file:
+### Ensure proper permissions for the driver file:
 ```
 sudo chmod u=rw,go=r /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
 ```
 
 
-Verify the driver is available:
+### Verify the driver is available:
 ```
 sudo modinfo /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
 ```
 
-Update module dependencies:
+### Update module dependencies:
 ```
 sudo depmod -a
 ```
 
-All commands:
+### All commands:
 ```
 sudo mkdir -p /lib/modules/$(uname -r)/extra
 sudo cp nc4_ili9488.ko /lib/modules/$(uname -r)/extra/
@@ -133,17 +137,17 @@ modinfo nc4_ili9488
 
 ## Load and install the driver:
 
-Load the driver:
+### Load the driver:
 ```
 sudo modprobe nc4_ili9488
 ```
 
-Verify the driver is loaded:
+### Verify the driver is loaded:
 ```
 lsmod | grep nc4_ili9488
 ```
 
-Check dmesg for logs:
+### Check dmesg for logs:
 ```
 dmesg | grep nc4_ili9488
 ```
@@ -151,80 +155,64 @@ If successful, you should see something like:
 - "nc4_ili9488 panel registered at /dev/fb0"
 - "nc4_ili9488 panel registered at /dev/fb1"
 
-Reboot the system:
-```
-sudo reboot
-```
-
-To load the driver at every boot, add "nc4_ili9488" to /etc/modules or create a file in /etc/modules-load.d/:
+### To load the driver at every boot, add "nc4_ili9488" to /etc/modules or create a file in /etc/modules-load.d/:
 ```
 echo nc4_ili9488 | sudo tee /etc/modules-load.d/nc4_ili9488.conf
 ```
 
-Reboot:
+### Reboot:
 ```
 sudo reboot
 ```
 
-## Run checks
-    
-Increase the console log level (Optional):
+## Overlay and Driver Validation Commands
+
+### Increase the console log level (Optional)
 ```
 sudo dmesg -n 8
 ```
+- Allows all kernel logs to be displayed for debugging purposes.
 
-Check if overlay was successfully loaded:
+### Check if the overlay was successfully loaded
 ```
 ls /proc/device-tree/overlays/nc4_ili9488
 ```
+- Expected outcome: Directory exists and contains files like `status` and `name`.
 
-Check if module is loaded:
+### Check if the module is loaded
 ```
 lsmod | grep nc4_ili9488
 ```
+- Expected outcome: Shows `nc4_ili9488` in the list with usage count.
 
-Verify the overlay's boot application using:
+### Verify the overlay's boot application
 ```
 dmesg | grep -i 'nc4_ili9488'
 ```
-Expected outcomes: Should see `Initialized nc4_ili9488` along with any error messages
+- Expected outcome: Should see `Initialized nc4_ili9488` along with any error messages.
 
-If this fails try unloading and reloading the module
+### If the module fails to load, try unloading and reloading it
 ```
 sudo rmmod nc4_ili9488
 sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
 dmesg | grep -i 'nc4_ili9488'
 ```
+- Expected outcome: Driver reloads successfully, and logs show initialization messages.
 
-Run the following command to ensure the nc4_ili9488 overlay was successfully loaded:
-```
-ls /proc/device-tree/overlays/nc4_ili9488
-```
-Expected outcomes: the directory exists and contains files like `status` and `name.
-
-Check for errors in the .dtbo
+### Check for errors in the .dtbo file
 ```
 sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/nc4_ili9488.dtbo
 ```
+- Expected outcome: Runs without any error messages.
 
-All commands:
-```
-sudo dmesg -n 8
-ls /proc/device-tree/overlays/nc4_ili9488
-lsmod | grep nc4_ili9488
-dmesg | grep -i 'nc4_ili9488'
-sudo rmmod nc4_ili9488
-sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
-dmesg | grep -i 'nc4_ili9488'
-ls /proc/device-tree/overlays/nc4_ili9488
-sudo dtc -I dtb -O dts -o /dev/null /boot/overlays/nc4_ili9488.dtbo
-```
+
+
 
 ## Debugging
 
 ### System checks
 
-Check driver kernel log:
+### Check driver kernel log:
 ```
 dmesg | grep nc4_ili9488
 ```
@@ -232,54 +220,54 @@ Check that:
 - SPI wiring and GPIO assignments match your hardware.
 - Your image matches the resolution. fbi will scale or crop as needed.
 
-Check Kernel Logs for Overlay Errors
+### Check Kernel Logs for Overlay Errors
 ```
 dmesg | grep -i 'overlay'
 ```
 
-Check if overlay was successfully loaded:
+### Check if overlay was successfully loaded:
 ```
 ls /proc/device-tree/overlays/nc4_ili9488
 ```
 
-Check if module is loaded:
+### Check if module is loaded:
 ```
 lsmod | grep nc4_ili9488
 ```
 
-Verify the overlay's boot application using:
+### Verify the overlay's boot application using:
 ```
 dmesg | grep -i 'nc4_ili9488'
 ```
 
-Check active frame buffers
+### Check active frame buffers
 ```
 ls /dev/fb*
 ```
 
-Check for SPI 
+### Check for SPI 
 ```
 ls /dev/spi*
 ```
 
-Directly Inspect the Alias Mapping: Run:
+### Directly Inspect the Alias Mapping: Run:
 ```
 cat /sys/firmware/devicetree/base/aliases/gpio
 ```
 
 ### Manual Commands
 
-Manually load the module at runtime:
+### Manually load the module at runtime:
 ```
 sudo modprobe nc4_ili9488
 ```
 
-Manually unload the module at runtime:
+### Manually unload the module at runtime:
 ```
 sudo rmmod nc4_ili9488
 ```
 
-Manually load the overlay at runtime:
+### Manually load the overlay at runtime:
 ```
 sudo dtoverlay nc4_ili9488
 ```
@@ -287,17 +275,17 @@ sudo dtoverlay nc4_ili9488
 dmesg | tail -50
 ```
 
-Turn the backlight on (maximum brightness):
+### Turn the backlight on (maximum brightness):
 ```
 echo 1 | sudo tee /sys/class/backlight/soc:backlight/brightness
 ```
 
-Turn the backlight off:
+### Turn the backlight off:
 ```
 echo 0 | sudo tee /sys/class/backlight/soc:backlight/brightness
 ```
 
-Draw an image to the fb0 buffer:
+### Draw an image to the fb0 buffer:
 ```
 sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/data/images/C01.png
 ```

@@ -25,15 +25,16 @@
 #include <linux/backlight.h>
 
 /* Driver version for reference in logs */
-#define ILI9488_DRIVER_VERSION "v1.0.3"
+#define ILI9488_DRIVER_VERSION "v2.0.0"
 
 #define NC4_ILI9488_NAME "nc4_ili9488"
-#define LCD_WIDTH   320
-#define LCD_HEIGHT  480
+#define LCD_WIDTH 320
+#define LCD_HEIGHT 480
 // We will use 24-bit color in FB, and send RGB888. Display uses 18-bit internally,
 // but we discard LSBs when sending RGB888 data.
 
-struct nc4_ili9488_panel {
+struct nc4_ili9488_panel
+{
 	struct spi_device *spi;
 	struct fb_info *info;
 	u8 *buffer; // Framebuffer memory
@@ -164,7 +165,8 @@ static int nc4_ili9488_update_display(struct nc4_ili9488_panel *panel)
 	int ret;
 	// Full window update
 	ret = nc4_ili9488_set_window(panel, 0, 0, panel->width - 1, panel->height - 1);
-	if (ret) {
+	if (ret)
+	{
 		dev_err(&panel->spi->dev, "Failed to set window\n");
 		return ret;
 	}
@@ -186,10 +188,13 @@ static int nc4_ili9488_blank(int blank, struct fb_info *info)
 	if (!panel->backlight)
 		return 0;
 
-	if (blank) {
+	if (blank)
+	{
 		backlight_disable(panel->backlight);
 		dev_info(&panel->spi->dev, "Backlight off\n");
-	} else {
+	}
+	else
+	{
 		backlight_enable(panel->backlight);
 		dev_info(&panel->spi->dev, "Backlight on\n");
 	}
@@ -222,13 +227,14 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 
 	dev_info(dev, "Probing nc4_ili9488 panel\n");
 
+	// Allocate panel structure
 	panel = devm_kzalloc(dev, sizeof(*panel), GFP_KERNEL);
 	if (!panel)
 		return -ENOMEM;
 
 	panel->spi = spi;
 
-	// Parse device tree gpios
+	// Get DC and RESET GPIOs from device tree
 	panel->dc_gpio = devm_gpiod_get(dev, "dc", GPIOD_OUT_LOW);
 	if (IS_ERR(panel->dc_gpio)) {
 		dev_err(dev, "Failed to get DC GPIO\n");
@@ -241,18 +247,18 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		return PTR_ERR(panel->reset_gpio);
 	}
 
-	// Find backlight device from Device Tree
+	// Find the backlight device referenced by the overlay
 	panel->backlight = devm_of_find_backlight(dev);
 	if (IS_ERR(panel->backlight)) {
 		dev_err(dev, "Failed to find backlight\n");
 		return PTR_ERR(panel->backlight);
 	}
 
-	// Set SPI mode and speed
+	// Configure SPI
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
 	if (device_property_read_u32(dev, "spi-max-frequency", &panel->bus_speed_hz))
-		panel->bus_speed_hz = 4000000; // default if property not found
+		panel->bus_speed_hz = 4000000; // Default speed if not provided
 	spi->max_speed_hz = panel->bus_speed_hz;
 
 	ret = spi_setup(spi);
@@ -261,42 +267,52 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		return ret;
 	}
 
+	// Set panel dimensions
 	panel->width = LCD_WIDTH;
 	panel->height = LCD_HEIGHT;
-	panel->buffer_size = panel->width * panel->height * 3; // RGB888 = 3 bytes/pixel
 
-	// Allocate framebuffer
+	// Use a 32-bit framebuffer (XRGB8888) for alignment and stability
+	panel->buffer_size = panel->width * panel->height * 4;
+
+	// Allocate framebuffer info struct
 	info = framebuffer_alloc(0, dev);
 	if (!info)
 		return -ENOMEM;
 
 	panel->info = info;
 	info->screen_size = panel->buffer_size;
+
+	// Set fixed info: 4 bytes per pixel, TrueColor visual
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = FB_VISUAL_TRUECOLOR;
-	info->fix.line_length = panel->width * 3;
+	info->fix.line_length = panel->width * 4;
 	strcpy(info->fix.id, "nc4_ili9488");
 
+	// Set variable info: standard XRGB8888 layout
 	info->var.xres = panel->width;
 	info->var.yres = panel->height;
 	info->var.xres_virtual = panel->width;
 	info->var.yres_virtual = panel->height;
-	info->var.bits_per_pixel = 24;
-	info->var.red.offset = 16;  info->var.red.length = 8;
-	info->var.green.offset = 8; info->var.green.length = 8;
-	info->var.blue.offset = 0;  info->var.blue.length = 8;
+	info->var.bits_per_pixel = 32;
+	info->var.red.offset = 16;   info->var.red.length = 8;
+	info->var.green.offset = 8;  info->var.green.length = 8;
+	info->var.blue.offset = 0;   info->var.blue.length = 8;
+	info->var.transp.offset = 24; info->var.transp.length = 8; // optional transparency
 
+	// Set framebuffer ops
 	info->fbops = &nc4_ili9488_fbops;
 	info->par = panel;
 
+	// Allocate and clear the pixel buffer
 	panel->buffer = vmalloc(panel->buffer_size);
 	if (!panel->buffer) {
 		framebuffer_release(info);
 		return -ENOMEM;
 	}
-	memset(panel->buffer, 0xFF, panel->buffer_size); // White screen initially
+	memset(panel->buffer, 0xFF, panel->buffer_size); // White fill initially
 	info->screen_base = (char __iomem *)panel->buffer;
 
+	// Register the framebuffer with the kernel
 	ret = register_framebuffer(info);
 	if (ret) {
 		vfree(panel->buffer);
@@ -304,8 +320,10 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		return ret;
 	}
 
+	// Let the SPI device driver data point to the panel
 	spi_set_drvdata(spi, panel);
 
+	// Initialize the panel (send commands to the LCD)
 	ret = nc4_ili9488_init_panel(panel);
 	if (ret) {
 		unregister_framebuffer(info);
@@ -314,10 +332,8 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	// Turn backlight on initially
+	// Turn backlight on and update the screen
 	nc4_ili9488_blank(FB_BLANK_UNBLANK, info);
-
-	// Initial update
 	nc4_ili9488_flush(info);
 
 	dev_info(dev, "nc4_ili9488 panel registered at /dev/fb%d\n", info->node);
@@ -327,8 +343,10 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 static void nc4_ili9488_remove(struct spi_device *spi)
 {
 	struct nc4_ili9488_panel *panel = spi_get_drvdata(spi);
-	if (panel) {
-		if (panel->info) {
+	if (panel)
+	{
+		if (panel->info)
+		{
 			unregister_framebuffer(panel->info);
 			vfree(panel->buffer);
 			framebuffer_release(panel->info);
@@ -337,15 +355,15 @@ static void nc4_ili9488_remove(struct spi_device *spi)
 }
 
 static const struct of_device_id nc4_ili9488_of_match[] = {
-	{ .compatible = "nc4,ili9488", },
-	{}
-};
+	{
+		.compatible = "nc4,ili9488",
+	},
+	{}};
 MODULE_DEVICE_TABLE(of, nc4_ili9488_of_match);
 
 static const struct spi_device_id nc4_ili9488_id[] = {
-    { "nc4,ili9488", 0 },
-    {}
-};
+	{"nc4,ili9488", 0},
+	{}};
 MODULE_DEVICE_TABLE(spi, nc4_ili9488_id);
 
 static struct spi_driver nc4_ili9488_driver = {

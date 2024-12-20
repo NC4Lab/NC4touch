@@ -755,6 +755,21 @@ Varify:
 nmcli connection show --active
 ```
 
+Git BS:
+```
+cd cd /home/nc4
+sudo cp -r ~/TouchscreenApparatus ~/TouchscreenApparatus_backup
+diff -r --exclude='.lgd-nfy0' /home/nc4/TouchscreenApparatus /home/nc4/TouchscreenApparatus_backup
+cd /home/nc4/TouchscreenApparatus
+git fsck --full | grep -o 'git/objects/[0-9a-f]*/[0-9a-f]*' | xargs rm -f
+find .git/objects -type f -empty -delete
+git status
+git fsck --full
+git status
+git add .
+```
+
+
 # Pin Mapping  
 
 

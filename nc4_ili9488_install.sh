@@ -34,6 +34,20 @@ if ! make; then
     exit 1
 fi
 
+# Check vermagic for compatibility
+echo "Checking vermagic for kernel module..."
+VERMAGIC=$(modinfo nc4_ili9488.ko | grep vermagic | awk '{print $2}')
+CURRENT_KERNEL=$(uname -r)
+
+if [ "$VERMAGIC" == "$CURRENT_KERNEL" ]; then
+    echo "Vermagic matches the current kernel version: $CURRENT_KERNEL"
+else
+    echo "Error: Vermagic ($VERMAGIC) does not match the current kernel version ($CURRENT_KERNEL)." >&2
+    echo "Ensure you are building the module against the correct kernel headers." >&2
+    exit 1
+fi
+
+
 # Verify the driver file was created
 if [ -f "nc4_ili9488.ko" ]; then
     echo "Driver build successful."
