@@ -195,6 +195,16 @@ Check Kernel Logs for Overlay Errors
 dmesg | grep -i 'overlay'
 ```
 
+Check if overlay was successfully loaded:
+```
+ls /proc/device-tree/overlays/nc4_ili9488
+```
+
+Check if module is loaded:
+```
+lsmod | grep nc4_ili9488
+```
+
 Verify the overlay's boot application using:
 ```
 dmesg | grep -i 'nc4_ili9488'
@@ -216,6 +226,11 @@ cat /sys/firmware/devicetree/base/aliases/gpio
 ```
 
 ### Manual Commands
+
+Manually load the module at runtime to get immediate feedback::
+```
+sudo modprobe nc4_ili9488
+```
 
 Manually load the overlay at runtime to get immediate feedback:
 ```

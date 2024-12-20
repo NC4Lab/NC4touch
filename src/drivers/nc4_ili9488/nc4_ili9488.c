@@ -330,13 +330,13 @@ static void nc4_ili9488_remove(struct spi_device *spi)
 }
 
 static const struct of_device_id nc4_ili9488_of_match[] = {
-	{ .compatible = "nc4_ili9488", },
+	{ .compatible = "nc4,ili9488", },
 	{}
 };
 MODULE_DEVICE_TABLE(of, nc4_ili9488_of_match);
 
 static const struct spi_device_id nc4_ili9488_id[] = {
-    { "nc4_ili9488", 0 },
+    { "nc4,ili9488", 0 },
     {}
 };
 MODULE_DEVICE_TABLE(spi, nc4_ili9488_id);
