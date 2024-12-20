@@ -15,7 +15,7 @@
 #include <linux/of_gpio.h>
 
 /* Driver version for reference in logs */
-#define ILI9488_DRIVER_VERSION "v1.0.2-debug"
+#define ILI9488_DRIVER_VERSION "v1.0.3"
 
 #define NC4_ILI9488_NAME "nc4_ili9488"
 #define LCD_WIDTH   320
