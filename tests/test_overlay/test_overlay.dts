@@ -1,0 +1,17 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    fragment@0 {
+        target-path = "/";
+        __overlay__ {
+            test_node {
+                compatible = "test,overlay";
+                dummy-property = <0x1>;
+                status = "okay";
+            };
+        };
+    };
+};

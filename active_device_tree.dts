@@ -337,12 +337,6 @@
 				brcm,pins = <0x10 0x11>;
 			};
 
-			panel0_pins {
-				brcm,function = <0x01 0x01 0x01>;
-				phandle = <0xf3>;
-				brcm,pins = <0x18 0x19 0x12>;
-			};
-
 			pcm-gpio28 {
 				brcm,function = <0x06>;
 				phandle = <0x74>;
@@ -1223,12 +1217,6 @@
 				};
 			};
 
-			panel1_pins {
-				brcm,function = <0x01 0x01>;
-				phandle = <0xf5>;
-				brcm,pins = <0x17 0x1b>;
-			};
-
 			jtag-gpio22 {
 				brcm,function = <0x03>;
 				phandle = <0x72>;
@@ -1450,12 +1438,6 @@
 			phandle = <0x4b>;
 			dmas = <0x0c 0x2000000d>;
 			brcm,overclock-50 = <0x00>;
-		};
-
-		backlight {
-			compatible = "gpio-backlight";
-			phandle = <0xf4>;
-			gpios = <0x07 0x12 0x00>;
 		};
 
 		power {
@@ -1948,38 +1930,13 @@
 			dmas = <0x0c 0x06 0x0c 0x07>;
 			cs-gpios = <0x07 0x08 0x01 0x07 0x07 0x01>;
 
-			panel0@0 {
-				pinctrl-names = "default";
-				pinctrl-0 = <0xf3>;
-				backlight = <0xf4>;
-				spi-max-frequency = "\0=\t";
-				reset-gpios = <0x07 0x18 0x00>;
-				compatible = "nc4,ili9488";
-				dc-gpios = <0x07 0x19 0x00>;
-				reg = <0x00>;
-				phandle = <0xf6>;
-			};
-
 			spidev@0 {
 				#address-cells = <0x01>;
 				#size-cells = <0x00>;
 				spi-max-frequency = <0x7735940>;
 				compatible = "spidev";
-				status = "disabled";
 				reg = <0x00>;
 				phandle = <0xbe>;
-			};
-
-			panel1@1 {
-				pinctrl-names = "default";
-				pinctrl-0 = <0xf5>;
-				backlight = <0xf4>;
-				spi-max-frequency = "\0=\t";
-				reset-gpios = <0x07 0x17 0x00>;
-				compatible = "nc4,ili9488";
-				dc-gpios = <0x07 0x1b 0x00>;
-				reg = <0x01>;
-				phandle = <0xf7>;
 			};
 
 			spidev@1 {
@@ -2266,7 +2223,7 @@
 
 	chosen {
 		linux,initrd-end = <0x2efff59b>;
-		bootargs = "coherent_pool=1M 8250.nr_uarts=0 snd_bcm2835.enable_headphones=0 cgroup_disable=memory numa_policy=interleave snd_bcm2835.enable_headphones=1 snd_bcm2835.enable_hdmi=1 bcm2708_fb.fbwidth=0 bcm2708_fb.fbheight=0 bcm2708_fb.fbswap=1 smsc95xx.macaddr=D8:3A:DD:6F:A3:94 vc_mem.mem_base=0x3ec00000 vc_mem.mem_size=0x40000000  console=ttyS0,115200 console=tty1 root=PARTUUID=737714c1-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=CA ip=169.254.55.240::0.0.0.0:255.255.0.0::eth0:off debug spi_debug=1";
+		bootargs = "coherent_pool=1M 8250.nr_uarts=0 snd_bcm2835.enable_headphones=0 cgroup_disable=memory numa_policy=interleave snd_bcm2835.enable_headphones=1 snd_bcm2835.enable_hdmi=1 bcm2708_fb.fbwidth=0 bcm2708_fb.fbheight=0 bcm2708_fb.fbswap=1 smsc95xx.macaddr=D8:3A:DD:6F:A3:94 vc_mem.mem_base=0x3ec00000 vc_mem.mem_size=0x40000000  console=ttyS0,115200 console=tty1 root=PARTUUID=737714c1-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=CA ip=169.254.55.240::0.0.0.0:255.255.0.0::eth0:off debug";
 		os_prefix = [00];
 		kaslr-seed = <0x00 0x00>;
 		log = <0x3ff80000 0x7ffe0>;
@@ -2286,6 +2243,12 @@
 			boot-mode = <0x01>;
 			partition = <0x00>;
 		};
+	};
+
+	test_node {
+		dummy-property = <0x01>;
+		compatible = "test,overlay";
+		status = "okay";
 	};
 
 	phy {

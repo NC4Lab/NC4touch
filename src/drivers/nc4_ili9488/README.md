@@ -165,13 +165,13 @@ sudo reboot
 
 ## Validate Overlay
 
-### Increase the console log level to max (Optional)
+### (Optional) Increase the console log level to max (Optional)
 ```
 sudo dmesg -n 8
 ```
 Allows all kernel logs to be displayed for debugging purposes.
 
-### Include kernel logging debug glag for more boot info:
+### (Optional) Include kernel logging debug glag for more boot info:
 ```
 sudo nano /boot/firmware/cmdline.txt
 ```
@@ -180,11 +180,22 @@ Add to end of file:
 debug
 ``` 
 
-### Check if the overlay was successfully loaded
+### (Never works) Check overlay nodes showing overlay was successfully loaded
 ```
 ls /proc/device-tree/overlays/nc4_ili9488
 ```
 Expected outcome: Directory exists and contains files like `status` and `name`.
+
+### Check if nodes (e.g., panel0 or panel1) exist in the flattened device tree:
+```
+grep -q "panel0" <(dtc -I fs /proc/device-tree) && echo "Found overlay nodes" || echo "No nodes found"
+
+```
+
+### Check if the kernel logs mention applying the nc4_ili9488 overlay:
+```
+dmesg | grep -qi "nc4_ili9488" && echo "Overlay logged in kernel logs" || echo "Overlay not logged in kernel logs"
+```
 
 ### Check active frame buffers
 ```
