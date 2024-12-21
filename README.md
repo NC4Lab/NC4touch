@@ -746,7 +746,7 @@ sudo grep -rli "ili9488" /home/nc4/TouchscreenApparatus/src/drivers/ili9488/ 2>/
 # Random
 
 Connect to my hotspot:
-   ```
+```
 sudo nmcli dev wifi connect "poserguru_s24" password "funkstar"
 ```
 

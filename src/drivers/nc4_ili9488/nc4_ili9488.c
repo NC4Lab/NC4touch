@@ -18,6 +18,10 @@
 // some lower bits of color information.
 
 #include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/types.h>
 #include <linux/spi/spi.h>
 #include <linux/gpio/consumer.h>
 #include <linux/delay.h>
@@ -261,7 +265,10 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 	struct fb_info *info;
 	int ret;
 
-	dev_info(dev, "Probing nc4_ili9488 panel\n");
+	pr_debug("Entering nc4_ili9488_probe for device %s\n", dev_name(dev));
+	// TEMP
+	dev_info(dev, "Probing nc4_ili9488 driver\n");
+	pr_err("nc4_ili9488_probe called\n");
 
 	/* Allocate panel structure */
 	dev_dbg(dev, "Allocating panel structure\n");
@@ -439,7 +446,26 @@ static struct spi_driver nc4_ili9488_driver = {
 	.id_table = nc4_ili9488_id,
 };
 
-module_spi_driver(nc4_ili9488_driver);
+// TEMP
+// module_spi_driver(nc4_ili9488_driver);
+static int __init nc4_ili9488_driver_init(void)
+{
+    static int init_count = 0;
+    init_count++;
+    pr_debug("nc4_ili9488: Driver initializing, count = %d\n", init_count);
+    return spi_register_driver(&nc4_ili9488_driver);
+}
+
+static void __exit nc4_ili9488_driver_exit(void)
+{
+    static int exit_count = 0;
+    exit_count++;
+    pr_debug("nc4_ili9488: Driver exiting, count = %d\n", exit_count);
+    spi_unregister_driver(&nc4_ili9488_driver);
+}
+
+module_init(nc4_ili9488_driver_init);
+module_exit(nc4_ili9488_driver_exit);
 
 MODULE_DESCRIPTION("nc4_ili9488 fbdev driver for ILI9488 LCD panels " ILI9488_DRIVER_VERSION);
 MODULE_AUTHOR("YourNameHere");
