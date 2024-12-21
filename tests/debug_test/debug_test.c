@@ -1,26 +1,21 @@
 #include <linux/module.h>
 #include <linux/init.h>
+#include <drm/drm_print.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Test Author");
-MODULE_DESCRIPTION("Debugging Test Module");
+MODULE_DESCRIPTION("Minimal DRM Test Driver");
 
-/* Module initialization */
-static int __init debug_test_init(void)
+static int __init test_driver_init(void)
 {
-    pr_info("debug_test: Initializing test module\n");
-    pr_debug("debug_test: Debug message during initialization\n");
-    pr_err("debug_test: Error message for testing\n");
+    DRM_INFO("Test Driver: Initialized successfully.\n");
     return 0;
 }
 
-/* Module cleanup */
-static void __exit debug_test_exit(void)
+static void __exit test_driver_exit(void)
 {
-    pr_info("debug_test: Exiting test module\n");
-    pr_debug("debug_test: Debug message during cleanup\n");
-    pr_err("debug_test: Error message during cleanup\n");
+    DRM_INFO("Test Driver: Exiting successfully.\n");
 }
 
-module_init(debug_test_init);
-module_exit(debug_test_exit);
+module_init(test_driver_init);
+module_exit(test_driver_exit);
