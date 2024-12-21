@@ -171,6 +171,15 @@ sudo dmesg -n 8
 ```
 Allows all kernel logs to be displayed for debugging purposes.
 
+### Include kernel logging debug glag for more boot info:
+```
+sudo nano /boot/firmware/cmdline.txt
+```
+Add to end of file:
+```
+debug
+``` 
+
 ### Check if the overlay was successfully loaded
 ```
 ls /proc/device-tree/overlays/nc4_ili9488
@@ -200,6 +209,11 @@ dmesg | grep firmware
 ### Verify the overlay is referenced in the config.txt:
 ```
 cat /boot/firmware/config.txt | grep dtoverlay
+```
+
+### Look for messages like Read config.txt or Read overlay:
+```
+dmesg | grep -i dt
 ```
 
 

@@ -1,4 +1,4 @@
-echo "==== Setting Up Device Tree Overlay ===="
+echo "==== START: Setting Up Device Tree Overlay ===="
 # Define directory for overlay
 DT_OVERLAY_DIR="/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488"
 cd "$DT_OVERLAY_DIR"
