@@ -21,26 +21,28 @@ fi
 # Check if overlay nodes exist in the device tree
 echo "Checking overlay nodes in the device tree..."
 
-# Specify expected node names or identifiers from the overlay
-EXPECTED_NODES=("pitft0" "pitft1" "pitft0@0" "pitft1@1")
+# Define the expected nodes
+EXPECTED_NODES=("panel0" "panel1" "pitft0" "pitft1" "pitft0@0" "pitft1@1" "pitft_pins_0" "pitft_pins_1" "backlight")
 
-# Search for each node in the flattened device tree
+# Validate each node
+echo "Checking overlay nodes in the device tree..."
 for NODE in "${EXPECTED_NODES[@]}"; do
-    if grep -q "$NODE" <(dtc -I fs /proc/device-tree 2>/dev/null); then
+    if dtc -I fs /proc/device-tree | grep -q "$NODE"; then
         echo "Node '$NODE' found in the flattened device tree."
     else
         echo "Node '$NODE' not found. Check overlay or binding for issues."
     fi
 done
 
-# List all nodes in the relevant SPI path for additional validation
-SPI_PATH="/proc/device-tree/soc/spi@7e204000"
-echo "Listing all nodes under $SPI_PATH for verification:"
-if [ -d "$SPI_PATH" ]; then
-    ls "$SPI_PATH" || echo "No nodes found under $SPI_PATH."
+# List all nodes under the SPI bus for detailed inspection
+SPI_BUS_PATH="/proc/device-tree/soc/spi@7e204000"
+if [ -d "$SPI_BUS_PATH" ]; then
+    echo "Listing all nodes under $SPI_BUS_PATH for verification:"
+    ls "$SPI_BUS_PATH"
 else
-    echo "SPI path $SPI_PATH does not exist."
+    echo "SPI bus path $SPI_BUS_PATH not found. Check overlay or hardware configuration."
 fi
+
 
 # Check kernel logs for overlay application
 echo "Checking kernel logs for overlay application..."

@@ -1,5 +1,5 @@
 KDIR ?= /lib/modules/`uname -r`/build
-#ccflags-y := -DDEBUG
+ccflags-y := -DDEBUG
 
 default:
 	$(MAKE) -C $(KDIR) M=$$PWD
