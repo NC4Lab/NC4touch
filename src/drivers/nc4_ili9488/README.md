@@ -91,24 +91,12 @@ make clean || true
 
 ### In the driver directory run:
 ```
-make
-```
-### (Alternative) installs the compiled kernel module into the system's kernel modules directory:
-```
-sudo make -C /lib/modules/$(uname -r)/build M=$(pwd) modules_install
+make -C /lib/modules/$(uname -r)/build M=$(pwd) modules
 ```
 If successful, this produces nc4_ili9488.ko
 
 ### Verify the file was created:
 ```
-ls nc4_ili9488.ko
-```
-
-### All commands:
-```
-cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
-make clean || true
-make
 ls nc4_ili9488.ko
 ```
 
@@ -131,7 +119,6 @@ sudo cp nc4_ili9488.ko /lib/modules/$(uname -r)/extra/
 sudo chmod u=rw,go=r /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
 ```
 
-
 ### Verify the driver is available:
 ```
 sudo modinfo /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
@@ -140,14 +127,6 @@ sudo modinfo /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
 ### Update module dependencies:
 ```
 sudo depmod -a
-```
-
-### All commands:
-```
-sudo mkdir -p /lib/modules/$(uname -r)/extra
-sudo cp nc4_ili9488.ko /lib/modules/$(uname -r)/extra/
-sudo depmod -a
-modinfo nc4_ili9488
 ```
 
 
@@ -184,31 +163,61 @@ sudo reboot
 
 
 
-## Validate Overlay and Driver
+## Validate Overlay
 
-### Increase the console log level (Optional)
+### Increase the console log level to max (Optional)
 ```
 sudo dmesg -n 8
 ```
-- Allows all kernel logs to be displayed for debugging purposes.
+Allows all kernel logs to be displayed for debugging purposes.
 
 ### Check if the overlay was successfully loaded
 ```
 ls /proc/device-tree/overlays/nc4_ili9488
 ```
-- Expected outcome: Directory exists and contains files like `status` and `name`.
+Expected outcome: Directory exists and contains files like `status` and `name`.
+
+### Check active frame buffers
+```
+ls /dev/fb*
+```
+If successful, you should see:
+- fb0"
+- fb1"
+
+### If the overlay does not load and you do not see /dev/fb0 or /dev/fb1 debug overlay loading:
+```
+dmesg | grep -i 'overlay'
+```
+Look for lines indicating that the overlay was applied successfully.
+```
+dmesg | grep dtoverlay
+```
+```
+dmesg | grep firmware
+```
+
+### Verify the overlay is referenced in the config.txt:
+```
+cat /boot/firmware/config.txt | grep dtoverlay
+```
+
+
+
+
+## Validate Driver
 
 ### Check if the module is loaded
 ```
 lsmod | grep nc4_ili9488
 ```
-- Expected outcome: Shows `nc4_ili9488` in the list with usage count.
+Expected outcome: Shows `nc4_ili9488` in the list with usage count.
 
 ### Verify the overlay's boot application if its loaded
 ```
 dmesg | grep -i 'nc4_ili9488'
 ```
-- Expected outcome: Should see `Initialized nc4_ili9488` along with any error messages.
+Expected outcome: Should see `Initialized nc4_ili9488` along with any error messages.
 
 ### If the module fails to load, try unloading and reloading it
 ```
@@ -216,13 +225,13 @@ sudo rmmod nc4_ili9488
 sudo insmod /lib/modules/$(uname -r)/extra/nc4_ili9488.ko
 dmesg | grep -i 'nc4_ili9488'
 ```
-- Expected outcome: Driver reloads successfully, and logs show initialization messages.
+Expected outcome: Driver reloads successfully, and logs show initialization messages.
 
 ### Check for errors in the .dtbo file
 ```
 sudo dtc -I dtb -O dts -o /dev/null /boot/firmware/overlays/nc4_ili9488.dtbo
 ```
-- Expected outcome: Runs without any error messages.
+Expected outcome: Runs without any error messages.
 
 
 
@@ -325,7 +334,7 @@ find /lib/modules/$(uname -r)/ -name '*nc4_ili9488*' || echo "No nc4_ili9488 mod
 ```
 
 
-=
+
 ## Debugging: System checks
 
 ### Check driver kernel log:
@@ -422,7 +431,7 @@ sudo find / -type f -name "*nc4_ili9488*" 2>/dev/null
 sudo grep -rli "nc4_ili9488" / 2>/dev/null
 ```
 ```
-find / -type f -name "*nc4_ili9488*" -exec dirname {} \; | sort -u
+sudo find / -type f -name "*nc4_ili9488.dtbo*" -exec dirname {} \; | sort -u
 ```
 
 ### Search within subfolders for files that contain a given string
