@@ -305,7 +305,7 @@ sudo update-initramfs -u
 lsmod | grep nc4_ili9488
 ```
 ```
-dmesg | grep -i ili9488
+dmesg | grep -i nc4_ili9488
 ```
 
 
