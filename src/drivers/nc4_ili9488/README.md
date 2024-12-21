@@ -68,12 +68,6 @@ cat /boot/firmware/config.txt
 sudo reboot
 ```
 
-### All commands:
-```
-cd /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488
-sudo dtc -@ -f -I dts -O dtb -Wunit_address_vs_reg -Wavoid_unnecessary_addr_size -o /boot/firmware/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
-cat /boot/firmware/config.txt
-```
 
 
 
@@ -136,6 +130,10 @@ sudo depmod -a
 ### Load the driver:
 ```
 sudo modprobe nc4_ili9488
+```
+If lode fails print kernel logs:
+```
+dmesg | tail -n 50
 ```
 
 ### Verify the driver is loaded:

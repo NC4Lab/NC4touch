@@ -362,7 +362,7 @@ static const struct of_device_id nc4_ili9488_of_match[] = {
 MODULE_DEVICE_TABLE(of, nc4_ili9488_of_match);
 
 static const struct spi_device_id nc4_ili9488_id[] = {
-	{"nc4,ili9488", 0},
+	{"ili9488", 0},
 	{}};
 MODULE_DEVICE_TABLE(spi, nc4_ili9488_id);
 
