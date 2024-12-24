@@ -1,18 +1,70 @@
 # Instructions to build, install, and test the nc4_ili9488 driver.
 
-
-
-## Install dependencies
+## System setup
 
 ### Make sure you have installed kernel headers and build tools:
 ```
 sudo apt-get update
 ```
 ```
-sudo apt-get install raspberrypi-kernel-headers build-essential git device-tree-compiler fbi -y
+sudo apt-get install build-essential git bc bison flex libssl-dev -y
 ```
 The "fbi" tool is used for testing by showing images on the framebuffer.
+```
+sudo apt-get install device-tree-compiler -y
+```
 
+
+### installing the needed DRM modules from the kernel source
+
+Install the tools needed to build kernel modules and DRM support.
+```
+sudo apt-get update && sudo apt-get upgrade -y
+```
+```
+sudo apt-get install build-essential git bc bison flex libssl-dev \
+    libncurses-dev raspberrypi-kernel-headers -y
+```
+
+Download the kernel source to a dedicated directory.
+```
+git clone --depth=1 https://github.com/raspberrypi/linux ~/linux
+cd ~/linux
+```
+
+Set up the kernel configuration for Raspberry Pi.
+```
+make bcm2711_defconfig
+```
+
+Generate required files (e.g., Module.symvers) for building modules.
+```
+make modules_prepare -j$(nproc)
+```
+
+
+Compile only the DRM-related kernel modules for faster builds.
+```
+make M=drivers/gpu/drm modules -j$(nproc)
+```
+
+Install the newly built DRM modules into the current system.
+```
+sudo make M=drivers/gpu/drm modules_install
+sudo depmod -a
+```
+
+Load the required DRM modules into the running kernel.
+```
+sudo modprobe drm
+sudo modprobe drm_kms_helper
+sudo modprobe drm_gem_dma_helper
+```
+
+Check if the modules are loaded and available.
+```
+lsmod | grep drm
+```
 
 
 ## Set up the device tree overlay
@@ -46,7 +98,6 @@ More verbose debugging:
 ```
 sudo dtc -@ -f -I dts -O dtb -Wunit_address_vs_reg -Wavoid_unnecessary_addr_size -o /boot/firmware/overlays/nc4_ili9488.dtbo nc4_ili9488-overlay.dts
 ```
-
 
 ### Copy the compiled overlay file to /boot/firmware/overlays/:
 ```
