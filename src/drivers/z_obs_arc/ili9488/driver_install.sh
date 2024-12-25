@@ -13,7 +13,7 @@ sudo cp ili9488.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/
 sudo depmod -a $(uname -r)
 echo "Driver successfully built and installed."
 echo "Rebuild the Initramfs..."
-sudo update-initramfs -u
+#sudo update-initramfs -u
 
 echo "==== Setting Up Device Tree Overlay ===="
 # Compile and install the device tree overlay

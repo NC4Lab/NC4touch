@@ -81,41 +81,41 @@
 		};
 	};
 
-	/* Fragment for the second display's pins (LCD_1):
-	 * GPIO23 = RESET (out)
-	 * GPIO27 = DC (out)
-	 * Note: Backlight is shared and already defined above.
-	 */
-	fragment@5 {
-		target = <&gpio>;
-		__overlay__ {
-			pitft_pins_1: pitft_pins_1 {
-				brcm,pins = <23 27>;
-				brcm,function = <1 1>; /* set as output */
-			};
-		};
-	};
+	// /* Fragment for the second display's pins (LCD_1):
+	//  * GPIO23 = RESET (out)
+	//  * GPIO27 = DC (out)
+	//  * Note: Backlight is shared and already defined above.
+	//  */
+	// fragment@5 {
+	// 	target = <&gpio>;
+	// 	__overlay__ {
+	// 		pitft_pins_1: pitft_pins_1 {
+	// 			brcm,pins = <23 27>;
+	// 			brcm,function = <1 1>; /* set as output */
+	// 		};
+	// 	};
+	// };
 
-	/* Fragment for the second ILI9488 device node (LCD_1) on SPI0 CE1 */
-	fragment@6 {
-		target = <&spi0>;
-		__overlay__ {
-			pitft1: pitft@1 {
-				compatible = "ili9488";
-				pinctrl-names = "default";
-				pinctrl-0 = <&pitft_pins_1>;
+	// /* Fragment for the second ILI9488 device node (LCD_1) on SPI0 CE1 */
+	// fragment@6 {
+	// 	target = <&spi0>;
+	// 	__overlay__ {
+	// 		pitft1: pitft@1 {
+	// 			compatible = "ili9488";
+	// 			pinctrl-names = "default";
+	// 			pinctrl-0 = <&pitft_pins_1>;
 
-				reg = <1>; /* CE1 line */
-				spi-max-frequency = <62000000>;
+	// 			reg = <1>; /* CE1 line */
+	// 			spi-max-frequency = <62000000>;
 
-				/* Rotation, DC, RESET for the second panel, share same backlight */
-				rotation = <0>;
-				reset-gpios = <&gpio 23 0>;
-				dc-gpios = <&gpio 27 0>;
-				backlight = <&backlight>;
-			};
-		};
-	};
+	// 			/* Rotation, DC, RESET for the second panel, share same backlight */
+	// 			rotation = <0>;
+	// 			reset-gpios = <&gpio 23 0>;
+	// 			dc-gpios = <&gpio 27 0>;
+	// 			backlight = <&backlight>;
+	// 		};
+	// 	};
+	// };
 
 	/* Override parameters for speed and rotation */
 	__overrides__ {

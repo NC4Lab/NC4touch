@@ -96,6 +96,12 @@
   - `255.255.0.0`: Subnet mask for the Ethernet interface.
   - `eth0:off`: Specifies the Ethernet interface and disables DHCP.
 
+3. At this stage you can also disable the Pi from loading the desktop by adding this line as well:
+   ```
+   systemd.unit=multi-user.target autologin-user=nc4 nosplash
+   ```
+
+
 3. Save the file and close the editor.
 
 ### 3: Configure Wi-Fi for Internet Access

@@ -7,11 +7,14 @@
 sudo apt-get update
 ```
 ```
-sudo apt-get install build-essential git bc bison flex libssl-dev -y
+sudo apt-get install build-essential git fbi bc bison flex libssl-dev -y
 ```
 The "fbi" tool is used for testing by showing images on the framebuffer.
 ```
 sudo apt-get install device-tree-compiler -y
+```
+```
+sudo apt-get install raspberrypi-kernel-headers -y
 ```
 
 

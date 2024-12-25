@@ -19,52 +19,11 @@ Confirm the Raspberry Pi kernel headers were installed correctly by checking if 
 ls /lib/modules/$(uname -r)/build
 ```
 
-## Build the driver
-  
-```
-cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488
-```
-
-Do a clean build
-```
-make clean || true
-```
-
-Clean Build Artifacts
-```
-git clean -fd
-```
-
-Build
-```
-make
-```
-
-Verify the file was created:
-```
-ls ili9488.ko
-```
-
-## Compile the driver
-   
-Copy the kernel module to the appropriate directory:
-```
-sudo cp /home/nc4/TouchscreenApparatus/src/drivers/ili9488/ili9488.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/
-```
-Update module dependencies to include the new driver:
-```
-sudo depmod -a
-```
-Confirm that the driver is available:
-```
-modinfo ili9488
-```
-
 ## Set up the device tree overlay
    
 Navigate to the directory containing the ili9488.dts file:
 ```
-cd /home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays
+cd /home/nc4/TouchscreenApparatus/src/drivers/z_obs_arc/ili9488/rpi-overlays
 ```
 
 Compile the overlay file to a .dtbo binary:
@@ -91,6 +50,47 @@ dtdebug=on
 Print the contents o /boot/firmware/config.txt:
 ```
 cat /boot/firmware/config.txt
+```
+
+## Build the driver
+  
+```
+cd /home/nc4/TouchscreenApparatus/src/drivers/z_obs_arc/ili9488
+```
+
+Do a clean build
+```
+make clean || true
+```
+
+Clean Build Artifacts
+```
+git clean -fd
+```
+
+Build
+```
+make
+```
+
+Verify the file was created:
+```
+ls ili9488.ko
+```
+
+## Compile the driver
+   
+Copy the kernel module to the appropriate directory:
+```
+sudo cp /home/nc4/TouchscreenApparatus/src/drivers/z_obs_arc/ili9488/ili9488.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/
+```
+Update module dependencies to include the new driver:
+```
+sudo depmod -a
+```
+Confirm that the driver is available:
+```
+modinfo ili9488
 ```
 
 Power off:
@@ -292,85 +292,9 @@ sudo grep -rli "ili9488" / 2>/dev/null
 
 ## Search within subfolders for files that contain a given string
 ```
-sudo grep -rli "ili9488" /home/nc4/TouchscreenApparatus/src/drivers/ili9488/ 2>/dev/null
+sudo grep -rli "ili9488" /home/nc4/TouchscreenApparatus/src/drivers/z_obs_arc/ili9488/ 2>/dev/null
 ```
 
-# Setting up python environment
-1. Update and Upgrade Raspberry Pi Packages:
-   ```
-   sudo apt update && sudo apt upgrade -y
-
-   ```
-
-2. Install general essentials:
-   ```
-   sudo apt install build-essential git python3-dev python3-venv python3-pip -y
-   ```
-
-3. Project-specific essentials:
-   ```
-   sudo apt install gpiod libgpiod-dev spi-tools fbset device-tree-compiler -y
-   sudo apt install lgpio
-   ```
-
-4. Create a Virtual Environment
-   - Navigate to the project directory and create an environement
-   ```
-   cd ~/TouchscreenApparatus
-   python3 -m venv venv
-   ```
-
-5. Activate the Virtual Environment
-   ```
-   source venv/bin/activate
-   ```
-
-6. Install Project specific Packages:
-   ```
-   pip install gpiod numpy pillow spidev
-   ```
-
-7. Install LCD libraries:
-   ```
-   pip install luma.lcd luma.core
-   ```
-
-8. Keep Dependencies Organized: 
-   - Create `requirements.txt` file:
-   ```
-   pip freeze > requirements.txt
-   ```
-   Dependencies can be reinstalled using:
-   ```
-   pip install -r requirements.txt
-   ```
-   Rerun the 'Create' command when libraries are modified.
-
-# Random
-
-Connect to my hotspot:
-```
-sudo nmcli dev wifi connect "poserguru_s24" password "funkstar"
-```
-
-Varify:
-```
-nmcli connection show --active
-```
-
-Git BS:
-```
-cd /home/nc4
-sudo cp -r ~/TouchscreenApparatus ~/TouchscreenApparatus_backup
-diff -r --exclude='.lgd-nfy0' /home/nc4/TouchscreenApparatus /home/nc4/TouchscreenApparatus_backup
-cd /home/nc4/TouchscreenApparatus
-git fsck --full | grep -o 'git/objects/[0-9a-f]*/[0-9a-f]*' | xargs rm -f
-find .git/objects -type f -empty -delete
-git status
-git fsck --full
-git status
-git add .
-```
 
 
 # Pin Mapping  
