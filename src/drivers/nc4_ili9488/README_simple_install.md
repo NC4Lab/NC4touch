@@ -76,6 +76,11 @@ Check if the module was successfully loaded:
 dmesg | grep -i nc4_ili9488
 ```
 
+Reboot:
+```
+sudo reboot
+```
+
 
 ## Varify with driver loaded
 
@@ -105,3 +110,8 @@ Check logs:
 dmesg | grep -i 'nc4_ili9488'
 ```
 If the overlay node is found, the driver’s probe() function logs “Probed! (dev=spi0.0).”
+
+If the overlay does not seemto have loaded applying it manually and checking for errors:
+```
+sudo dtoverlay -v nc4_ili9488
+```
