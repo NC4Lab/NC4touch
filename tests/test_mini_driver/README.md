@@ -1,4 +1,4 @@
-A. Compile the Overlay
+## Compile the Overlay
 Create test_mini_overlay.dts in some folder, for example ~/overlays/.
 
 Compile into a .dtbo:
@@ -22,7 +22,7 @@ sudo nano /boot/firmware/config.txt
 dtoverlay=test_mini_overlay
 ```
 
-B. Reboot to Load the Overlay
+## Reboot to Load the Overlay
 Reboot:
 ```
 sudo reboot
@@ -30,7 +30,7 @@ sudo reboot
 
 After reboot, check logs:
 ```
-dmesg | grep -i 'test_mini'
+ | grep -i 'test_mini'
 ```
 You may see something like “(overlay) test_mini_overlay loaded successfully” if everything’s working.
 
@@ -40,7 +40,7 @@ ls /proc/device-tree/soc/spi@7e204000/
 ```
 You should see a directory named test_mini@0.
 
-C. Build and Insert the Driver
+## Build and Insert the Driver
 Build the out-of-tree driver:
 ```
 cd /home/nc4/TouchscreenApparatus/tests/test_mini_driver
@@ -51,15 +51,35 @@ make
 
 This should produce test_mini_driver.ko.
 
-Insert the module:
+## Insert the module:
+
+### Install and Load with modprobe
+
+Copy the .ko file to the system module directory:
 ```
-sudo insmod test_mini_driver.ko
+sudo mkdir -p /lib/modules/$(uname -r)/extra
 ```
+```
+sudo cp test_mini_driver.ko /lib/modules/$(uname -r)/extra/
+```
+
+Update the module dependency database:
+```
+sudo depmod -a
+```
+
+Load the module by name using modprobe:
 ```
 sudo modprobe test_mini_driver
 ```
 
-If successful, you’ll see a test_mini_driver: Probed! message in dmesg if the overlay is present and the node matched.
+Check if the module was successfully loaded:
+```
+dmesg | grep -i test_mini_driver
+```
+
+
+## Varify with driver loaded
 
 Check logs:
 ```
