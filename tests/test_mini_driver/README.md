@@ -81,17 +81,33 @@ dmesg | grep -i test_mini_driver
 
 ## Varify with driver loaded
 
+Check if the Device Node Exists After Boot indicating overlay loaded
+```
+ls /proc/device-tree/soc/spi@7e204000/
+```
+You should see a directory named test_mini@0.
+
+Check if the Driver is Loaded:
+```
+lsmod | grep test_mini
+```
+Should see:
+```
+test_mini_driver       12288  0
+```
+
+Verify the Kernel Logs for Driver Activity
+```
+dmesg | grep -i test_mini
+```
+If the overlay node is found, the driver’s probe() function logs “Probed! (dev=spi0.0).”
+
 Check logs:
 ```
 dmesg | grep -i 'test_mini'
 ```
-If the overlay node is found, the driver’s probe() function logs “Probed! (dev=...).”
+If the overlay node is found, the driver’s probe() function logs “Probed! (dev=spi0.0).”
 
-Verify it’s loaded:
-```
-lsmod | grep test_mini
-```
-Should show test_mini_driver.
 
 (Optional) Remove the module to test the remove() function:
 ```

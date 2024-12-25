@@ -12,11 +12,24 @@
 #include <linux/spi/spi.h>
 #include <linux/of.h>
 
-/* Match table for of_platform binding */
+/*
+ * Match table for of_platform binding. This recognizes "test_mini"
+ * from the Device Tree (overlay).
+ */
 static const struct of_device_id test_mini_of_match[] = {
-    {.compatible = "mytest,mini"},
+    {.compatible = "test_mini"},
     {/* sentinel */}};
 MODULE_DEVICE_TABLE(of, test_mini_of_match);
+
+/*
+ * The spi_device_id table ensures an alias "test_mini" is exported.
+ * That way, the kernel can auto-load this driver if it sees a device
+ * with 'modalias=spi:test_mini'.
+ */
+static const struct spi_device_id test_mini_id[] = {
+    {"test_mini", 0},
+    {/* sentinel */}};
+MODULE_DEVICE_TABLE(spi, test_mini_id);
 
 /*
  * Minimal probe function: logs a message upon driver binding to the SPI device.
@@ -47,8 +60,14 @@ static struct spi_driver test_mini_spi_driver = {
         .of_match_table = test_mini_of_match,
     },
     .probe = test_mini_probe,
-    /* Use 'test_mini_remove' with 'void' return if your kernel requires it: */
     .remove = test_mini_remove,
+
+    /*
+     * Using 'id_table' here means the kernel will automatically
+     * load this module if it sees a device with 'spi:test_mini'
+     * in the modalias.
+     */
+    .id_table = test_mini_id,
 };
 
 /*
