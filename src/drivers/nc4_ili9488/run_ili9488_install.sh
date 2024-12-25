@@ -150,5 +150,4 @@ fi
 echo "Checking kernel logs for driver initialization..."
 dmesg | grep nc4_ili9488
 
-echo "==== Setup Complete. Rebooting Now ===="
-sudo reboot
+echo "==== Setup Complete ===="

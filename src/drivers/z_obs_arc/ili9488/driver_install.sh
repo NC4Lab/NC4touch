@@ -10,7 +10,7 @@ echo "Building driver..."
 make
 echo "Installing driver..."
 sudo cp ili9488.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/
-sudo depmod -a
+sudo depmod -a $(uname -r)
 echo "Driver successfully built and installed."
 echo "Rebuild the Initramfs..."
 sudo update-initramfs -u
