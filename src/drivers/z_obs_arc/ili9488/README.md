@@ -79,11 +79,20 @@ ls ili9488.ko
 ```
 
 ## Compile the driver
-   
+
+Copy the .ko file to the system module directory:
+```
+sudo mkdir -p /lib/modules/$(uname -r)/extra
+```
+```
+sudo cp ili9488.ko /lib/modules/$(uname -r)/extra/
+```
+<!--    
 Copy the kernel module to the appropriate directory:
 ```
 sudo cp /home/nc4/TouchscreenApparatus/src/drivers/z_obs_arc/ili9488/ili9488.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/
-```
+``` -->
+
 Update module dependencies to include the new driver:
 ```
 sudo depmod -a
@@ -149,6 +158,7 @@ sudo rm /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/tiny/ili9488.ko
 ## Update Module Dependencies
 ```
 sudo depmod
+sudo depmod -a
 ```
 
 ## Clear any cached kernel module information
