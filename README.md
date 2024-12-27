@@ -782,17 +782,17 @@ nmcli connection show --active
 Git BS:
 ```
 cd /home/nc4
+sudo rm -r TouchscreenApparatus_backup
 sudo cp -r ~/TouchscreenApparatus ~/TouchscreenApparatus_backup
 diff -r --exclude='.lgd-nfy0' /home/nc4/TouchscreenApparatus /home/nc4/TouchscreenApparatus_backup
 cd /home/nc4/TouchscreenApparatus
-git fsck --full | grep -o 'git/objects/[0-9a-f]*/[0-9a-f]*' | xargs rm -f
-find .git/objects -type f -empty -delete
 git stash
 git fetch --all
 git reset --hard origin/main
 git stash pop
 git add .
-Commit changes
+git commit -m "Git got messed up again"
+git push
 ```
 
 
