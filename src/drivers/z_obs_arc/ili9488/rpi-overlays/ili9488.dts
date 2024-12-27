@@ -1,12 +1,5 @@
 /*
- * Enhanced Device Tree overlay for ILI-9488
- * Modified to support two displays (pitft@0 and pitft@1)
- *
- * Notes:
- * - This overlay enables SPI0 and configures two ILI9488 devices on CE0 and CE1.
- * - Each display node uses a unique DC and RESET GPIO line.
- * - Both displays share the same SPI lines (MOSI, SCLK) and the same backlight.
- * - The "pitft_pins" and "pitft_pins_1" pinctrl groups are used to set these GPIOs as outputs.
+ * Device Tree overlay for ILI-9488
  */
 
 /dts-v1/;
@@ -39,7 +32,10 @@
 	fragment@2 {
 		target = <&gpio>;
 		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			pitft_pins: pitft_pins {
+				reg = <0>;
 				brcm,pins = <24 25 18>;
 				brcm,function = <1 1 1>; /* set as output */
 			};
