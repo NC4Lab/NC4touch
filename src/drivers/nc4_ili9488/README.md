@@ -16,6 +16,9 @@ sudo apt-get install device-tree-compiler -y
 ```
 sudo apt-get install raspberrypi-kernel-headers -y
 ```
+```
+sudo apt install libssl-dev libncurses5-dev
+```
 
 
 ### installing the needed DRM modules from the kernel source
