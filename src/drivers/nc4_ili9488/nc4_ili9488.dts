@@ -1,12 +1,13 @@
 /********************************************************************************
- * nc4_ili9488.dts (Revised for up to 3 ILI9488 panels on SPI0)
+ * nc4_ili9488.dts
+ * 
+ * Device Tree Overlay for two ILI9488 panels on Raspberry Pi's SPI0 bus.
+ * - Disables spidev0 (CS0) and spidev1 (CS1).
+ * - Creates two SPI child nodes: pitft0@0 (CE0) and pitft1@1 (CE1).
+ * - Each panel has its own Reset and DC lines.
+ * - Shared backlight on GPIO18.
  *
- * - Disables (or supersedes) spidev0/spidev1 by overriding the SPI0 node
- * - Uses a single pin control fragment for SPI0 pins + chip selects
- * - Defines up to three ILI9488 child nodes: display0@0, display1@1, display2@2
- * - Each node can have its own reset-gpios, dc-gpios, and shares backlight
- *
- * Usage:
+ * Compatible usage:
  *   dtoverlay=nc4_ili9488
  ********************************************************************************/
  /dts-v1/;
@@ -15,127 +16,133 @@
 / {
 	compatible = "brcm,bcm2835";
 
-	/***********************************************************************
-	 * fragment@0: Setup GPIO pin functions for SPI0 lines
-	 *   This is optional if the default Pi firmware already sets them.
-	 *   Adjust pin numbers and alt functions as needed for your Pi model.
-	 ***********************************************************************/
+	/****************************************************************************
+	 * Fragment 0: Enable SPI0 hardware
+	 ****************************************************************************/
 	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/****************************************************************************
+	 * Fragment 1: Disable spidev0
+	 ****************************************************************************/
+	fragment@1 {
+		target = <&spidev0>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	/****************************************************************************
+	 * Fragment 2: Disable spidev1
+	 ****************************************************************************/
+	fragment@2 {
+		target = <&spidev1>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	/****************************************************************************
+	 * Fragment 3: GPIO pins for the FIRST panel (pitft0)
+	 *   GPIO24 = RESET (out)
+	 *   GPIO25 = DC (out)
+	 *   GPIO18 = Backlight (out, shared)
+	 ****************************************************************************/
+	fragment@3 {
 		target = <&gpio>;
 		__overlay__ {
-			/* Example alt function setup for SPI0 on GPIO9=MISO, GPIO10=MOSI, GPIO11=SCLK */
-			spi0_pins: spi0_pins {
-				brcm,pins = <9 10 11>;
-				/* alt0 = 0, alt1 = 1, etc. The exact function value may differ on certain Pi models. */
-				brcm,function = <0 0 0>; 
-			};
-
-			/* Chip Select lines: CE0 (GPIO8), CE1 (GPIO7), optional CE2 (GPIO6) */
-			spi0_cs_pins: spi0_cs_pins {
-				brcm,pins = <8 7 6>;
-				brcm,function = <0 0 0>; /* alt0 or alt1 or output, depending on usage */
+			pitft0_pins: pitft0_pins {
+				brcm,pins = <24 25 18>;
+				brcm,function = <1 1 1>; /* Set as output */
 			};
 		};
 	};
 
-	/***********************************************************************
-	 * fragment@1: Configure &spi0
-	 *   - Mark it as "okay"
-	 *   - Reference our pinctrl
-	 *   - Provide an array of cs-gpios for 2 or 3 chip selects
-	 *   - Define up to three child nodes, each "compatible = ili9488"
-	 ***********************************************************************/
-	fragment@1 {
+	/****************************************************************************
+	 * Fragment 4: GPIO pins for the SECOND panel (pitft1)
+	 *   GPIO23 = RESET (out)
+	 *   GPIO27 = DC (out)
+	 *   GPIO18 = Backlight (out, shared)
+	 ****************************************************************************/
+	fragment@4 {
+		target = <&gpio>;
+		__overlay__ {
+			pitft1_pins: pitft1_pins {
+				brcm,pins = <23 27 18>;
+				brcm,function = <1 1 1>; /* Set as output */
+			};
+		};
+	};
+
+	/****************************************************************************
+	 * Fragment 5: FIRST ILI9488 device node on SPI0 CE0
+	 ****************************************************************************/
+	fragment@5 {
 		target = <&spi0>;
 		__overlay__ {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			pinctrl-names = "default";
-			pinctrl-0 = <&spi0_pins &spi0_cs_pins>;
-			/* Each entry in cs-gpios is <&gpio <pin> <flags>>, active-low typically uses flag=1 */
-			cs-gpios = <&gpio 8 1>, <&gpio 7 1>, <&gpio 6 1>;
-			status = "okay";
+			pitft0: pitft0@0 {
+				compatible = "ili9488"; /* Reusing the original compatible */
+				pinctrl-names = "default";
+				pinctrl-0 = <&pitft0_pins>;
 
-			/* ===============================
-			 * First ILI9488 on CE0
-			 * =============================== */
-			display0: ili9488_0@0 {
-				compatible = "ili9488";
-				reg = <0>; /* CE0 */
-				spi-max-frequency = <4000000>;
+				reg = <0>; /* CE0 line */
+				spi-max-frequency = <4000000>; /* Override as needed */
+
 				rotation = <0>;
-
-				/* If each display has unique DC/RESET lines, specify them here: */
 				reset-gpios = <&gpio 24 0>;
 				dc-gpios = <&gpio 25 0>;
 				backlight = <&backlight>;
 			};
+		};
+	};
 
-			/* ===============================
-			 * Second ILI9488 on CE1
-			 * =============================== */
-			display1: ili9488_1@1 {
-				compatible = "ili9488";
-				reg = <1>; /* CE1 */
-				spi-max-frequency = <4000000>;
+	/****************************************************************************
+	 * Fragment 6: SECOND ILI9488 device node on SPI0 CE1
+	 ****************************************************************************/
+	fragment@6 {
+		target = <&spi0>;
+		__overlay__ {
+			pitft1: pitft1@1 {
+				compatible = "ili9488"; /* Same panel type, different CS */
+				pinctrl-names = "default";
+				pinctrl-0 = <&pitft1_pins>;
+
+				reg = <1>; /* CE1 line */
+				spi-max-frequency = <4000000>; /* Override as needed */
+
 				rotation = <0>;
-
 				reset-gpios = <&gpio 23 0>;
 				dc-gpios = <&gpio 27 0>;
 				backlight = <&backlight>;
 			};
-
-			/* ===============================
-			 * Third ILI9488 on CE2 (optional)
-			 * ===============================
-			 * By default, "disabled". Enable it if your hardware is wired 
-			 * to a third panel on GPIO6 (CE2), and you have assigned appropriate 
-			 * reset/dc pins below.
-			 */
-			display2: ili9488_2@2 {
-				compatible = "ili9488";
-				reg = <2>; /* CE2 */
-				spi-max-frequency = <4000000>;
-				rotation = <0>;
-
-				/* Example wiring for the third panel */
-				reset-gpios = <&gpio 22 0>;
-				dc-gpios = <&gpio 5 0>;
-				backlight = <&backlight>;
-
-				/* Mark as disabled by default; change to "okay" if you physically have a 3rd display */
-				status = "disabled";
-			};
 		};
 	};
 
-	/***********************************************************************
-	 * fragment@2: Shared backlight node
-	 ***********************************************************************/
-	fragment@2 {
+	/****************************************************************************
+	 * Fragment 7: Shared backlight control for both panels
+	 ****************************************************************************/
+	fragment@7 {
 		target-path = "/soc";
 		__overlay__ {
 			backlight: backlight {
 				compatible = "gpio-backlight";
 				gpios = <&gpio 18 0>;
-				default-state = "on";
 			};
 		};
 	};
 
-	/***********************************************************************
-	 * Overridable parameters for speed and rotation (and enabling the 3rd LCD)
-	 ***********************************************************************/
+	/****************************************************************************
+	 * Overridable parameters for speed and rotation
+	 ****************************************************************************/
 	__overrides__ {
-		speed =       <&display0>,"spi-max-frequency:0",
-					  <&display1>,"spi-max-frequency:0",
-					  <&display2>,"spi-max-frequency:0";
-
-		rotation =    <&display0>,"rotation:0",
-					  <&display1>,"rotation:0",
-					  <&display2>,"rotation:0";
-
-		enable3rd =   <&display2>,"status";
+		speed = <&pitft0>,"spi-max-frequency:0", <&pitft1>,"spi-max-frequency:0";
+		rotation = <&pitft0>,"rotation:0", <&pitft1>,"rotation:0";
 	};
 };

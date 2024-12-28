@@ -28,20 +28,14 @@ else
     exit 1
 fi
 
-##############################################################################
 # Capture and filter dtc warnings from the live device tree
-##############################################################################
 TMP_DTC_RAW="/tmp/dtc_raw_output.txt"
 TMP_DTC_FILTERED="/tmp/dtc_filtered_output.txt"
 
-# Run dtc on the live device tree, capturing *all* stderr to TMP_DTC_RAW
 dtc -I fs /proc/device-tree 2> "$TMP_DTC_RAW" > /dev/null
-
-# Filter out known Raspberry Pi "noise" warnings.
 grep -vE '(unit_address_vs_reg|simple_bus_reg|avoid_default_addr_size|avoid_unnecessary_addr_size|unique_unit_address|clocks_property|power_domains_property|resets_property|gpios_property|interrupt_provider|dmas_property|msi_parent_property|phys_property|thermal_sensors_property)' \
     "$TMP_DTC_RAW" > "$TMP_DTC_FILTERED"
 
-# Print or log the filtered dtc output
 echo "---- Filtered dtc Warnings & Errors (non-RPi-specific) ----"
 cat "$TMP_DTC_FILTERED"
 echo "-----------------------------------------------------------"
@@ -50,11 +44,12 @@ echo
 
 # Define the expected nodes
 EXPECTED_NODES=(
-    "pitft0@0"
-    "pitft0_pins"
-    "pitft1@1"
-    "pitft1_pins"
+    "ili9488_0@0"
+    "ili9488_1@1"
+    "ili9488_2@2"
     "backlight"
+    "spi0_pins"
+    "spi0_cs_pins"
 )
 
 # Validate each node in the live device tree
@@ -68,22 +63,43 @@ for NODE in "${EXPECTED_NODES[@]}"; do
     fi
 done
 
-# List all nodes under the SPI bus for detailed inspection
-SPI_BUS_PATH="/proc/device-tree/soc/spi@7e204000"
-if [ -d "$SPI_BUS_PATH" ]; then
-    echo "Listing all nodes under $SPI_BUS_PATH for verification:"
-    ls "$SPI_BUS_PATH"
+# Validate SPI0 pins for ALT function
+SPI0_PINS_PATH="/proc/device-tree/soc/spi@7e204000/spi0_pins"
+if [ -d "$SPI0_PINS_PATH" ]; then
+    echo "Node 'spi0_pins' found. Verifying ALT functions..."
+    grep -q "brcm,function" "$SPI0_PINS_PATH" && echo "ALT functions correctly defined." || echo "ERROR!! Missing 'brcm,function' property for SPI0 pins."
 else
-    echo "SPI bus path $SPI_BUS_PATH not found. Check overlay or hardware configuration."
+    echo "ERROR!! Node 'spi0_pins' not found. Check overlay configuration."
+fi
+
+# Validate auxiliary SPI CS pins
+SPI0_CS_PINS_PATH="/proc/device-tree/soc/spi@7e204000/spi0_cs_pins"
+if [ -d "$SPI0_CS_PINS_PATH" ]; then
+    echo "Node 'spi0_cs_pins' found. Verifying CS pin configurations..."
+    grep -q "brcm,function" "$SPI0_CS_PINS_PATH" && echo "CS pins correctly defined." || echo "ERROR!! Missing 'brcm,function' property for CS pins."
+else
+    echo "ERROR!! Node 'spi0_cs_pins' not found. Check overlay configuration."
+fi
+
+# Check cs-gpios definition
+SPI0_PATH="/proc/device-tree/soc/spi@7e204000"
+if grep -q "cs-gpios" "$SPI0_PATH"; then
+    echo "cs-gpios property correctly defined under SPI0."
+else
+    echo "ERROR!! Missing 'cs-gpios' property under SPI0 node."
+fi
+
+# Validate backlight node
+BACKLIGHT_PATH="/proc/device-tree/soc/backlight"
+if [ -d "$BACKLIGHT_PATH" ]; then
+    echo "Backlight node found."
+else
+    echo "ERROR!! Backlight node not found. Check overlay configuration."
 fi
 
 # Check kernel logs for overlay application
-echo "Checking kernel logs for overlay application..."
-if dmesg | grep -qi "$OVERLAY_NAME"; then
-    echo "Overlay is logged in kernel messages."
-else
-    echo "Overlay not found in kernel messages. Check the logs for issues."
-fi
+echo "Checking kernel logs for overlay and driver messages..."
+dmesg | grep -i -e "$OVERLAY_NAME" -e "$DRIVER_NAME"
 
 # Verify overlay entries in config.txt
 echo "Verifying overlay references in config.txt..."
@@ -118,6 +134,17 @@ else
         exit 1
     fi
 fi
+
+# Validate framebuffers
+echo "Validating framebuffers..."
+for FB in /dev/fb0 /dev/fb1 /dev/fb2; do
+    if [ -e "$FB" ]; then
+        echo "Framebuffer $FB exists."
+        fbset -fb "$FB"
+    else
+        echo "ERROR!! Framebuffer $FB not found."
+    fi
+done
 
 # Final kernel log check
 echo "Final kernel logs:"
