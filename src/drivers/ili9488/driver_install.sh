@@ -1,4 +1,3 @@
-
 echo "==== Setting Up Device Tree Overlay ===="
 # Compile and install the device tree overlay
 DT_OVERLAY_DIR="/home/nc4/TouchscreenApparatus/src/drivers/ili9488/rpi-overlays"
@@ -18,8 +17,6 @@ sudo mkdir -p /lib/modules/$(uname -r)/extra
 sudo cp ili9488.ko /lib/modules/$(uname -r)/extra/
 sudo depmod -a $(uname -r)
 echo "Driver successfully built and installed."
-#echo "Rebuild the Initramfs..."
-#sudo update-initramfs -u
 
 #echo "==== Setup Complete. Rebooting Now ===="
-#sudo reboot
+sudo reboot

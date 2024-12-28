@@ -1,21 +1,24 @@
-/*
- * Enhanced Device Tree overlay for ILI-9488
- * Modified to support two displays (pitft0@0 and pitft1@1)
+/********************************************************************************
+ * nc4_ili9488.dts
+ * 
+ * Device Tree Overlay for two ILI9488 panels on Raspberry Pi's SPI0 bus.
+ * - Disables spidev0 (CS0) and spidev1 (CS1).
+ * - Creates two SPI child nodes: pitft0@0 (CE0) and pitft1@1 (CE1).
+ * - Each panel has its own Reset and DC lines.
+ * - Shared backlight on GPIO18.
  *
- * Notes:
- * - This overlay enables SPI0 and configures two ILI9488 devices on CE0 and CE1.
- * - Each display node uses a unique DC and RESET GPIO line.
- * - Both displays share the same SPI lines (MOSI, SCLK) and the same backlight.
- * - The "pitft_pins_0" and "pitft_pins_1" pinctrl groups are used to set these GPIOs as outputs.
- */
-
-/dts-v1/;
+ * Compatible usage:
+ *   dtoverlay=nc4_ili9488
+ ********************************************************************************/
+ /dts-v1/;
 /plugin/;
 
 / {
 	compatible = "brcm,bcm2835";
 
-	/* Fragment to enable SPI0 hardware */
+	/****************************************************************************
+	 * Fragment 0: Enable SPI0 hardware
+	 ****************************************************************************/
 	fragment@0 {
 		target = <&spi0>;
 		__overlay__ {
@@ -23,7 +26,9 @@
 		};
 	};
 
-	/* Fragment to disable the default spidev0 device */
+	/****************************************************************************
+	 * Fragment 1: Disable spidev0
+	 ****************************************************************************/
 	fragment@1 {
 		target = <&spidev0>;
 		__overlay__ {
@@ -31,7 +36,9 @@
 		};
 	};
 
-	/* Fragment to disable the default spidev0 device (SPI0 CS1) */
+	/****************************************************************************
+	 * Fragment 2: Disable spidev1
+	 ****************************************************************************/
 	fragment@2 {
 		target = <&spidev1>;
 		__overlay__ {
@@ -39,37 +46,55 @@
 		};
 	};
 
-	/* Fragment for the first display's pins (LCD_0):
-	 * GPIO24 = RESET (out)
-	 * GPIO25 = DC (out)
-	 * GPIO18 = Backlight (out, shared)
-	 */
+	/****************************************************************************
+	 * Fragment 3: GPIO pins for the FIRST panel (pitft0)
+	 *   GPIO24 = RESET (out)
+	 *   GPIO25 = DC (out)
+	 *   GPIO18 = Backlight (out, shared)
+	 ****************************************************************************/
 	fragment@3 {
 		target = <&gpio>;
 		__overlay__ {
-			pitft_pins: pitft_pins_0 {
+			pitft0_pins: pitft0_pins {
 				brcm,pins = <24 25 18>;
-				brcm,function = <1 1 1>; /* set as output */
+				brcm,function = <1 1 1>; /* Set as output */
 			};
 		};
 	};
 
-	/* Fragment for the first ILI9488 device node (LCD_0) on SPI0 CE0 */
+	/****************************************************************************
+	 * Fragment 4: GPIO pins for the SECOND panel (pitft1)
+	 *   GPIO23 = RESET (out)
+	 *   GPIO27 = DC (out)
+	 *   GPIO18 = Backlight (out, shared)
+	 ****************************************************************************/
 	fragment@4 {
+		target = <&gpio>;
+		__overlay__ {
+			pitft1_pins: pitft1_pins {
+				brcm,pins = <23 27 18>;
+				brcm,function = <1 1 1>; /* Set as output */
+			};
+		};
+	};
+
+	/****************************************************************************
+	 * Fragment 5: FIRST ILI9488 device node on SPI0 CE0
+	 ****************************************************************************/
+	fragment@5 {
 		target = <&spi0>;
 		__overlay__ {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			pitft: pitft0@0 {
-				compatible = "nc4_ili9488";
+			pitft0: pitft0@0 {
+				compatible = "ilitek,ili9488"; /* Reusing the original compatible */
 				pinctrl-names = "default";
-				pinctrl-0 = <&pitft_pins_0>;
+				pinctrl-0 = <&pitft0_pins>;
 
 				reg = <0>; /* CE0 line */
-				spi-max-frequency = <4000000>;
+				spi-max-frequency = <4000000>; /* Override as needed */
 
-				/* Rotation, DC, RESET and backlight for the first panel */
 				rotation = <0>;
 				reset-gpios = <&gpio 24 0>;
 				dc-gpios = <&gpio 25 0>;
@@ -78,8 +103,32 @@
 		};
 	};
 
-	/* Fragment defining the backlight control, shared by all displays */
-	fragment@5 {
+	/****************************************************************************
+	 * Fragment 6: SECOND ILI9488 device node on SPI0 CE1
+	 ****************************************************************************/
+	fragment@6 {
+		target = <&spi0>;
+		__overlay__ {
+			pitft1: pitft1@1 {
+				compatible = "ilitek,ili9488"; /* Same panel type, different CS */
+				pinctrl-names = "default";
+				pinctrl-0 = <&pitft1_pins>;
+
+				reg = <1>; /* CE1 line */
+				spi-max-frequency = <4000000>; /* Override as needed */
+
+				rotation = <0>;
+				reset-gpios = <&gpio 23 0>;
+				dc-gpios = <&gpio 27 0>;
+				backlight = <&backlight>;
+			};
+		};
+	};
+
+	/****************************************************************************
+	 * Fragment 7: Shared backlight control for both panels
+	 ****************************************************************************/
+	fragment@7 {
 		target-path = "/soc";
 		__overlay__ {
 			backlight: backlight {
@@ -89,52 +138,11 @@
 		};
 	};
 
-	/* Fragment for the second display's pins (LCD_1):
-	 * GPIO23 = RESET (out)
-	 * GPIO27 = DC (out)
-	 * Note: Backlight is shared and already defined above.
-	 */
-	fragment@6 {
-		target = <&gpio>;
-		__overlay__ {
-			pitft_pins_1: pitft_pins_1 {
-				brcm,pins = <23 27>;
-				brcm,function = <1 1>; /* set as output */
-			};
-		};
-	};
-
-	/* Fragment for the second ILI9488 device node (LCD_1) on SPI0 CE1 */
-	fragment@7 {
-		target = <&spi0>;
-		__overlay__ {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			
-			pitft1: pitft1@1 {
-				compatible = "nc4_ili9488";
-				pinctrl-names = "default";
-				pinctrl-0 = <&pitft_pins_1>;
-
-				reg = <1>; /* CE1 line */
-				spi-max-frequency = <4000000>;
-
-				/* Rotation, DC, RESET for the second panel, share same backlight */
-				rotation = <0>;
-				reset-gpios = <&gpio 23 0>;
-				dc-gpios = <&gpio 27 0>;
-				backlight = <&backlight>;
-			};
-		};
-	};
-
-	/* Override parameters for speed and rotation */
-	// TODO: Determine if commented out version is the best approach
+	/****************************************************************************
+	 * Overridable parameters for speed and rotation
+	 ****************************************************************************/
 	__overrides__ {
-		speed = <&pitft0>,"spi-max-frequency:0",
-				<&pitft1>,"spi-max-frequency:0";
-		rotation = <&pitft0>,"rotation:0",
-					<&pitft1>,"rotation:0";
-
+		speed = <&pitft0>,"spi-max-frequency:0", <&pitft1>,"spi-max-frequency:0";
+		rotation = <&pitft0>,"rotation:0", <&pitft1>,"rotation:0";
 	};
 };
