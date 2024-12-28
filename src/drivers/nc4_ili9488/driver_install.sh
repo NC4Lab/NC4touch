@@ -42,5 +42,4 @@ echo "To enable at boot, add the following line to /boot/firmware/config.txt (if
 echo "  dtoverlay=nc4_ili9488"
 
 echo "Reboot is recommended for changes to take effect."
-# Uncomment to reboot automatically:
-# sudo reboot
+sudo reboot
