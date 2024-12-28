@@ -44,16 +44,11 @@ echo
 
 # Define the expected nodes
 EXPECTED_NODES=(
-    "ili9488_0@0"
-    "ili9488_1@1"
+    "pitft0@0"
+    "pitft1@1"
     "backlight"
+    "spi0_aux_pins"
 )
-
-# Include the 3rd display node if enabled
-THIRD_DISPLAY_STATUS=$(grep "display2.*status.*okay" /proc/device-tree/soc/spi@7e204000/display2/status 2>/dev/null)
-if [ "$THIRD_DISPLAY_STATUS" ]; then
-    EXPECTED_NODES+=("ili9488_2@2")
-fi
 
 # Validate each node in the live device tree
 echo "Checking overlay nodes in the live device tree..."
@@ -74,11 +69,13 @@ else
     echo "ERROR!! 'pinctrl-0' not found for SPI0. Check overlay binding."
 fi
 
-CS_GPIOS=$(grep "cs-gpios" "$SPI0_PATH" 2>/dev/null)
-if [ "$CS_GPIOS" ]; then
-    echo "Chip select GPIOs defined: $CS_GPIOS"
+# Check auxiliary pin group
+SPI0_AUX_PINS_PATH="/proc/device-tree/soc/spi@7e204000/spi0_aux_pins"
+if [ -d "$SPI0_AUX_PINS_PATH" ]; then
+    echo "Node 'spi0_aux_pins' found. Verifying pins..."
+    grep -q "brcm,pins" "$SPI0_AUX_PINS_PATH" && echo "Pins correctly defined." || echo "ERROR!! Missing 'brcm,pins' property."
 else
-    echo "ERROR!! 'cs-gpios' not found for SPI0. Check overlay configuration."
+    echo "ERROR!! Node 'spi0_aux_pins' not found. Check overlay configuration."
 fi
 
 # List all nodes under the SPI bus
@@ -130,7 +127,7 @@ fi
 
 # Validate framebuffers
 echo "Validating framebuffers..."
-for FB in /dev/fb0 /dev/fb1 /dev/fb2; do
+for FB in /dev/fb0 /dev/fb1; do
     if [ -e "$FB" ]; then
         echo "Framebuffer $FB exists."
         fbset -fb "$FB"
