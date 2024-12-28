@@ -44,4 +44,3 @@ echo "  dtoverlay=nc4_ili9488"
 echo "Reboot is recommended for changes to take effect."
 # Uncomment to reboot automatically:
 # sudo reboot
-1535

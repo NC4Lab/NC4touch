@@ -26,7 +26,6 @@
  * -----------------------------------------------------------------------------
  */
 #include <drm/drm_framebuffer.h> /* For struct drm_framebuffer, fb->format */
-#include <drm/drm_format.h>		 /* For DRM_FORMAT_* constants if needed */
 #include <drm/drm_fourcc.h>		 /* For more format definitions (if needed) */
 /* -----------------------------------------------------------------------------
  * END OF NEW HEADERS
