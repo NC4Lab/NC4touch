@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Configuration
-OVERLAY_NAME="ili9488"
+OVERLAY_NAME="nc4_ili9488"
 OVERLAY_DTBO="/boot/firmware/overlays/${OVERLAY_NAME}.dtbo"
-DRIVER_NAME="ili9488"
+DRIVER_NAME="nc4_ili9488"
 DRIVER_PATH="/lib/modules/$(uname -r)/extra/${DRIVER_NAME}.ko"
-LOG_DIR="/home/nc4/TouchscreenApparatus/src/drivers/ili9488/logs"
+LOG_DIR="/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/logs"
 LOG_FILE="${LOG_DIR}/install_validation.log"
 
 # Ensure log directory exists
@@ -51,8 +51,10 @@ echo "Note: Full dtc output (including Pi-specific warnings) is in $TMP_DTC_RAW"
 
 # Define the expected nodes
 EXPECTED_NODES=(
-    "pitft@0"
-    "pitft_pins"
+    "pitft0@0"
+    "pitft0_pins"
+    "pitft1@1"
+    "pitft1_pins"
     "backlight"
 )
 
@@ -60,26 +62,30 @@ EXPECTED_NODES=(
 echo
 echo "---- Checking overlay nodes in the live device tree ----"
 for NODE in "${EXPECTED_NODES[@]}"; do
-    case "$NODE" in
-        "pitft_pins")
-            NODE_PATH="/proc/device-tree/soc/gpio@7e200000/$NODE"
-            ;;
-        *)
-            NODE_PATH="/proc/device-tree/soc/spi@7e204000/$NODE"
-            ;;
-    esac
-
-    if [ -d "$NODE_PATH" ]; then
-        echo "Node '$NODE' found at path: $NODE_PATH"
-    elif grep -q "$NODE" "$TMP_DTC_RAW"; then
+    NODE_PATHS=(
+        "/proc/device-tree/soc/spi@7e204000/$NODE"
+        "/proc/device-tree/soc/gpio@7e200000/$NODE"
+    )
+    
+    FOUND=false
+    for NODE_PATH in "${NODE_PATHS[@]}"; do
+        if [ -d "$NODE_PATH" ]; then
+            echo "Node '$NODE' found at path: $NODE_PATH"
+            FOUND=true
+            break
+        fi
+    done
+    
+    if ! $FOUND && grep -q "$NODE" "$TMP_DTC_RAW"; then
         echo "Node '$NODE' found in decompiled Device Tree (TMP_DTC_RAW)."
-    else
+        FOUND=true
+    fi
+
+    if ! $FOUND; then
         echo "!!ERROR!!: Node '$NODE' not found. Check overlay or binding for issues."
     fi
 done
 echo "-----------------------------------------------------------"
-
-
 
 # List all nodes under the SPI bus for detailed inspection
 SPI_BUS_PATH="/proc/device-tree/soc/spi@7e204000"
@@ -142,13 +148,13 @@ fi
 
 # Log and print relevant dmesg output for debugging
 echo
-echo "==== Fetching and logging dmesg output (ili9488, SPI, GPIO, and DTB) ==== "
-dmesg | grep -E "ili9488|spi|gpio|dtb" | tee -a "$LOG_FILE"
+echo "==== Fetching and logging dmesg output (nc4_ili9488, SPI, GPIO, and DTB) ==== "
+dmesg | grep -E "nc4_ili9488|spi|gpio|dtb" | tee -a "$LOG_FILE"
 
 # Validate GPIO Pin States
 echo
 echo "==== Validating GPIO Pin States ===="
-GPIO_PINS=(7 18 24 25)
+GPIO_PINS=(7 8 18 23 24 25)
 for PIN in "${GPIO_PINS[@]}"; do
     echo "Checking GPIO $PIN:"
     raspi-gpio get $PIN

@@ -788,12 +788,13 @@ sudo rm -r TouchscreenApparatus_backup
 sudo cp -r ~/TouchscreenApparatus ~/TouchscreenApparatus_backup
 diff -r --exclude='.lgd-nfy0' /home/nc4/TouchscreenApparatus /home/nc4/TouchscreenApparatus_backup
 cd /home/nc4/TouchscreenApparatus
-git stash
-git fetch --all
+rm -f .git/objects/*/*
+git fetch origin main
+git fetch --depth=1
 git reset --hard origin/main
-git stash pop
+sudo cp -r ../TouchscreenApparatus_backup/* .
 git add .
-git commit -m "Git got messed up again"
+git commit -m "Restoring local changes after fixing Git corruption"
 git push
 ```
 
