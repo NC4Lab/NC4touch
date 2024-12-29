@@ -14,6 +14,11 @@ sudo apt-get install device-tree-compiler -y
 sudo apt-get install raspberrypi-kernel-headers -y
 ```
 
+Optional:
+```
+sudo apt install libdrm-tests kmscube
+```
+
 
 # Setting up the nc4_ili9488 driver
 
@@ -290,7 +295,7 @@ echo 0 | sudo tee /sys/class/backlight/soc:backlight/brightness
 
 ## Draw an image to the fb0 buffer:
 ```
-sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/data/images/A01.bmp
+sudo fbi -d /dev/fb -T 1 /home/nc4/TouchscreenApparatus/data/images/A01.bmp
 ```
 
 ## Check for SPI 

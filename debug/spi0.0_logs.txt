@@ -1,0 +1,12 @@
+[   12.956210] nc4_ili9488 spi0.0: Loading nc4_ili9488 driver v2.3-debug
+[   12.956221] nc4_ili9488 spi0.0: nc4_ili9488: Probing device dev=spi0.0 cs=0
+[   12.956323] nc4_ili9488 spi0.0: nc4_ili9488: reset GPIO acquired
+[   12.956353] nc4_ili9488 spi0.0: nc4_ili9488: dc GPIO acquired
+[   12.956382] nc4_ili9488 spi0.0: nc4_ili9488: backlight found and initialized
+[   12.956391] nc4_ili9488 spi0.0: nc4_ili9488: Rotation property=0 dev=spi0.0 cs=0
+[   12.956404] nc4_ili9488 spi0.0: nc4_ili9488: SPI init success, mode=0x4 max_speed_hz=4000000
+[   12.956533] nc4_ili9488 spi0.0: nc4_ili9488: mipi_dbi device initialized
+[   12.957046] [drm] Initialized nc4_ili9488 1.0.0 20241227 for spi0.0 on minor 1
+[   12.957067] nc4_ili9488 spi0.0: nc4_ili9488: DRM device registered
+[   12.963313] nc4_ili9488 spi0.0: [drm] fb1: nc4_ili9488drmf frame buffer device
+[   12.963339] nc4_ili9488 spi0.0: nc4_ili9488: Probe successful dev=spi0.0 cs=0
