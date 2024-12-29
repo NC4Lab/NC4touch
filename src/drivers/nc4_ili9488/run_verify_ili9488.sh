@@ -22,6 +22,7 @@ echo "=== Starting Overlay and Driver Validation ==="
 ## Validate Overlay
 echo
 echo "==== Validating Overlay ===="
+echo
 
 # Check if overlay .dtbo exists
 if [ -f "$OVERLAY_DTBO" ]; then
@@ -119,9 +120,9 @@ fi
 ## Validate Driver
 echo
 echo "==== Validating Driver ===="
+echo
 
 # Check if the driver module exists
-echo
 echo "Checking if the driver is found:"
 if [ -f "$DRIVER_PATH" ]; then
     echo "Driver file found: $DRIVER_PATH"
@@ -146,9 +147,57 @@ else
     fi
 fi
 
+# Confirm the DRM cards setup
+echo
+echo "==== Verifying DRM Cards Setup ===="
+echo
+DRM_PATH="/sys/class/drm"
+if [ -d "$DRM_PATH" ]; then
+    echo "---- Listing DRM cards and connectors ----"
+    ls "$DRM_PATH"
+    echo
+    echo "---- Details for each DRM card ----"
+    for CARD in "$DRM_PATH"/card*; do
+        echo "Inspecting $(basename "$CARD"):"
+        ls "$CARD"
+        if [ -f "$CARD/uevent" ]; then
+            cat "$CARD/uevent"
+        fi
+        echo
+    done
+    echo "-----------------------------------------------------------"
+else
+    echo "!!ERROR!!: DRM path $DRM_PATH not found. Check driver setup."
+fi
+
+# Confirm framebuffers are associated with DRM cards
+echo
+echo "==== Verifying Framebuffers ===="
+echo
+FB_PATH="/sys/class/graphics"
+if [ -d "$FB_PATH" ]; then
+    echo "---- Listing framebuffers ----"
+    ls "$FB_PATH"
+    echo
+    echo "---- Details for each framebuffer ----"
+    for FB in "$FB_PATH"/fb*; do
+        echo "Inspecting $(basename "$FB"):"
+        ls "$FB"
+        if [ -f "$FB/uevent" ]; then
+            cat "$FB/uevent"
+        fi
+        echo
+    done
+    echo "-----------------------------------------------------------"
+else
+    echo "!!ERROR!!: Framebuffer path $FB_PATH not found. Check graphics setup."
+fi
+
+
 # Validate GPIO Pin States
 echo
 echo "==== Validating GPIO Pin States ===="
+echo
 GPIO_PINS=(7 8 18 23 24 25)
 for PIN in "${GPIO_PINS[@]}"; do
     echo "Checking GPIO $PIN:"
