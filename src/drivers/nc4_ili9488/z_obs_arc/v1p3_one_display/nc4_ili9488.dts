@@ -56,8 +56,8 @@
 		target = <&gpio>;
 		__overlay__ {
 			pitft0_pins: pitft0_pins {
-				brcm,pins = <24 25>;
-				brcm,function = <1 1>; /* Set as output */
+				brcm,pins = <24 25 18>;
+				brcm,function = <1 1 1>; /* Set as output */
 			};
 		};
 	};
@@ -72,8 +72,8 @@
 		target = <&gpio>;
 		__overlay__ {
 			pitft1_pins: pitft1_pins {
-				brcm,pins = <23 27>;
-				brcm,function = <1 1>; /* Set as output */
+				brcm,pins = <23 27 18>;
+				brcm,function = <1 1 1>; /* Set as output */
 			};
 		};
 	};
