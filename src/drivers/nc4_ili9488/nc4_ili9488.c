@@ -104,7 +104,7 @@ static inline int nc4_ili9488_send_cmd(struct mipi_dbi *dbi,
 									   ...)
 {
 	va_list args;
-	u8 data[16]; /* Sufficient for known sequences */
+	u8 data[16] = {0}; /* Sufficient for known sequences */
 	int i, ret;
 
 	/* ADDED FOR DEBUG */
