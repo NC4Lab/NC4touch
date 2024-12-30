@@ -56,6 +56,7 @@ Restart
 ```
 sudo systemctl restart kmscon
 ```
+
 Capture logs:
 ```
 sudo journalctl -u kmscon --no-pager > /home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/kmscon_boot.log
