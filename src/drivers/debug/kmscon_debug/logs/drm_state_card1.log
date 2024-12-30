@@ -17,7 +17,7 @@ plane[32]: plane-0
 				size=614400
 				imported=no
 				dma_addr=0x000000002a800000
-				vaddr=00000000c9dedc6f
+				vaddr=00000000c43653a1
 	crtc-pos=320x480+0+0
 	src-pos=320.000000x480.000000+0.000000+0.000000
 	rotation=1

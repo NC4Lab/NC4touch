@@ -490,3 +490,14 @@ Dec 30 01:16:38 raspberrypi kmscon[661]: [0000.000000] NOTICE: kmscon Revision v
 Dec 30 01:16:38 raspberrypi kmscon[661]: [0000.353835] NOTICE: vt: using tty /dev/tty1 (open_tty() in ../src/uterm_vt.c:285)
 Dec 30 01:16:41 raspberrypi kmscon[661]: [0002.556298] WARNING: video_fbdev: cannot read monitor refresh rate, forcing 60 Hz (display_activate_force() in ../src/uterm_fbdev_video.c:285)
 Dec 30 01:16:41 raspberrypi kmscon[661]: [0002.559402] WARNING: video_fbdev: cannot read monitor refresh rate, forcing 60 Hz (display_activate_force() in ../src/uterm_fbdev_video.c:285)
+Dec 30 01:45:14 raspberrypi systemd[1]: Stopping kmsconvt@tty1.service - KMS System Console on tty1...
+Dec 30 01:45:15 raspberrypi kmscon[661]: [1717.041539] WARNING: seat: destroying seat seat0 while still awake: -16 (kmscon_seat_free() in ../src/kmscon_seat.c:806)
+Dec 30 01:45:16 raspberrypi systemd[1]: kmsconvt@tty1.service: Deactivated successfully.
+Dec 30 01:45:16 raspberrypi systemd[1]: Stopped kmsconvt@tty1.service - KMS System Console on tty1.
+Dec 30 01:45:16 raspberrypi systemd[1]: kmsconvt@tty1.service: Consumed 1.621s CPU time.
+-- Boot 8cfb282fc67244bb936e86b36657dd79 --
+Dec 30 01:45:22 raspberrypi systemd[1]: Started kmsconvt@tty1.service - KMS System Console on tty1.
+Dec 30 01:45:28 raspberrypi kmscon[662]: [0000.000000] NOTICE: kmscon Revision v9.0.0 Jan 29 2023 19:19:17 (log_print_init() in ../src/shl_log.c:509)
+Dec 30 01:45:28 raspberrypi kmscon[662]: [0000.354113] NOTICE: vt: using tty /dev/tty1 (open_tty() in ../src/uterm_vt.c:285)
+Dec 30 01:45:31 raspberrypi kmscon[662]: [0002.569467] WARNING: video_fbdev: cannot read monitor refresh rate, forcing 60 Hz (display_activate_force() in ../src/uterm_fbdev_video.c:285)
+Dec 30 01:45:31 raspberrypi kmscon[662]: [0002.570854] WARNING: video_fbdev: cannot read monitor refresh rate, forcing 60 Hz (display_activate_force() in ../src/uterm_fbdev_video.c:285)
