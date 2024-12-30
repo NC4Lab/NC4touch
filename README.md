@@ -806,7 +806,9 @@ Varify
 nmcli connection show --active
 ```
 
-## Corrupt Git Recovery:
+## Git:
+
+Corrupt Recovery:
 ```
 cd /home/nc4
 sudo rm -r TouchscreenApparatus_backup
@@ -821,6 +823,11 @@ sudo cp -r ../TouchscreenApparatus_backup/* .
 git add .
 git commit -m "Restoring local changes after fixing Git corruption"
 git push
+```
+
+Merge conflict
+```
+git pull --no-rebase
 ```
 
 ## System Recovery
