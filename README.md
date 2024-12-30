@@ -797,7 +797,7 @@ Varify
 nmcli connection show --active
 ```
 
-## Git Corrupt:
+## Corrupt Git Recovery:
 ```
 cd /home/nc4
 sudo rm -r TouchscreenApparatus_backup
@@ -814,9 +814,49 @@ git commit -m "Restoring local changes after fixing Git corruption"
 git push
 ```
 
-Back up your /boot directory and /lib/modules using:
+## System Recovery
+
+### Back up your /boot directory and /lib/modules using:
 ```
 sudo cp -r /boot /boot_backup
 sudo cp -r /lib/modules /lib/modules_backup
 ```
 
+### Clone Pi System to Another SD
+
+1. Download and install `balenaEtcher`
+```
+https://etcher.balena.io/#download-etcher
+```
+
+2. Insert the SD cards you are cloning from and to
+
+3. Select `Clone Drive`
+
+4. Choose the card to clone from and click `Select 1`
+
+5. Select `Select Traget`
+
+6. Choose the card to clone to and click `Select 1`
+
+7. Click `Flash!`
+
+
+### Image Pi System on Windows
+
+1. Download USB Image Tool
+```
+https://www.alexpage.de/usb-image-tool/download/
+```
+
+2. Extract and run the exe.
+
+3. Insert SD into a reader.
+
+4. Select it in the left pannel of the UI.
+
+5. Click backup.
+
+6. Name it something like `Pi_4_Backup_24_12_29`
+
+7. Click Save.
