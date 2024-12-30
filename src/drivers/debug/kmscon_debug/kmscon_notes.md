@@ -56,7 +56,6 @@ Restart
 ```
 sudo systemctl restart kmscon
 ```
-```
 Capture logs:
 ```
 sudo journalctl -u kmscon --no-pager > /home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/kmscon_boot.log
@@ -91,3 +90,11 @@ sudo journalctl -b | grep kmscon > /home/nc4/TouchscreenApparatus/src/drivers/de
 
 sudo fbi -d /dev/fb0 -T 1 /home/nc4/TouchscreenApparatus/data/images/A01.bmp
 sudo fbi -d /dev/fb1 -T 1 /home/nc4/TouchscreenApparatus/data/images/A01.bmp
+
+# drm_test
+```
+cd /home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/drm_test_code
+gcc -v -o drm_test drm_test.c
+sudo systemctl stop kmsconvt@tty1
+sudo ./drm_test
+'''

@@ -563,6 +563,11 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 
 	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Allocated DRM device successfully.\n");
 
+	// TEMP
+	DRM_DEBUG_KMS("nc4_ili9488: [DRIVER INFO] Driver Name: %s\n", nc4_ili9488_driver.name);
+	DRM_DEBUG_KMS("nc4_ili9488: [DRIVER INFO] Description: %s\n", nc4_ili9488_driver.desc);
+	DRM_DEBUG_KMS("nc4_ili9488: [DRIVER INFO] Date: %s\n", nc4_ili9488_driver.date);
+
 	dbi->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(dbi->reset))
 	{

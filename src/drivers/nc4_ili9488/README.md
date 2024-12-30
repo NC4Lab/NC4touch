@@ -1,5 +1,7 @@
 # Install dependencies
 
+## Main
+
 ```
 sudo apt-get update
 ```
@@ -13,6 +15,9 @@ sudo apt-get install device-tree-compiler -y
 ```
 sudo apt-get install raspberrypi-kernel-headers -y
 ```
+```
+sudo apt-get install libdrm-dev
+```
 
 Optional:
 ```
@@ -21,6 +26,8 @@ sudo apt install libdrm-tests kmscube
 ```
 sudo apt-get install drm-info
 ```
+
+# KMS
 
 Needed for the driver to work for... reasons?
 ```
