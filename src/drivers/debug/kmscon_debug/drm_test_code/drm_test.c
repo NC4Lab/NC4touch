@@ -5,6 +5,7 @@
 #include <unistd.h>  // Added for close()
 #include <errno.h>
 #include <string.h>
+#include <ctype.h> // For isprint()
 
 #define DRM_CARD_PATH "/dev/dri/card0"
 
@@ -46,11 +47,46 @@ int main()
         return 1;
     }
 
-    // Ensure null-termination for safety
-    name[version.name_len] = '\0';
-    desc[version.desc_len] = '\0';
-    date[version.date_len] = '\0';
+    // Log raw buffer contents for debugging
+    printf("Raw Driver Name: ");
+    for (size_t i = 0; i < version.name_len; i++)
+    {
+        printf("%02x ", (unsigned char)name[i]);
+    }
+    printf("\n");
 
+    printf("Raw Description: ");
+    for (size_t i = 0; i < version.desc_len; i++)
+    {
+        printf("%02x ", (unsigned char)desc[i]);
+    }
+    printf("\n");
+
+    printf("Raw Date: ");
+    for (size_t i = 0; i < version.date_len; i++)
+    {
+        printf("%02x ", (unsigned char)date[i]);
+    }
+    printf("\n");
+
+    // Ensure null-termination for safety and remove non-printable characters
+    for (size_t i = 0; i < sizeof(name); i++)
+    {
+        if (!isprint(name[i]))
+            name[i] = '\0';
+    }
+    for (size_t i = 0; i < sizeof(desc); i++)
+    {
+        if (!isprint(desc[i]))
+            desc[i] = '\0';
+    }
+    for (size_t i = 0; i < sizeof(date); i++)
+    {
+        if (!isprint(date[i]))
+            date[i] = '\0';
+    }
+
+    // Print results
     printf("DRM Version: %d.%d.%d\n", version.version_major, version.version_minor, version.version_patchlevel);
     printf("Driver Name: %s\n", version.name);
     printf("Description: %s\n", version.desc);
