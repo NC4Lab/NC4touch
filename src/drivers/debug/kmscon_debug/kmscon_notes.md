@@ -39,6 +39,30 @@ Check status:
 sudo systemctl status kmsconvt@tty1.service
 ```
 
+Add the following for debugging:
+```
+sudo systemctl edit kmsconvt@tty1.service
+```
+```
+[Service]
+ExecStart=
+ExecStart=/usr/bin/kmscon --vt=%I
+```
+Reload
+```
+sudo systemctl daemon-reload
+```
+Restart 
+```
+sudo systemctl restart kmscon
+```
+```
+Capture logs:
+```
+sudo journalctl -u kmscon --no-pager > /home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/kmscon_boot.log
+```
+
+
 # Procedure
 
 Restart with kmscon enabled
