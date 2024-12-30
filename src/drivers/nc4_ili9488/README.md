@@ -21,10 +21,31 @@ sudo apt install libdrm-tests kmscube
 ```
 sudo apt-get install drm-info
 ```
+
+Needed for the driver to work for... reasons?
 ```
 sudo apt-get install kms++
 ```
 
+But installs a bunch of other shit that needs to be removed:
+```
+sudo apt-get purge nvidia* openafs-client
+```
+
+Manually force remove the problematic modules:
+```
+sudo dpkg --remove --force-all apfs-dkms jool-dkms openafs-modules-dkms dahdi-dkms xtrx-dkms tp-smapi-dkms rapiddisk-dkms vpoll-dkms gost-crypto-dkms evdi-dkms broadcom-sta-dkms lttng-modules-dkms iptables-netflow-dkms falcosecurity-scap-dkms ddcci-dkms digimend-dkms bbswitch-dkms r8168-dkms
+```
+
+Purge Remaining Files:
+```
+sudo apt-get autoremove --purge
+```
+
+Reconfigure the System: 
+```
+sudo dpkg --configure -a
+```
 
 # Setting up the nc4_ili9488 driver
 
