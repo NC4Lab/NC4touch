@@ -30,7 +30,8 @@ echo "Cleaning old builds..."
 make clean || true
 
 echo "Compiling nc4_ili9488.ko..."
-make
+#make
+make V=1
 
 echo "==== Installing the nc4_ili9488 Kernel Module ===="
 sudo mkdir -p /lib/modules/$(uname -r)/extra

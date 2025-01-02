@@ -98,25 +98,21 @@ static int nc4_mipi_dbi18_buf_copy(void *dst, struct drm_framebuffer *fb,
  * Logs every command sent to the panel for easier traceability.
  ******************************************************************************/
 static inline int nc4_ili9488_send_cmd(struct mipi_dbi *dbi,
-									   const char *cmd_name,
-									   u8 cmd_code,
-									   int num_args,
-									   ...)
+                                       const char *cmd_name,
+                                       u8 cmd_code,
+                                       int num_args,
+                                       ...)
 {
 	va_list args;
-	u8 data[16] = {0}; /* Sufficient for known sequences */
+	u8 data[16] = {0};
 	int i, ret;
 
-	/* ADDED FOR DEBUG */
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_send_cmd] SPI dev=%s cs=%d -> cmd=%s(0x%02X), num_args=%d\n",
-				  dev_name(dbi->spi->dev.parent),
-				  to_spi_device(dbi->spi->dev.parent)->chip_select,
-				  cmd_name, cmd_code, num_args);
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_send_cmd] dev=%s -> cmd=%s(0x%02X), num_args=%d\n",
+		      dev_name(dbi->spi->dev.parent), cmd_name, cmd_code, num_args);
 
-	if (num_args > 16)
-	{
+	if (num_args > 16) {
 		DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_send_cmd] Command %s(0x%02X) has too many args: %d\n",
-					  cmd_name, cmd_code, num_args);
+		              cmd_name, cmd_code, num_args);
 		return -EINVAL;
 	}
 
@@ -126,22 +122,23 @@ static inline int nc4_ili9488_send_cmd(struct mipi_dbi *dbi,
 	va_end(args);
 
 	/* Log debug details */
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_send_cmd] CMD:%s(0x%02X), args(%d):", cmd_name, cmd_code, num_args);
-	for (i = 0; i < num_args; i++)
-	{
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_send_cmd] CMD:%s(0x%02X), args(%d):",
+		      cmd_name, cmd_code, num_args);
+	for (i = 0; i < num_args; i++) {
 		DRM_DEBUG_KMS("  0x%02X", data[i]);
 	}
 	DRM_DEBUG_KMS("\n");
 
 	/* Send the command via MIPI-DBI */
 	ret = mipi_dbi_command(dbi, cmd_code,
-						   data[0], data[1], data[2], data[3],
-						   data[4], data[5], data[6], data[7],
-						   data[8], data[9], data[10], data[11],
-						   data[12], data[13], data[14], data[15]);
+			       data[0], data[1], data[2], data[3],
+			       data[4], data[5], data[6], data[7],
+			       data[8], data[9], data[10], data[11],
+			       data[12], data[13], data[14], data[15]);
 
 	return ret;
 }
+
 
 /*******************************************************************************
  * Helper function: Set window address for partial updates
@@ -152,10 +149,8 @@ static void nc4_mipi_dbi_set_window_address(struct mipi_dbi_dev *dbidev,
 {
 	struct mipi_dbi *dbi = &dbidev->dbi;
 
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi_set_window_address] dev=%s cs=%d xs=%u xe=%u ys=%u ye=%u\n",
-				  dev_name(dbi->spi->dev.parent),
-				  to_spi_device(dbi->spi->dev.parent)->chip_select,
-				  xs, xe, ys, ye);
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi_set_window_address] dev=%s xs=%u xe=%u ys=%u ye=%u\n",
+				  dev_name(dbi->spi->dev.parent), xs, xe, ys, ye);
 
 	xs += dbidev->left_offset;
 	xe += dbidev->left_offset;
@@ -253,16 +248,14 @@ static void nc4_mipi_dbi18_fb_dirty(struct drm_framebuffer *fb, struct drm_rect 
 		return;
 	}
 
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_fb_dirty] Dirty framebuffer update: dev=%s cs=%d rect=(%u,%u)-(%u,%u)\n",
-				  dev_name(fb->dev->dev),
-				  to_spi_device(fb->dev->dev)->chip_select,
-				  rect->x1, rect->y1, rect->x2, rect->y2);
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_fb_dirty] Dirty framebuffer update: dev=%s rect=(%u,%u)-(%u,%u)\n",
+				  dev_name(fb->dev->dev), rect->x1, rect->y1, rect->x2, rect->y2);
 
-	/* Determine if a full update is required */
 	if (width == fb->width && height == fb->height)
+	{
 		DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_fb_dirty] Full framebuffer update detected.\n");
+	}
 
-	/* Use intermediate buffer if necessary */
 	tr = dbidev->tx_buf;
 	ret = nc4_mipi_dbi18_buf_copy(tr, fb, rect, swap);
 	if (ret)
@@ -271,8 +264,8 @@ static void nc4_mipi_dbi18_fb_dirty(struct drm_framebuffer *fb, struct drm_rect 
 		return;
 	}
 
-	/* Set the window address and write data */
 	nc4_mipi_dbi_set_window_address(dbidev, rect->x1, rect->x2 - 1, rect->y1, rect->y2 - 1);
+
 	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_fb_dirty] Writing memory data to device.\n");
 	mipi_dbi_command_buf(dbi, MIPI_DCS_WRITE_MEMORY_START, tr, width * height * 3);
 }
@@ -307,9 +300,8 @@ void nc4_mipi_dbi18_pipe_update(struct drm_simple_display_pipe *pipe,
 		DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_pipe_update] no damage to update\n");
 	}
 
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_pipe_update] pipe_update done for dev=%s cs=%d\n",
-				  dev_name(pipe->crtc.dev->dev),
-				  to_spi_device(pipe->crtc.dev->dev)->chip_select);
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_mipi_dbi18_pipe_update] pipe_update done for dev=%s\n",
+				  dev_name(pipe->crtc.dev->dev));
 }
 
 /*******************************************************************************
@@ -547,8 +539,8 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 	u32 rotation = 0;
 	int ret;
 
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Starting probe for device %s on CS=%d\n",
-				  dev_name(dev), spi->chip_select);
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Starting probe for device %s\n",
+				  dev_name(dev));
 
 	dbidev = devm_drm_dev_alloc(dev, &nc4_ili9488_driver, struct mipi_dbi_dev, drm);
 	if (IS_ERR(dbidev))
@@ -561,13 +553,6 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 	dbi = &dbidev->dbi;
 	drm = &dbidev->drm;
 
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Allocated DRM device successfully.\n");
-
-	// TEMP
-	DRM_DEBUG_KMS("nc4_ili9488: [DRIVER INFO] Driver Name: %s\n", nc4_ili9488_driver.name);
-	DRM_DEBUG_KMS("nc4_ili9488: [DRIVER INFO] Description: %s\n", nc4_ili9488_driver.desc);
-	DRM_DEBUG_KMS("nc4_ili9488: [DRIVER INFO] Date: %s\n", nc4_ili9488_driver.date);
-
 	dbi->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(dbi->reset))
 	{
@@ -575,8 +560,6 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 				  PTR_ERR(dbi->reset));
 		return PTR_ERR(dbi->reset);
 	}
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] RESET GPIO: %s\n",
-				  dbi->reset ? "acquired" : "not defined");
 
 	dc = devm_gpiod_get_optional(dev, "dc", GPIOD_OUT_LOW);
 	if (IS_ERR(dc))
@@ -585,7 +568,6 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 				  PTR_ERR(dc));
 		return PTR_ERR(dc);
 	}
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] DC GPIO: %s\n", dc ? "acquired" : "not defined");
 
 	dbidev->backlight = devm_of_find_backlight(dev);
 	if (IS_ERR(dbidev->backlight))
@@ -594,7 +576,6 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 				  PTR_ERR(dbidev->backlight));
 		return PTR_ERR(dbidev->backlight);
 	}
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Backlight initialized successfully.\n");
 
 	device_property_read_u32(dev, "rotation", &rotation);
 	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Device rotation property: %u\n", rotation);
@@ -605,7 +586,16 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		DRM_ERROR("nc4_ili9488: [nc4_ili9488_probe] SPI initialization failed. Error: %d\n", ret);
 		return ret;
 	}
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] SPI initialized successfully.\n");
+
+	spi->mode |= SPI_NO_CS;
+	ret = spi_setup(spi);
+	if (ret)
+	{
+		DRM_ERROR("nc4_ili9488: [nc4_ili9488_probe] spi_setup failed when forcing software CS. Error: %d\n", ret);
+		return ret;
+	}
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Using software-controlled CS for device %s\n",
+				  dev_name(dev));
 
 	ret = nc4_mipi_dbi18_dev_init(dbidev, &nc4_ili9488_pipe_funcs, &nc4_sx035hv006_mode, rotation);
 	if (ret)
@@ -613,7 +603,6 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		DRM_ERROR("nc4_ili9488: [nc4_ili9488_probe] MIPI-DBI device initialization failed. Error: %d\n", ret);
 		return ret;
 	}
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] MIPI-DBI device initialized successfully.\n");
 
 	drm_mode_config_reset(drm);
 
@@ -623,13 +612,12 @@ static int nc4_ili9488_probe(struct spi_device *spi)
 		DRM_ERROR("nc4_ili9488: [nc4_ili9488_probe] DRM device registration failed. Error: %d\n", ret);
 		return ret;
 	}
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] DRM device registered successfully.\n");
 
 	spi_set_drvdata(spi, drm);
 	drm_fbdev_generic_setup(drm, 0);
 
-	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Probe completed for device %s on CS=%d\n",
-				  dev_name(dev), spi->chip_select);
+	DRM_DEBUG_KMS("nc4_ili9488: [nc4_ili9488_probe] Probe completed for device %s\n",
+				  dev_name(dev));
 
 	return 0;
 }
