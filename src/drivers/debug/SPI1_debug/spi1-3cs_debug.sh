@@ -1,8 +1,12 @@
 #!/bin/bash
 
-# Define the output directory and file
+# Define the suffix for saved files
+SUFFIX="4"
+
+# Define the output directory and file names with the suffix
 OUTPUT_DIR="/home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_debug"
-OUTPUT_FILE="$OUTPUT_DIR/spi1-3cs_debug.log"
+OUTPUT_FILE="$OUTPUT_DIR/spi1-3cs_debug_${SUFFIX}.log"
+DTS_FILE="$OUTPUT_DIR/live_device_tree_${SUFFIX}.dts"
 
 # Ensure the output directory exists
 if [ ! -d "$OUTPUT_DIR" ]; then
@@ -38,7 +42,6 @@ echo >> "$OUTPUT_FILE"
 
 # Decompile live Device Tree
 echo "=== Decompiled Device Tree ===" >> "$OUTPUT_FILE"
-DTS_FILE="$OUTPUT_DIR/live_device_tree.dts"
 sudo dtc -I fs -O dts -o "$DTS_FILE" /proc/device-tree
 if [ -f "$DTS_FILE" ]; then
   echo "Decompiled device tree saved to: $DTS_FILE" >> "$OUTPUT_FILE"
@@ -100,6 +103,26 @@ echo "Applying spi1-3cs overlay:" >> "$OUTPUT_FILE"
 sudo dtoverlay spi1-3cs >> "$OUTPUT_FILE" 2>&1
 echo "Applying nc4_ili9488 overlay:" >> "$OUTPUT_FILE"
 sudo dtoverlay nc4_ili9488 >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
+# Log available SPI devices
+echo "=== Available SPI Devices ===" >> "$OUTPUT_FILE"
+ls /dev/spi* >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
+# Verify runtime overlays in live Device Tree
+echo "=== Verifying Runtime Overlays in Device Tree ===" >> "$OUTPUT_FILE"
+if grep -q "spi1-3cs" "$DTS_FILE"; then
+  echo "spi1-3cs overlay is active in runtime device tree." >> "$OUTPUT_FILE"
+else
+  echo "spi1-3cs overlay is missing from the runtime device tree." >> "$OUTPUT_FILE"
+fi
+
+if grep -q "nc4_ili9488" "$DTS_FILE"; then
+  echo "nc4_ili9488 overlay is active in runtime device tree." >> "$OUTPUT_FILE"
+else
+  echo "nc4_ili9488 overlay is missing from the runtime device tree." >> "$OUTPUT_FILE"
+fi
 echo >> "$OUTPUT_FILE"
 
 # Verify runtime overlays in live Device Tree
