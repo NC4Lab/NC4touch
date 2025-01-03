@@ -57,7 +57,7 @@
 	};
 
 	/****************************************************************************
-	 * GPIO pins for the FIRST panel (pitft0)
+	 * GPIO pins for the LCD_0 panel (pitft0)
 	 *   GPIO24 = RESET (out)
 	 *   GPIO25 = DC (out)
 	 *   GPIO27 = Backlight (out, shared)
@@ -73,7 +73,7 @@
 	};
 
 	/****************************************************************************
-	 * GPIO pins for the SECOND panel (pitft1)
+	 * GPIO pins for the LCD_1 panel (pitft1)
 	 *   GPIO23 = RESET (out)
 	 *   GPIO22 = DC (out)
 	 *   GPIO27 = Backlight (out, shared)
@@ -89,7 +89,7 @@
 	};
 
 	/****************************************************************************
-	 * GPIO pins for the THIRD panel (pitft2)
+	 * GPIO pins for the LCD_2 panel (pitft2)
 	 *   GPIO13 = RESET (out)
 	 *   GPIO12 = DC (out)
 	 *   GPIO27 = Backlight (out, shared)
@@ -105,7 +105,7 @@
 	};
 
 	/****************************************************************************
-	 * FIRST ILI9488 device node on SPI1 CE0
+	 * LCD_0 ILI9488 device node on SPI1 CE0
 	 ****************************************************************************/
 	fragment@7 {
 		target = <&spi1>;
@@ -130,7 +130,7 @@
 	};
 
 	/****************************************************************************
-	 * SECOND ILI9488 device node on SPI1 CE1
+	 * LCD_1 ILI9488 device node on SPI1 CE1
 	 ****************************************************************************/
 	fragment@8 {
 		target = <&spi1>;
@@ -152,7 +152,7 @@
 	};
 
 	/****************************************************************************
-	 * THIRD ILI9488 device node on SPI1 CE2
+	 * LCD_2 ILI9488 device node on SPI1 CE2
 	 ****************************************************************************/
 	fragment@9 {
 		target = <&spi1>;

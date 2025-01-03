@@ -61,6 +61,8 @@ EXPECTED_NODES=(
     "pitft0_pins"
     "pitft1@1"
     "pitft1_pins"
+    "pitft2@2"
+    "pitft2_pins"
     "backlight"
 )
 
@@ -69,7 +71,7 @@ echo
 echo "---- Checking overlay nodes in the live device tree ----"
 for NODE in "${EXPECTED_NODES[@]}"; do
     NODE_PATHS=(
-        "/proc/device-tree/soc/spi@7e204000/$NODE"
+        "/proc/device-tree/soc/spi@7e215080/$NODE"
         "/proc/device-tree/soc/gpio@7e200000/$NODE"
     )
     
@@ -101,7 +103,7 @@ if [ -d "$SPI_BUS_PATH" ]; then
     ls "$SPI_BUS_PATH"
     echo "-----------------------------------------------------------"
 else
-    echo "SPI bus path $SPI_BUS_PATH not found. Check overlay or hardware configuration."
+    echo "!!ERROR!!: SPI bus path $SPI_BUS_PATH not found. Check overlay or hardware configuration."
 fi
 
 # Check kernel logs for overlay application
@@ -110,7 +112,7 @@ echo "Checking kernel logs for overlay application:"
 if dmesg | grep -qi "$OVERLAY_NAME"; then
     echo "Overlay is logged in kernel messages."
 else
-    echo "Overlay not found in kernel messages. Check the logs for issues."
+    echo "!!ERROR!!: Overlay not found in kernel messages. Check the logs for issues."
 fi
 
 # Verify overlay entries in config.txt
@@ -119,7 +121,7 @@ echo "Verifying overlay references in config.txt:"
 if grep -q "dtoverlay=$OVERLAY_NAME" /boot/firmware/config.txt; then
     echo "Overlay is referenced in config.txt."
 else
-    echo "Overlay not found in config.txt. Ensure it is added correctly."
+    echo "!!ERROR!!: Overlay not found in config.txt. Ensure it is added correctly."
 fi
 
 ## Validate Driver
@@ -198,59 +200,45 @@ else
     echo "!!ERROR!!: Framebuffer path $FB_PATH not found. Check graphics setup."
 fi
 
+# Check SPI devices and driver binding
 echo
 echo "==== Checking Driver Probe and Device Binding for SPI Devices ===="
 
-# Check for spi1.0
-if dmesg | grep -q -i "nc4_ili9488.*spi1.0"; then
-    echo "Driver probe for spi1.0 detected in logs."
-else
-    echo "!!ERROR!!: No logs found for driver probe on spi1.0."
-fi
+SPI_DEVICES=("spi1.0" "spi1.1" "spi1.2")
 
-if [ -e /sys/bus/spi/devices/spi1.0/driver ]; then
-    DRIVER_PATH=$(readlink /sys/bus/spi/devices/spi1.0/driver)
-    if [[ $DRIVER_PATH == *"nc4_ili9488"* ]]; then
-        echo "spi1.0 is correctly bound to nc4_ili9488 driver."
+echo
+echo "==== Checking Driver Probe and Device Binding for SPI Devices ===="
+for DEVICE in "${SPI_DEVICES[@]}"; do
+    # Check driver probe in kernel logs
+    if dmesg | grep -q -i "$DRIVER_NAME.*$DEVICE"; then
+        echo "Driver probe for $DEVICE detected in logs."
     else
-        echo "!!ERROR!!: spi1.0 is not bound to nc4_ili9488 driver."
+        echo "!!ERROR!!: No logs found for driver probe on $DEVICE."
     fi
-else
-    echo "!!ERROR!!: No driver found bound to spi1.0."
-fi
 
-# Check for spi1.1
-if dmesg | grep -q -i "nc4_ili9488.*spi1.1"; then
-    echo "Driver probe for spi1.1 detected in logs."
-else
-    echo "!!ERROR!!: No logs found for driver probe on spi1.1."
-fi
-
-if [ -e /sys/bus/spi/devices/spi1.1/driver ]; then
-    DRIVER_PATH=$(readlink /sys/bus/spi/devices/spi1.1/driver)
-    if [[ $DRIVER_PATH == *"nc4_ili9488"* ]]; then
-        echo "spi1.1 is correctly bound to nc4_ili9488 driver."
+    # Check driver binding
+    DEVICE_PATH="/sys/bus/spi/devices/$DEVICE/driver"
+    if [ -e "$DEVICE_PATH" ]; then
+        DRIVER_BOUND=$(readlink "$DEVICE_PATH")
+        if [[ $DRIVER_BOUND == *"$DRIVER_NAME"* ]]; then
+            echo "$DEVICE is correctly bound to $DRIVER_NAME driver."
+        else
+            echo "!!ERROR!!: $DEVICE is not bound to $DRIVER_NAME driver."
+        fi
     else
-        echo "!!ERROR!!: spi1.1 is not bound to nc4_ili9488 driver."
+        echo "!!ERROR!!: No driver found bound to $DEVICE."
     fi
-else
-    echo "!!ERROR!!: No driver found bound to spi1.1."
-fi
+done
 
-# Validate GPIO Pin States
+# Check Relivant GPIO Pin States
 echo
 echo "==== Validating GPIO Pin States ===="
 echo
-GPIO_PINS=(7 8 18 23 24 25)
+GPIO_PINS=(18 17 16 12 13 22 23 24 25 27)
 for PIN in "${GPIO_PINS[@]}"; do
     echo "Checking GPIO $PIN:"
     raspi-gpio get $PIN
 done
-
-# # Log and print relevant dmesg output for debugging
-# echo
-# echo "==== Fetching and logging dmesg output (nc4_ili9488, SPI, GPIO, and DTB) ==== "
-# dmesg | grep -E "nc4_ili9488|spi|gpio|dtb" | tee -a "$LOG_FILE"
 
 echo
 echo "=== Validation Complete ==="
