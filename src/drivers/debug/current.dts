@@ -2268,6 +2268,7 @@
 	};
 
 	chosen {
+		user-warnings = <0x64746572 0x726f723a 0x2063616e 0x27742066 0x696e6420 0x73796d62 0x6f6c2027 0x73706964 0x6576315f 0x30270a64 0x74657272 0x6f723a20 0x4661696c 0x65642074 0x6f207265 0x736f6c76 0x65206f76 0x65726c61 0x7920276e 0x63345f69 0x6c693934 0x3838270a>;
 		linux,initrd-end = <0x2efff172>;
 		bootargs = "coherent_pool=1M 8250.nr_uarts=0 snd_bcm2835.enable_headphones=0 cgroup_disable=memory numa_policy=interleave snd_bcm2835.enable_headphones=1 snd_bcm2835.enable_hdmi=1 bcm2708_fb.fbwidth=0 bcm2708_fb.fbheight=0 bcm2708_fb.fbswap=1 smsc95xx.macaddr=D8:3A:DD:6F:A3:94 vc_mem.mem_base=0x3ec00000 vc_mem.mem_size=0x40000000  console=ttyS0,115200 console=tty1 root=PARTUUID=60ff2e57-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=CA ip=169.254.55.240::0.0.0.0:255.255.0.0::eth0:off systemd.unit=multi-user.target autologin-user=nc4 nosplash logo.nologo vt.global_cursor_default=0 drm.debug=0x1f log_buf_len=16M";
 		os_prefix = [00];

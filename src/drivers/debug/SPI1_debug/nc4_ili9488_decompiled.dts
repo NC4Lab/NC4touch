@@ -1,0 +1,182 @@
+/dts-v1/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "okay";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+
+			pitft0@0 {
+				compatible = "ili9488";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x01>;
+				reg = <0x00>;
+				spi-max-frequency = <0x1312d00>;
+				rotation = <0x00>;
+				reset-gpios = <0xffffffff 0x18 0x00>;
+				dc-gpios = <0xffffffff 0x19 0x00>;
+				backlight = <0x02>;
+				phandle = <0x05>;
+			};
+
+			pitft1@1 {
+				compatible = "ili9488";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x03>;
+				reg = <0x01>;
+				spi-max-frequency = <0x1312d00>;
+				rotation = <0x00>;
+				reset-gpios = <0xffffffff 0x17 0x00>;
+				dc-gpios = <0xffffffff 0x16 0x00>;
+				backlight = <0x02>;
+				phandle = <0x06>;
+			};
+
+			pitft2@2 {
+				compatible = "ili9488";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x04>;
+				reg = <0x02>;
+				spi-max-frequency = <0x989680>;
+				rotation = <0x00>;
+				reset-gpios = <0xffffffff 0x0d 0x00>;
+				dc-gpios = <0xffffffff 0x0c 0x00>;
+				backlight = <0x02>;
+				phandle = <0x07>;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@3 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@4 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+
+			pitft0_pins {
+				brcm,pins = <0x18 0x19>;
+				brcm,function = <0x01 0x01>;
+				phandle = <0x01>;
+			};
+		};
+	};
+
+	fragment@5 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+
+			pitft1_pins {
+				brcm,pins = <0x17 0x16>;
+				brcm,function = <0x01 0x01>;
+				phandle = <0x03>;
+			};
+		};
+	};
+
+	fragment@6 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+
+			pitft2_pins {
+				brcm,pins = <0x0d 0x0c>;
+				brcm,function = <0x01 0x01>;
+				phandle = <0x04>;
+			};
+		};
+	};
+
+	fragment@7 {
+		target-path = "/soc";
+
+		__overlay__ {
+
+			backlight {
+				compatible = "gpio-backlight";
+				gpios = <0xffffffff 0x1b 0x00>;
+				phandle = <0x02>;
+			};
+		};
+	};
+
+	__overrides__ {
+		speed = <0x05 0x7370692d 0x6d61782d 0x66726571 0x75656e63 0x793a3000 0x06 0x7370692d 0x6d61782d 0x66726571 0x75656e63 0x793a3000 0x07 0x7370692d 0x6d61782d 0x66726571 0x75656e63 0x793a3000>;
+		rotation = [00 00 00 05 72 6f 74 61 74 69 6f 6e 3a 30 00 00 00 00 06 72 6f 74 61 74 69 6f 6e 3a 30 00 00 00 00 07 72 6f 74 61 74 69 6f 6e 3a 30 00];
+	};
+
+	__symbols__ {
+		pitft0 = "/fragment@0/__overlay__/pitft0@0";
+		pitft1 = "/fragment@0/__overlay__/pitft1@1";
+		pitft2 = "/fragment@0/__overlay__/pitft2@2";
+		pitft0_pins = "/fragment@4/__overlay__/pitft0_pins";
+		pitft1_pins = "/fragment@5/__overlay__/pitft1_pins";
+		pitft2_pins = "/fragment@6/__overlay__/pitft2_pins";
+		backlight = "/fragment@7/__overlay__/backlight";
+	};
+
+	__fixups__ {
+		spi1 = "/fragment@0:target:0";
+		gpio = "/fragment@0/__overlay__/pitft0@0:reset-gpios:0\0/fragment@0/__overlay__/pitft0@0:dc-gpios:0\0/fragment@0/__overlay__/pitft1@1:reset-gpios:0\0/fragment@0/__overlay__/pitft1@1:dc-gpios:0\0/fragment@0/__overlay__/pitft2@2:reset-gpios:0\0/fragment@0/__overlay__/pitft2@2:dc-gpios:0\0/fragment@4:target:0\0/fragment@5:target:0\0/fragment@6:target:0\0/fragment@7/__overlay__/backlight:gpios:0";
+		spidev0 = "/fragment@1:target:0";
+		spidev1 = "/fragment@2:target:0";
+		spidev2 = "/fragment@3:target:0";
+	};
+
+	__local_fixups__ {
+
+		fragment@0 {
+
+			__overlay__ {
+
+				pitft0@0 {
+					pinctrl-0 = <0x00>;
+					backlight = <0x00>;
+				};
+
+				pitft1@1 {
+					pinctrl-0 = <0x00>;
+					backlight = <0x00>;
+				};
+
+				pitft2@2 {
+					pinctrl-0 = <0x00>;
+					backlight = <0x00>;
+				};
+			};
+		};
+
+		__overrides__ {
+			speed = <0x00 0x18 0x30>;
+			rotation = <0x00 0x0f 0x1e>;
+		};
+	};
+};

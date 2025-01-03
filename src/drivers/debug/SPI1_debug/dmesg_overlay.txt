@@ -1,0 +1,68 @@
+[   51.791142] nc4_ili9488: Unknown symbol mipi_dbi_poweron_conditional_reset (err -2)
+[   51.791169] nc4_ili9488: Unknown symbol drm_gem_fb_end_cpu_access (err -2)
+[   51.791191] nc4_ili9488: Unknown symbol mipi_dbi_dev_init_with_formats (err -2)
+[   51.791215] nc4_ili9488: Unknown symbol mipi_dbi_command_stackbuf (err -2)
+[   51.791227] nc4_ili9488: Unknown symbol mipi_dbi_debugfs_init (err -2)
+[   51.791241] nc4_ili9488: Unknown symbol drm_atomic_helper_shutdown (err -2)
+[   51.791257] nc4_ili9488: Unknown symbol mipi_dbi_spi_init (err -2)
+[   51.791277] nc4_ili9488: Unknown symbol mipi_dbi_pipe_mode_valid (err -2)
+[   51.791305] nc4_ili9488: Unknown symbol mipi_dbi_pipe_disable (err -2)
+[   51.791338] nc4_ili9488: Unknown symbol drm_gem_fb_vmap (err -2)
+[   51.791349] nc4_ili9488: Unknown symbol mipi_dbi_command_buf (err -2)
+[   51.791370] nc4_ili9488: Unknown symbol drm_atomic_helper_damage_merged (err -2)
+[   51.791394] nc4_ili9488: Unknown symbol drm_gem_fb_vunmap (err -2)
+[   51.791406] nc4_ili9488: Unknown symbol drm_gem_dma_dumb_create (err -2)
+[   51.791419] nc4_ili9488: Unknown symbol drm_gem_fb_get_obj (err -2)
+[   51.791450] nc4_ili9488: Unknown symbol drm_fb_xrgb8888_to_rgb888 (err -2)
+[   51.791465] nc4_ili9488: Unknown symbol drm_fbdev_generic_setup (err -2)
+[   51.791479] nc4_ili9488: Unknown symbol drm_fb_memcpy (err -2)
+[   51.791493] nc4_ili9488: Unknown symbol drm_gem_fb_begin_cpu_access (err -2)
+[   51.791505] nc4_ili9488: Unknown symbol drm_fb_swab (err -2)
+[   51.791529] nc4_ili9488: Unknown symbol drm_gem_dma_prime_import_sg_table_vmap (err -2)
+[  129.962338] nc4_ili9488: Unknown symbol mipi_dbi_poweron_conditional_reset (err -2)
+[  129.962367] nc4_ili9488: Unknown symbol drm_gem_fb_end_cpu_access (err -2)
+[  129.962390] nc4_ili9488: Unknown symbol mipi_dbi_dev_init_with_formats (err -2)
+[  129.962415] nc4_ili9488: Unknown symbol mipi_dbi_command_stackbuf (err -2)
+[  129.962427] nc4_ili9488: Unknown symbol mipi_dbi_debugfs_init (err -2)
+[  129.962441] nc4_ili9488: Unknown symbol drm_atomic_helper_shutdown (err -2)
+[  129.962457] nc4_ili9488: Unknown symbol mipi_dbi_spi_init (err -2)
+[  129.962477] nc4_ili9488: Unknown symbol mipi_dbi_pipe_mode_valid (err -2)
+[  129.962506] nc4_ili9488: Unknown symbol mipi_dbi_pipe_disable (err -2)
+[  129.962592] nc4_ili9488: Unknown symbol drm_gem_fb_vmap (err -2)
+[  129.962605] nc4_ili9488: Unknown symbol mipi_dbi_command_buf (err -2)
+[  129.962627] nc4_ili9488: Unknown symbol drm_atomic_helper_damage_merged (err -2)
+[  129.962651] nc4_ili9488: Unknown symbol drm_gem_fb_vunmap (err -2)
+[  129.962664] nc4_ili9488: Unknown symbol drm_gem_dma_dumb_create (err -2)
+[  129.962677] nc4_ili9488: Unknown symbol drm_gem_fb_get_obj (err -2)
+[  129.962708] nc4_ili9488: Unknown symbol drm_fb_xrgb8888_to_rgb888 (err -2)
+[  129.962723] nc4_ili9488: Unknown symbol drm_fbdev_generic_setup (err -2)
+[  129.962738] nc4_ili9488: Unknown symbol drm_fb_memcpy (err -2)
+[  129.962752] nc4_ili9488: Unknown symbol drm_gem_fb_begin_cpu_access (err -2)
+[  129.962765] nc4_ili9488: Unknown symbol drm_fb_swab (err -2)
+[  129.962789] nc4_ili9488: Unknown symbol drm_gem_dma_prime_import_sg_table_vmap (err -2)
+[ 1963.086351] OF: resolver: node label 'spidev1_0' not found in live devicetree symbols table
+[ 1963.086376] OF: resolver: overlay phandle fixup failed: -22
+[ 3277.626822] OF: resolver: node label 'spidev1_0' not found in live devicetree symbols table
+[ 3277.626843] OF: resolver: overlay phandle fixup failed: -22
+[ 4199.251172] OF: resolver: node label 'spidev2' not found in live devicetree symbols table
+[ 4199.251189] OF: resolver: overlay phandle fixup failed: -22
+[ 4290.783197] OF: resolver: node label 'spidev2' not found in live devicetree symbols table
+[ 4290.783211] OF: resolver: overlay phandle fixup failed: -22
+[ 4580.561749] OF: overlay: WARNING: memory leak will occur if overlay removed, property: /soc/spi@7e215080/status
+[ 4580.565189] spi-bcm2835aux fe215080.spi: chipselect 0 already in use
+[ 4580.565202] spi_master spi1: spi_device register error /soc/spi@7e215080/pitft0@0
+[ 4580.565221] of_spi_notify: failed to create for '/soc/spi@7e215080/pitft0@0'
+[ 4580.565234] OF: changeset notifier error @/soc/spi@7e215080/pitft0@0
+[ 4580.565267] spi-bcm2835aux fe215080.spi: chipselect 1 already in use
+[ 4580.565273] spi_master spi1: spi_device register error /soc/spi@7e215080/pitft1@1
+[ 4580.565288] of_spi_notify: failed to create for '/soc/spi@7e215080/pitft1@1'
+[ 4580.565300] OF: changeset notifier error @/soc/spi@7e215080/pitft1@1
+[ 4580.565330] spi-bcm2835aux fe215080.spi: chipselect 2 already in use
+[ 4580.565336] spi_master spi1: spi_device register error /soc/spi@7e215080/pitft2@2
+[ 4580.565349] of_spi_notify: failed to create for '/soc/spi@7e215080/pitft2@2'
+[ 4580.565361] OF: changeset notifier error @/soc/spi@7e215080/pitft2@2
+[ 4580.565755] OF: overlay: overlay apply changeset entry notify error -16
+[ 5059.748788] OF: resolver: node label 'spidev1_1' not found in live devicetree symbols table
+[ 5059.748812] OF: resolver: overlay phandle fixup failed: -22
+[ 5092.754014] OF: resolver: node label 'spidev1_2' not found in live devicetree symbols table
+[ 5092.754038] OF: resolver: overlay phandle fixup failed: -22
