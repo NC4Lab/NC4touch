@@ -94,5 +94,28 @@ else
 fi
 echo >> "$OUTPUT_FILE"
 
+# Runtime overlay application
+echo "=== Runtime Overlay Application Logs ===" >> "$OUTPUT_FILE"
+echo "Applying spi1-3cs overlay:" >> "$OUTPUT_FILE"
+sudo dtoverlay spi1-3cs >> "$OUTPUT_FILE" 2>&1
+echo "Applying nc4_ili9488 overlay:" >> "$OUTPUT_FILE"
+sudo dtoverlay nc4_ili9488 >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
+# Verify runtime overlays in live Device Tree
+echo "=== Verifying Runtime Overlays in Device Tree ===" >> "$OUTPUT_FILE"
+if grep -q "spi1-3cs" "$DTS_FILE"; then
+  echo "spi1-3cs overlay is active in runtime device tree." >> "$OUTPUT_FILE"
+else
+  echo "spi1-3cs overlay is missing from the runtime device tree." >> "$OUTPUT_FILE"
+fi
+
+if grep -q "nc4_ili9488" "$DTS_FILE"; then
+  echo "nc4_ili9488 overlay is active in runtime device tree." >> "$OUTPUT_FILE"
+else
+  echo "nc4_ili9488 overlay is missing from the runtime device tree." >> "$OUTPUT_FILE"
+fi
+echo >> "$OUTPUT_FILE"
+
 # Summary of results
 echo "Debug information saved to: $OUTPUT_FILE"
