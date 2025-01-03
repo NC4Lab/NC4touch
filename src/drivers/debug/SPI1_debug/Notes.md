@@ -8,7 +8,6 @@ sudo dtoverlay nc4_ili9488
 dmesg | grep -i "overlay\|dtdebug\|spi\|ili9488" > /home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_debug/dmesg_overlay.txt
 
 
-
 # Decompile a Device Tree Blob (.dtbo) file back into a Device Tree Source (.dts) file for inspection
 sudo dtc -I dtb -O dts -o /home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_debug/nc4_ili9488_decompiled.dts /boot/firmware/overlays/nc4_ili9488.dtbo
 
@@ -17,3 +16,7 @@ sudo dtc -I dtb -O dts -o /home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_
 
 # Delete dtbo
 sudo rm /boot/firmware/overlays/nc4_ili9488.dtbo
+
+
+# Decompile base DT
+sudo dtc -I fs -O dts -o /home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_debug/nc4_ili9488_decompiled.dts /proc/device-tree
