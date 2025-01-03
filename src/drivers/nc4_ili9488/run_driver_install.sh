@@ -21,8 +21,8 @@ dtc -@ -I dts -O dtb -o nc4_ili9488.dtbo nc4_ili9488.dts
 # Verbose
 #dtc -@ -I dts -O dtb -o nc4_ili9488.dtbo nc4_ili9488.dts -v
 
-echo "Copying nc4_ili9488.dtbo to $OVERLAY_TARGET"
-sudo cp nc4_ili9488.dtbo "$OVERLAY_TARGET"
+echo "Copying nc4_ili9488.dtbo to /boot/firmware/overlays/nc4_ili9488.dtbo"
+sudo cp nc4_ili9488.dtbo "/boot/firmware/overlays/nc4_ili9488.dtbo"
 
 echo "==== Building the nc4_ili9488 Kernel Module ===="
 # Build the kernel module
