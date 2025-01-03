@@ -2,7 +2,7 @@
 
 # Define the output directory and file
 OUTPUT_DIR="/home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_debug"
-OUTPUT_FILE="$OUTPUT_DIR/spi1-3cs_debug_1.log"
+OUTPUT_FILE="$OUTPUT_DIR/spi1-3cs_debug.log"
 
 # Ensure the output directory exists
 if [ ! -d "$OUTPUT_DIR" ]; then
@@ -20,11 +20,17 @@ echo "=== Kernel Logs: Overlay Loading Errors ===" >> "$OUTPUT_FILE"
 dmesg | grep -i "overlay\|dtdebug\|spi\|ili9488" >> "$OUTPUT_FILE" 2>&1
 echo >> "$OUTPUT_FILE"
 
+# Capture full dmesg logs for comprehensive review
+echo "=== Full Kernel Logs ===" >> "$OUTPUT_FILE"
+dmesg >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
 # Decompile live Device Tree
 echo "=== Decompiled Device Tree ===" >> "$OUTPUT_FILE"
-sudo dtc -I fs -O dts -o "$OUTPUT_DIR/live_device_tree.dts" /proc/device-tree
-if [ -f "$OUTPUT_DIR/live_device_tree.dts" ]; then
-  echo "Decompiled device tree saved to: $OUTPUT_DIR/live_device_tree.dts" >> "$OUTPUT_FILE"
+DTS_FILE="$OUTPUT_DIR/live_device_tree.dts"
+sudo dtc -I fs -O dts -o "$DTS_FILE" /proc/device-tree
+if [ -f "$DTS_FILE" ]; then
+  echo "Decompiled device tree saved to: $DTS_FILE" >> "$OUTPUT_FILE"
 else
   echo "Failed to decompile live device tree." >> "$OUTPUT_FILE"
 fi
@@ -32,17 +38,31 @@ echo >> "$OUTPUT_FILE"
 
 # Check for SPI nodes in the live Device Tree
 echo "=== SPI Nodes in Live Device Tree ===" >> "$OUTPUT_FILE"
-grep -E "spidev|spi" "$OUTPUT_DIR/live_device_tree.dts" >> "$OUTPUT_FILE" 2>&1
+grep -E "spidev|spi" "$DTS_FILE" >> "$OUTPUT_FILE" 2>&1
 echo >> "$OUTPUT_FILE"
 
 # Extract specific spidev references
 echo "=== Specific Spidev References in Live Device Tree ===" >> "$OUTPUT_FILE"
-grep -A 5 -B 5 "spidev@" "$OUTPUT_DIR/live_device_tree.dts" >> "$OUTPUT_FILE" 2>&1
+grep -A 5 -B 5 "spidev@" "$DTS_FILE" >> "$OUTPUT_FILE" 2>&1
 echo >> "$OUTPUT_FILE"
 
 # Extract symbolic links for spidev
 echo "=== Symbolic Links for Spidev Nodes ===" >> "$OUTPUT_FILE"
-grep -i "spidev" "$OUTPUT_DIR/live_device_tree.dts" | grep "=" >> "$OUTPUT_FILE" 2>&1
+grep -i "spidev" "$DTS_FILE" | grep "=" >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
+# Verify if both overlays are loaded at boot
+echo "=== Verifying Boot-Time Overlays ===" >> "$OUTPUT_FILE"
+if grep -q "spi1-3cs" "$DTS_FILE"; then
+  echo "spi1-3cs overlay is successfully loaded." >> "$OUTPUT_FILE"
+else
+  echo "spi1-3cs overlay is missing in the device tree." >> "$OUTPUT_FILE"
+fi
+if grep -q "nc4_ili9488" "$DTS_FILE"; then
+  echo "nc4_ili9488 overlay is successfully loaded." >> "$OUTPUT_FILE"
+else
+  echo "nc4_ili9488 overlay is missing in the device tree." >> "$OUTPUT_FILE"
+fi
 echo >> "$OUTPUT_FILE"
 
 # Check GPIO configurations
