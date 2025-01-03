@@ -352,30 +352,50 @@ sudo grep -rli "nc4_ili9488" / 2>/dev/null
 sudo grep -rli "nc4_ili9488" /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/ 2>/dev/null
 ```
 
-
-
 # Pin Mapping  
 
+## Online resource
+```
+https://pinout.xyz/pinout/
+```
 ## SPI0 Pin Mapping
 
-| **Signal** | **GPIO Pin** | **Physical Pin** |
-|------------|--------------|------------------|
-| MOSI       | GPIO 10      | Pin 19           |
-| MISO       | GPIO 9       | Pin 21           |
-| SCLK       | GPIO 11      | Pin 23           |
-| CE0        | GPIO 8       | Pin 24           |
-| CE1        | GPIO 7       | Pin 26           |
+| **Signal** | **Physical Pin** | **GPIO Pin** |
+|------------|------------------|--------------|
+| MOSI       | Pin 19           | GPIO 10      |
+| MISO       | Pin 21           | GPIO 9       |
+| SCLK       | Pin 23           | GPIO 11      |
+| CE0        | Pin 24           | GPIO 8       |
+| CE1        | Pin 26           | GPIO 7       |
 
 ## SPI1 Pin Mapping
 
-| **Signal** | **GPIO Pin** | **Physical Pin** |
-|------------|--------------|------------------|
-| MOSI       | GPIO 20      | Pin 38           |
-| MISO       | GPIO 19      | Pin 35           |
-| SCLK       | GPIO 21      | Pin 40           |
-| CE0        | GPIO 18      | Pin 12           |
-| CE1        | GPIO 17      | Pin 11           |
-| CE2        | GPIO 16      | Pin 36           |
+| **Signal** | **Physical Pin** | **GPIO Pin** |
+|------------|------------------|--------------|
+| MOSI       | Pin 38           | GPIO 20      |
+| MISO       | Pin 35           | GPIO 19      |
+| SCLK       | Pin 40           | GPIO 21      |
+| CE0        | Pin 12           | GPIO 18      |
+| CE1        | Pin 11           | GPIO 17      |
+| CE2        | Pin 36           | GPIO 16      |
+
+## Hardware I²C Buses
+
+| **Bus** | **Signal** | **Physical Pin(s)** | **GPIO Pin(s)** | **Description**                                                                                   |
+|---------|------------|---------------------|-----------------|---------------------------------------------------------------------------------------------------|
+| I²C0    | SDA        | Pin 27              | GPIO0           | Primarily used for HAT EEPROM identification; not recommended for general use.                    |
+|         | SCL        | Pin 28              | GPIO1           |                                                                                                   |
+| I²C1    | SDA        | Pin 3               | GPIO2           | Default I²C bus; includes fixed 1.8 kΩ pull-up resistors to 3.3V.                                 |
+|         | SCL        | Pin 5               | GPIO3           |                                                                                                   |
+| I²C3    | SDA        | Pin 7               | GPIO4           | Additional hardware I²C bus; can be enabled via Device Tree overlay.                              |
+|         | SCL        | Pin 29              | GPIO5           |                                                                                                   |
+| I²C4    | SDA        | Pin 31              | GPIO6           | Another hardware I²C bus; configurable through Device Tree overlay.                               |
+|         | SCL        | Pin 32              | GPIO7           |                                                                                                   |
+| I²C5    | SDA        | Pin 24              | GPIO8           | Shares pins with SPI0; ensure no conflicts when using this bus.                                   |
+|         | SCL        | Pin 21              | GPIO9           |                                                                                                   |
+| I²C6    | SDA        | Pin 19              | GPIO10          | Shares pins with SPI0; use with caution to avoid conflicts.                                       |
+|         | SCL        | Pin 23              | GPIO11          |                                                                                                   |
+
 
 ## New Mapping
 
@@ -394,8 +414,30 @@ sudo grep -rli "nc4_ili9488" /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9
 |              | DC              | Pin 13           | GPIO 27         |                       | LCD_1 Data/Command signal       |
 |              | RES             | Pin 16           | GPIO 23         |                       | LCD_1 Reset signal              |
 | **LCD_2**    | CS              | Pin 36           | GPIO 16         | CE2                   | LCD_2 SPI1 Chip Select           |
-|              | DC              | Pin 29           | GPIO 5          |                       | LCD_2 Data/Command signal       |
-|              | RES             | Pin 31           | GPIO 6          |                       | LCD_2 Reset signal              |
+|              | DC              | Pin 32           | GPIO 12         |                       | LCD_2 Data/Command signal       |
+|              | RES             | Pin 33           | GPIO 13         |                       | LCD_2 Reset signal              |
+
+### I2C
+| **LCD**      | **LCD Pin**     | **Pi Header Pin** | **Pi BCM GPIO** | **Pi Label** | **Description**                    |
+|--------------|-----------------|-------------------|-----------------|--------------|------------------------------------|
+| **LCD_0**    | SDA             | Pin 3             | GPIO2           | SDA          | LCD_0 I²C data for touch (I²C1)    |
+|              | SCL             | Pin 5             | GPIO3           | SCL          | LCD_0 I²C clock for touch (I²C1)   |
+| **LCD_1**    | SDA             | Pin 7             | GPIO4           | SDA          | LCD_1 I²C data for touch (I²C3)    |
+|              | SCL             | Pin 29            | GPIO5           | SCL          | LCD_1 I²C clock for touch (I²C3)   |
+| **LCD_2**    | SDA             | Pin 31            | GPIO6           | SDA          | LCD_2 I²C data for touch (I²C4)    |
+|              | SCL             | Pin 32            | GPIO7           | SCL          | LCD_2 I²C clock for touch (I²C4)   |
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## Old Mapping
@@ -417,12 +459,5 @@ sudo grep -rli "nc4_ili9488" /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9
 |              | DC              | Pin 29           | GPIO 5          |                       | LCD_2 Data/Command signal       |
 |              | RES             | Pin 31           | GPIO 6          |                       | LCD_2 Reset signal              |
 
-### I2C
-| **LCD**      | **LCD Pin**     | **Pi Header Pin** | **Pi BCM GPIO** | **Pi Label** | **Description**      |
-|--------------|-----------------|-------------------|-----------------|--------------|----------------------|
-| **LCD_0**    | SDA             | undecided         | undecided       | SDA          | LCD_0 I2C data for touch |
-|              | SCL             | undecided         | undecided       | SCL          | LCD_0 I2C clock for touch |
-| **LCD_1**    | SDA             | undecided         | undecided       | SDA          | LCD_1 I2C data for touch |
-|              | SCL             | undecided         | undecided       | SCL          | LCD_1 I2C clock for touch |
-| **LCD_2**    | SDA             | undecided         | undecided       | SDA          | LCD_2 I2C data for touch |
-|              | SCL             | undecided         | undecided       | SCL          | LCD_2 I2C clock for touch |
+
+
