@@ -41,7 +41,7 @@ status
 -----------------------------------------------------------
 
 Checking kernel logs for overlay application:
-Overlay is logged in kernel messages.
+!!ERROR!!: Overlay not found in kernel messages. Check the logs for issues.
 
 Verifying overlay references in config.txt:
 Overlay is referenced in config.txt.
