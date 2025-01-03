@@ -30,7 +30,7 @@
 	 * Disable spidev1.0 (SPI1, CS0)
 	 ****************************************************************************/
 	fragment@1 {
-		target = <&spidev1_0>;
+		target = <&spidev1.0>;
 		__overlay__ {
 			status = "disabled";
 		};
@@ -40,7 +40,7 @@
 	 * Disable spidev1.1 (SPI1, CS1)
 	 ****************************************************************************/
 	fragment@2 {
-		target = <&spidev1_1>;
+		target = <&spidev1.1>;
 		__overlay__ {
 			status = "disabled";
 		};
@@ -50,7 +50,7 @@
 	 * Disable spidev1.2 (SPI1, CS2)
 	 ****************************************************************************/
 	fragment@3 {
-		target = <&spidev1_2>;
+		target = <&spidev1.2>;
 		__overlay__ {
 			status = "disabled";
 		};
