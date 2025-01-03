@@ -2,7 +2,7 @@
 
 # Define the output directory and file
 OUTPUT_DIR="/home/nc4/TouchscreenApparatus/src/drivers/debug/SPI1_debug"
-OUTPUT_FILE="$OUTPUT_DIR/spi1_debug_2.log"
+OUTPUT_FILE="$OUTPUT_DIR/nc4_ili9488_db_2.log"
 
 # Ensure the output directory exists
 if [ ! -d "$OUTPUT_DIR" ]; then
