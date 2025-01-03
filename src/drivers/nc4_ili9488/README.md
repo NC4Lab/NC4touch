@@ -406,16 +406,16 @@ https://pinout.xyz/pinout/
 |              | GND             | Pin 6 or Pin 9    | N/A             | GND                   | Shared Ground                   |
 |              | MOSI            | Pin 38           | GPIO 20         | MOSI                  | Shared SPI1 data                 |
 |              | SCLK            | Pin 40           | GPIO 21         | SCLK                  | Shared SPI1 clock                |
-|              | Backlight       | Pin 15           | GPIO 22         |                       | Shared Backlight control        |
+|              | Backlight       | Pin 13           | GPIO 27         |                       | Shared Backlight control        |
 | **LCD_0**    | CS              | Pin 12           | GPIO 18         | CE0                   | LCD_0 SPI1 Chip Select           |
-|              | DC              | Pin 22           | GPIO 25         |                       | LCD_0 Data/Command signal       |
-|              | RES             | Pin 18           | GPIO 24         |                       | LCD_0 Reset signal              |
+|              | RES             | Pin 22           | GPIO 25         |                       | LCD_0 Reset signal              |
+|              | DC              | Pin 18           | GPIO 24         |                       | LCD_0 Data/Command signal       |
 | **LCD_1**    | CS              | Pin 11           | GPIO 17         | CE1                   | LCD_1 SPI1 Chip Select           |
-|              | DC              | Pin 13           | GPIO 27         |                       | LCD_1 Data/Command signal       |
 |              | RES             | Pin 16           | GPIO 23         |                       | LCD_1 Reset signal              |
+|              | DC              | Pin 15           | GPIO 22         |                       | LCD_1 Data/Command signal       |
 | **LCD_2**    | CS              | Pin 36           | GPIO 16         | CE2                   | LCD_2 SPI1 Chip Select           |
-|              | DC              | Pin 32           | GPIO 12         |                       | LCD_2 Data/Command signal       |
 |              | RES             | Pin 33           | GPIO 13         |                       | LCD_2 Reset signal              |
+|              | DC              | Pin 32           | GPIO 12         |                       | LCD_2 Data/Command signal       |
 
 ### I2C
 | **LCD**      | **LCD Pin**     | **Pi Header Pin** | **Pi BCM GPIO** | **Pi Label** | **Description**                    |
