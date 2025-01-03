@@ -1,5 +1,24 @@
 === SPI1 Debugging Logs ===
-Timestamp: Fri  3 Jan 13:34:24 PST 2025
+Timestamp: Fri  3 Jan 13:43:07 PST 2025
+
+=== Active Commands in config.txt ===
+dtparam=spi=on
+dtparam=audio=on
+camera_auto_detect=1
+display_auto_detect=1
+auto_initramfs=1
+max_framebuffers=2
+arm_64bit=1
+disable_overscan=1
+arm_boost=1
+[cm4]
+otg_mode=1
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+[all]
+dtoverlay=spi1-3cs
+dtoverlay=nc4_ili9488
+dtdebug=on
 
 === Kernel Logs: Overlay Loading Errors ===
 

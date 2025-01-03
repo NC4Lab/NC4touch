@@ -15,6 +15,17 @@ echo "=== SPI1 Debugging Logs ===" > "$OUTPUT_FILE"
 echo "Timestamp: $(date)" >> "$OUTPUT_FILE"
 echo >> "$OUTPUT_FILE"
 
+# List active (non-commented) lines in config.txt
+echo "=== Active Commands in config.txt ===" >> "$OUTPUT_FILE"
+CONFIG_FILE="/boot/firmware/config.txt"
+
+if [ -f "$CONFIG_FILE" ]; then
+  grep -E '^[^#]' "$CONFIG_FILE" >> "$OUTPUT_FILE"
+else
+  echo "$CONFIG_FILE not found. Cannot list active commands." >> "$OUTPUT_FILE"
+fi
+echo >> "$OUTPUT_FILE"
+
 # Check kernel logs for overlay application errors
 echo "=== Kernel Logs: Overlay Loading Errors ===" >> "$OUTPUT_FILE"
 dmesg | grep -i "overlay\|dtdebug\|spi\|ili9488" >> "$OUTPUT_FILE" 2>&1
