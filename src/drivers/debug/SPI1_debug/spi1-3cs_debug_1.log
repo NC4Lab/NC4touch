@@ -1,5 +1,5 @@
 === SPI1 Debugging Logs ===
-Timestamp: Fri  3 Jan 13:10:03 PST 2025
+Timestamp: Fri  3 Jan 13:20:04 PST 2025
 
 === Kernel Logs: Overlay Loading Errors ===
 
@@ -108,6 +108,93 @@ Decompiled device tree saved to: /home/nc4/TouchscreenApparatus/src/drivers/debu
 		spi_dma4 = <0x46 0x646d6173 0x3a303d00 0x2e 0x46 0x646d6173 0x3a383d00 0x2e>;
 		spi = "\0\0\0Fstatus";
 
+=== Specific Spidev References in Live Device Tree ===
+			status = "okay";
+			reg = <0x7e215080 0x40>;
+			phandle = <0xc1>;
+			cs-gpios = <0x07 0x12 0x01 0x07 0x11 0x01 0x07 0x10 0x01>;
+
+			spidev@2 {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				spi-max-frequency = <0x7735940>;
+				compatible = "spidev";
+				status = "okay";
+				reg = <0x02>;
+				phandle = <0xf8>;
+			};
+
+			spidev@0 {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				spi-max-frequency = <0x7735940>;
+				compatible = "spidev";
+				status = "okay";
+				reg = <0x00>;
+				phandle = <0xf6>;
+			};
+
+			spidev@1 {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				spi-max-frequency = <0x7735940>;
+				compatible = "spidev";
+				status = "okay";
+--
+			reg = <0x7e204000 0x200>;
+			phandle = <0x46>;
+			dmas = <0x0c 0x06 0x0c 0x07>;
+			cs-gpios = <0x07 0x08 0x01 0x07 0x07 0x01>;
+
+			spidev@0 {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				spi-max-frequency = <0x7735940>;
+				compatible = "spidev";
+				reg = <0x00>;
+				phandle = <0xbe>;
+			};
+
+			spidev@1 {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				spi-max-frequency = <0x7735940>;
+				compatible = "spidev";
+				reg = <0x01>;
+--
+		vchiq = "/soc/mailbox@7e00b840";
+		uart1_ctsrts_gpio16 = "/soc/gpio@7e200000/uart1-ctsrts-gpio16";
+		i2c3_gpio4 = "/soc/gpio@7e200000/i2c3-gpio4";
+		gpclk1_gpio44 = "/soc/gpio@7e200000/gpclk1-gpio44";
+		smi = "/soc/smi@7e600000";
+		spidev1 = "/soc/spi@7e204000/spidev@1";
+		i2c4_pins = "/soc/gpio@7e200000/i2c4";
+		clk_27MHz = "/clk-27M";
+		uart5_gpio12 = "/soc/gpio@7e200000/uart5-gpio12";
+		i2c6_gpio0 = "/soc/gpio@7e200000/i2c6-gpio0";
+		sdhci = "/soc/mmc@7e300000";
+--
+		led_act = "/leds/led-act";
+		emmc2bus = "/emmc2bus";
+		gpclk2_gpio6 = "/soc/gpio@7e200000/gpclk2-gpio6";
+		aliases = "/aliases";
+		uart0_ctsrts_gpio16 = "/soc/gpio@7e200000/uart0-ctsrts-gpio16";
+		spidev0 = "/soc/spi@7e204000/spidev@0";
+		gicv2 = "/soc/interrupt-controller@40041000";
+		sound = "/soc/sound";
+		uart5 = "/soc/serial@7e201a00";
+		firmware = "/soc/firmware";
+		dpi_18bit_gpio0 = "/soc/gpio@7e200000/dpi_18bit_gpio0";
+
+=== Symbolic Links for Spidev Nodes ===
+				compatible = "spidev";
+				compatible = "spidev";
+				compatible = "spidev";
+				compatible = "spidev";
+				compatible = "spidev";
+		spidev1 = "/soc/spi@7e204000/spidev@1";
+		spidev0 = "/soc/spi@7e204000/spidev@0";
+
 === GPIO States ===
 BANK0 (GPIO 0 to 27):
 GPIO 0: level=1 func=INPUT pull=UP
@@ -145,7 +232,7 @@ GPIO 30: level=0 alt=3 func=CTS0 pull=UP
 GPIO 31: level=0 alt=3 func=RTS0 pull=NONE
 GPIO 32: level=1 alt=3 func=TXD0 pull=NONE
 GPIO 33: level=1 alt=3 func=RXD0 pull=UP
-GPIO 34: level=0 alt=3 func=SD1_CLK pull=NONE
+GPIO 34: level=1 alt=3 func=SD1_CLK pull=NONE
 GPIO 35: level=1 alt=3 func=SD1_CMD pull=UP
 GPIO 36: level=1 alt=3 func=SD1_DAT0 pull=UP
 GPIO 37: level=1 alt=3 func=SD1_DAT1 pull=UP

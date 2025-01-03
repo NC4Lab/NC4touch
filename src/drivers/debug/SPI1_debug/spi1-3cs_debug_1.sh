@@ -35,6 +35,16 @@ echo "=== SPI Nodes in Live Device Tree ===" >> "$OUTPUT_FILE"
 grep -E "spidev|spi" "$OUTPUT_DIR/live_device_tree.dts" >> "$OUTPUT_FILE" 2>&1
 echo >> "$OUTPUT_FILE"
 
+# Extract specific spidev references
+echo "=== Specific Spidev References in Live Device Tree ===" >> "$OUTPUT_FILE"
+grep -A 5 -B 5 "spidev@" "$OUTPUT_DIR/live_device_tree.dts" >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
+# Extract symbolic links for spidev
+echo "=== Symbolic Links for Spidev Nodes ===" >> "$OUTPUT_FILE"
+grep -i "spidev" "$OUTPUT_DIR/live_device_tree.dts" | grep "=" >> "$OUTPUT_FILE" 2>&1
+echo >> "$OUTPUT_FILE"
+
 # Check GPIO configurations
 echo "=== GPIO States ===" >> "$OUTPUT_FILE"
 if command -v raspi-gpio &> /dev/null; then
