@@ -33,7 +33,7 @@
 
 [Unit]
 # Description of the service
-Description=Load nc4_ili9488 Overlay and Initialize Displays
+Description=Initialize DRM Services
 
 # Ensure service runs after system reaches multi-user target (normal boot level, no graphic interface) and DRM devices are available.
 After=multi-user.target dev-dri-card1.device
@@ -42,11 +42,11 @@ After=multi-user.target dev-dri-card1.device
 # This is a one-time task, so we use "oneshot"
 Type=oneshot
 
+# # Command to load the overlay
+# ExecStart=/usr/bin/dtoverlay nc4_ili9488
+
 # Command to initialize displays
 ExecStart=/home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/drm_init_utility/drm_init_utility
-
-# Command to load the overlay
-ExecStart=/usr/bin/dtoverlay nc4_ili9488
 
 # Ensures the service is considered active even after it has executed the commands
 RemainAfterExit=yes
