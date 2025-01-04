@@ -50,6 +50,7 @@
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "kbuild": "cpp"
+        "kbuild": "cpp",
+        "*.service": "systemd"
     }
 }
