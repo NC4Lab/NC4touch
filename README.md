@@ -1,3 +1,202 @@
+# Raspberry Pi Project Setup: Required Packages and Verification
+
+This document outlines the required packages for your Raspberry Pi project, organized into logical groups. Each section includes installation commands, confirmation steps, and optional cleanup.
+
+---
+
+## **1. Core Development Tools**
+### **Install**:
+```bash
+sudo apt-get install build-essential git bc bison flex libssl-dev -y
+```
+
+### **Purpose**:
+- **`build-essential`**: Provides GCC, `make`, and other essential build tools.
+- **`git`**: Source code management and cloning repositories.
+- **`bc`, `bison`, `flex`**: Often required for building kernels and modules.
+- **`libssl-dev`**: Provides SSL development libraries.
+
+### **Confirm**:
+1. **Check Tools**:
+   ```bash
+   gcc --version     # Confirms GCC is installed
+   make --version    # Confirms `make` is installed
+   git --version     # Confirms `git` is installed
+   ```
+2. **Check Libraries**:
+   Look for `libssl-dev`:
+   ```bash
+   dpkg -l | grep libssl-dev
+   ```
+
+---
+
+## **2. Kernel Headers and Device Tree**
+### **Install**:
+```bash
+sudo apt-get install raspberrypi-kernel-headers device-tree-compiler -y
+```
+
+### **Purpose**:
+- **`raspberrypi-kernel-headers`**: Required for building kernel modules.
+- **`device-tree-compiler`**: Compiles `.dts` files into `.dtbo` overlays for display configuration.
+
+### **Confirm**:
+1. **Check Kernel Headers**:
+   ```bash
+   ls /lib/modules/$(uname -r)/build
+   ```
+   - If this directory exists, the kernel headers are installed correctly.
+2. **Check Device Tree Compiler**:
+   ```bash
+   dtc --version
+   ```
+   - Confirms `dtc` is installed.
+
+---
+
+## **3. DRM Development and Testing**
+### **Install**:
+```bash
+sudo apt-get install libdrm-dev libdrm-tests kmscube drm-info -y
+```
+
+### **Purpose**:
+- **`libdrm-dev`**: Development libraries for interacting with the Direct Rendering Manager (DRM).
+- **`libdrm-tests`**: Tools for debugging DRM resources.
+- **`kmscube`**: Tests KMS (Kernel Mode Setting) functionality.
+- **`drm-info`**: Provides detailed DRM resource information.
+
+### **Confirm**:
+1. **Check Development Libraries**:
+   ```bash
+   dpkg -l | grep libdrm-dev
+   ```
+2. **Test DRM Tools**:
+   - Run `kmscube`:
+     ```bash
+     kmscube
+     ```
+     - Tests KMS and DRM pipeline functionality.
+   - Check DRM info:
+     ```bash
+     drm-info
+     ```
+
+---
+
+## **4. Framebuffer Tools**
+### **Install**:
+```bash
+sudo apt-get install fbi -y
+```
+
+### **Purpose**:
+- **`fbi`**: A framebuffer image viewer for testing display configurations.
+
+### **Confirm**:
+1. **Test Framebuffer Devices**:
+   - Display an image on the framebuffer:
+     ```bash
+     sudo fbi -d /dev/fb0 -T 1 /path/to/test-image.jpg
+     ```
+     - Replace `/path/to/test-image.jpg` with an actual image file.
+
+---
+
+## **5. Optional Tools**
+
+### **Install Micro Text Editor**:
+```bash
+sudo apt install micro -y
+```
+
+### **Purpose**:
+- **`micro`**: A lightweight and user-friendly text editor, useful for editing configuration files like `config.txt` or `.json` settings.
+
+### **Confirm**:
+- Open the editor:
+  ```bash
+  micro --version
+  ```
+- Configure settings (optional):
+  ```bash
+  micro ~/.config/micro/settings.json
+  ```
+
+### **Install Python for Scripting**:
+```bash
+sudo apt-get install python3 python3-pip -y
+```
+
+### **Purpose**:
+- **`python3`**: Provides Python 3 for scripting and development tasks.
+- **`python3-pip`**: Allows installing Python packages via `pip`.
+
+### **Confirm**:
+1. **Check Python Version**:
+   ```bash
+   python3 --version
+   ```
+2. **Test Pip**:
+   ```bash
+   pip3 --version
+   ```
+
+### **Install DKMS**:
+```bash
+sudo apt-get install dkms -y
+```
+
+### **Purpose**:
+- **`dkms`**: Automates building and installing kernel modules, useful for maintaining module compatibility during kernel upgrades.
+
+### **Confirm**:
+- Check DKMS status:
+  ```bash
+  dkms status
+  ```
+
+### **Install Logging and Monitoring Tools**:
+```bash
+sudo apt-get install htop -y
+```
+
+### **Purpose**:
+- **`htop`**: A terminal-based system monitor to observe CPU, memory, and processes.
+
+### **Confirm**:
+- Run `htop`:
+  ```bash
+  htop
+  ```
+
+---
+
+## **Optional Final Check**
+After completing all installations, confirm that all packages are installed:
+```bash
+dpkg -l | grep -E "build-essential|git|bc|bison|flex|libssl-dev|raspberrypi-kernel-headers|device-tree-compiler|libdrm-dev|libdrm-tests|kmscube|drm-info|fbi|micro|python3|pip3|dkms|htop"
+```
+
+---
+
+## **Expected Results**
+1. Each installation command completes without errors.
+2. Confirmation commands verify the tools and libraries are available.
+3. Optional cleanup removes unnecessary packages:
+   ```bash
+   sudo apt autoremove
+   ```
+
+## **Update and Restsart**   
+   ```
+   sudo apt update && sudo apt upgrade -y
+   ```
+   ```
+   sudo reboot
+   ```
+
 # Setting Up Raspberry Pi OS with SSH and VS Code Remote Development
 
 ## Install Raspberry Pi OS
