@@ -13,15 +13,11 @@
 #
 # Logging:
 # - Outputs results to both the console and a log file in the
-#   logs directory (`install_validation.log`).
+#   logs directory.
 #
 # Prerequisites:
 # - Ensure `config.env` is correctly set up.
 # - Requires permissions for `dmesg`, `lsmod`, `insmod`, etc.
-#
-# Usage:
-# Run this script from the `scripts` directory:
-#   ./validate_install.sh
 # ==========================================================
 
 set -e
@@ -30,9 +26,10 @@ set -e
 source /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/config.env
 
 # Configuration variables
+DRIVER_NAME="nc4_ili9488"
 OVERLAY_DTBO="/boot/firmware/overlays/${OVERLAY_NAME}.dtbo"
 DRIVER_PATH="/lib/modules/$(uname -r)/extra/${DRIVER_NAME}.ko"
-LOG_FILE="${LOGS_DIR}/install_validation.log"
+LOG_FILE="${LOGS_DIR}/dbverify_nc4_ili9488.log"
 
 # Ensure log directory exists
 mkdir -p "$LOGS_DIR"
@@ -58,7 +55,7 @@ if [ -f "$OVERLAY_DTBO" ]; then
     echo "Overlay file found: $OVERLAY_DTBO"
 else
     echo "!!ERROR!!: Overlay file not found: $OVERLAY_DTBO" >&2
-    #exit 1
+    exit 1
 fi
 
 # Capture and filter dtc warnings from the live device tree
@@ -145,7 +142,7 @@ if [ -f "$DRIVER_PATH" ]; then
     echo "Driver file found: $DRIVER_PATH"
 else
     echo "!!ERROR!!: Driver file not found: $DRIVER_PATH" >&2
-    #exit 1
+    exit 1
 fi
 
 # Check if the module is loaded
@@ -160,7 +157,7 @@ else
         echo "Driver module loaded successfully."
     else
         echo "!!ERROR!!: Failed to load the driver module." >&2
-        #exit 1
+        exit 1
     fi
 fi
 

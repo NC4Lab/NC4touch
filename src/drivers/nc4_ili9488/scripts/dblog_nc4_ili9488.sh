@@ -1,15 +1,15 @@
 #!/bin/bash
 # ==========================================================
-# Journalctl Log Capture for nc4_drm_init_util
+# DRM KMS Debugging Script for nc4_ili9488
 # ----------------------------------------------------------
-# This script captures journalctl logs related to the
-# nc4_drm_init_util utility and saves them in a log file
-# within the configured logs directory.
+# This script enables DRM KMS debug logging, captures logs
+# specific to the nc4_ili9488 driver, and saves them to a
+# log file in the configured logs directory.
 # ----------------------------------------------------------
 # Prerequisites:
 # - Ensure the config.env file is set up correctly.
-# - Run this script with sufficient permissions if required
-#   to access journalctl (e.g., via sudo).
+# - Run this script with sufficient permissions to modify
+#   kernel parameters (e.g., via sudo).
 # ==========================================================
 
 set -e
@@ -18,7 +18,8 @@ set -e
 source /home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/config.env
 
 # Configuration variables
-LOG_FILE="$LOGS_DIR/nc4_drm_init_util_debug.log"
+DRIVER_NAME="nc4_ili9488"
+LOG_FILE="$LOGS_DIR/dblog_nc4_ili9488.log"
 
 # Ensure the log directory exists
 mkdir -p "$LOGS_DIR"
@@ -30,20 +31,24 @@ mkdir -p "$LOGS_DIR"
 echo "Cleaning up journalctl logs older than one day..."
 sudo journalctl --vacuum-time=1d
 
-# Capture journalctl logs for the nc4_drm_init_util utility
-echo "Capturing journalctl logs for nc4_drm_init_util..."
-sudo journalctl | grep "nc4_drm_init_util" > "$LOG_FILE"
+# Capture logs related to the driver
+echo "Capturing logs for $DRIVER_NAME..."
+if ! dmesg | grep "$DRIVER_NAME" > "$LOG_FILE"; then
+    echo "!!ERROR!!: Failed to capture logs from dmesg." >&2
+    exit 1
+fi
 
 # Print a summary to the console
 if [[ -s "$LOG_FILE" ]]; then
     log_count=$(wc -l < "$LOG_FILE")
-    echo "Logs for nc4_drm_init_util saved to $LOG_FILE."
+    echo "Logs for nc4_ili9488 saved to $LOG_FILE."
     echo "Number of matching log entries: $log_count"
     echo "Last 10 entries:"
     tail -n 10 "$LOG_FILE"
 else
-    echo "No logs found for nc4_drm_init_util. Log file created but is empty."
+    echo "No logs found for nc4_ili9488. Log file created but is empty."
 fi
 
 # Done
-echo "Log capture complete. Logs are stored in $LOG_FILE."
+echo "Logging complete. Logs are saved in $LOG_FILE."
+
