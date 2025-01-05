@@ -33,7 +33,10 @@ sudo journalctl --vacuum-time=1d
 
 # Capture logs related to the driver
 echo "Capturing logs for $DRIVER_NAME..."
-dmesg | grep "$DRIVER_NAME" > "$LOG_FILE"
+if ! dmesg | grep "$DRIVER_NAME" > "$LOG_FILE"; then
+    echo "!!ERROR!!: Failed to capture logs from dmesg." >&2
+    exit 1
+fi
 
 # Print a summary to the console
 if [[ -s "$LOG_FILE" ]]; then

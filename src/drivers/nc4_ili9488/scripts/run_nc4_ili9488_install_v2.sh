@@ -47,11 +47,11 @@ echo "==== Building the nc4_ili9488 Kernel Module ====" | tee -a "$LOG_FILE"
 
 # Clean old builds with verbose logging
 echo "Cleaning old builds..." | tee -a "$LOG_FILE"
-make clean O="$BUILDS_DIR" |& tee -a "$LOG_FILE" || true
+make clean |& tee -a "$LOG_FILE" || true
 
 # Compile the kernel module with verbose logging
 echo "Compiling nc4_ili9488.ko..." | tee -a "$LOG_FILE"
-make O="$BUILDS_DIR" |& tee -a "$LOG_FILE"
+make |& tee -a "$LOG_FILE"
 
 echo "==== Installing the nc4_ili9488 Kernel Module ====" | tee -a "$LOG_FILE"
 
