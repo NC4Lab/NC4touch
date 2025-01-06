@@ -1,4 +1,4 @@
-################################################################################
+##########################################################C
 # Systemd Service: nc4_drm_init_util.service
 #
 # This service initializes the nc4_ili9488 driver by executing
@@ -9,6 +9,7 @@
 #
 # Command Instructions:
 # To edit in VS Code:
+#   sudo nano /etc/systemd/system/nc4_drm_init_util.service
 #   sudo micro /etc/systemd/system/nc4_drm_init_util.service
 #
 # To reload systemd to apply changes::
