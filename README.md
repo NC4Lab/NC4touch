@@ -974,7 +974,7 @@ sudo grep -rli "ili9488" /home/nc4/TouchscreenApparatus/src/drivers/ili9488/ 2>/
 
 ## Log Housekeeping
 
-Retain only 10 MB of log data:
+Retain only 10 MB of log data (M, K):
 ```
 sudo journalctl --vacuum-size=10M
 ```
@@ -983,6 +983,23 @@ Remove logs older than 1 hour (h, d, w):
 ```
 sudo journalctl --vacuum-time=6h
 ```
+
+Remove all logs
+```
+sudo rm -rf /var/log/journal/*
+sudo systemctl restart systemd-journald
+```
+
+Check all logs
+```
+sudo journalctl
+```
+
+Check log disk usage
+```
+sudo journalctl --disk-usage
+```
+
 
 ## WiFi
 

@@ -3,7 +3,7 @@
 # Configuration
 DRIVER_NAME="nc4_ili9488"
 LOG_DIR="/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/logs"
-LOG_FILE="$LOG_DIR/kms_debug.log"
+LOG_FILE="$LOG_DIR/debug_nc4_ili9488.log"
 
 # Ensure the log directory exists
 mkdir -p "$LOG_DIR"

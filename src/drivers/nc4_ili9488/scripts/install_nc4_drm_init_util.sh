@@ -11,9 +11,9 @@
 set -e
 
 # Paths
-UTILITY_DIR="/home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/nc4_drm_init_util"
-LOG_DIR="/home/nc4/TouchscreenApparatus/src/drivers/debug/kmscon_debug/logs"
-LOG_FILE="$LOG_DIR/drm_debug.log"
+UTILITY_DIR="/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/utils"
+LOG_DIR="/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/logs"
+LOG_FILE="$LOG_DIR/install_nc4_drm_init_util.log"
 UTILITY_SOURCE="$UTILITY_DIR/nc4_drm_init_util.c"
 UTILITY_BINARY="$UTILITY_DIR/nc4_drm_init_util"
 

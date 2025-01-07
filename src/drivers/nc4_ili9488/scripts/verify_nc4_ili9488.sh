@@ -6,7 +6,7 @@ OVERLAY_DTBO="/boot/firmware/overlays/${OVERLAY_NAME}.dtbo"
 DRIVER_NAME="nc4_ili9488"
 DRIVER_PATH="/lib/modules/$(uname -r)/extra/${DRIVER_NAME}.ko"
 LOG_DIR="/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/logs"
-LOG_FILE="${LOG_DIR}/install_validation.log"
+LOG_FILE="${LOG_DIR}/verify_nc4_ili9488.log"
 
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
