@@ -14,38 +14,51 @@
 // Debugging macro for consistent logging
 #define DRM_DEBUG_KMS(fmt, ...) syslog(LOG_INFO, "nc4_ili9488: [nc4_drm_init_util] " fmt, ##__VA_ARGS__)
 
-/***************************************************************************
- * nc4_drm_init_util.c
- *
- * Utility to initialize DRM pipelines for three display panels.
- *
- * This program:
- * - Dynamically iterates over DRM devices (/dev/dri/cardX).
- * - Fetches DRM resources and identifies connected displays.
- * - Creates a dumb framebuffer and sets a mode for each display.
- * - Fills the framebuffer with a solid color (white) for testing.
- *
- * Designed for use with the nc4_ili9488 project on SPI1 with three displays.
- *
- * Limitations:
- * - Assumes fixed configuration of three displays on SPI1.
- * - No timeout or retry logic for unavailable resources.
- *
- * Author: <Your Name>
- ******************************************************************************/
+// Helper to log connector details
+void log_connector_details(drmModeConnector *connector)
+{
+    DRM_DEBUG_KMS("Connector %d: connection=%d, count_modes=%d, type=%d, type_id=%d\n",
+                  connector->connector_id, connector->connection, connector->count_modes,
+                  connector->connector_type, connector->connector_type_id);
+    for (int i = 0; i < connector->count_modes; i++)
+    {
+        drmModeModeInfo mode = connector->modes[i];
+        DRM_DEBUG_KMS("Mode %d: %ux%u @ %uHz\n", i, mode.hdisplay, mode.vdisplay, mode.vrefresh);
+    }
+}
 
-int initialize_display(int card_num)
+// Helper to log CRTC details
+void log_crtc_details(drmModeRes *resources)
+{
+    DRM_DEBUG_KMS("CRTCs available: %d\n", resources->count_crtcs);
+    for (int i = 0; i < resources->count_crtcs; i++)
+    {
+        DRM_DEBUG_KMS("CRTC %d: ID=%d\n", i, resources->crtcs[i]);
+    }
+}
+
+// Helper to log framebuffer details
+void log_framebuffer_details(int fb_num)
+{
+    char fb_path[50];
+    snprintf(fb_path, sizeof(fb_path), "/sys/class/graphics/fb%d", fb_num);
+    if (access(fb_path, F_OK) == 0)
+    {
+        DRM_DEBUG_KMS("Framebuffer %d is present at %s\n", fb_num, fb_path);
+    }
+    else
+    {
+        DRM_DEBUG_KMS("Framebuffer %d is missing or inaccessible at %s\n", fb_num, fb_path);
+    }
+}
+
+// Main initialization function for a single card
+int initialize_display(int card_num, int fb_num)
 {
     char device_path[20];
     snprintf(device_path, sizeof(device_path), "/dev/dri/card%d", card_num);
 
-    /***************************************************************************
-     * Open DRM Device
-     *
-     * Opens the DRM device file (e.g., /dev/dri/cardX) to access display hardware.
-     * - Ensures read/write access to the DRM subsystem.
-     * - Exits with an error if the device is unavailable.
-     **************************************************************************/
+    // Open DRM Device
     int drm_fd = open(device_path, O_RDWR | 0);
     if (drm_fd < 0)
     {
@@ -54,9 +67,7 @@ int initialize_display(int card_num)
     }
     DRM_DEBUG_KMS("Opened DRM device %s successfully\n", device_path);
 
-    /***************************************************************************
-     * Fetch DRM Resources
-     **************************************************************************/
+    // Fetch DRM Resources
     drmModeRes *resources = drmModeGetResources(drm_fd);
     if (!resources)
     {
@@ -66,9 +77,10 @@ int initialize_display(int card_num)
     }
     DRM_DEBUG_KMS("Fetched DRM resources for %s successfully\n", device_path);
 
-    /***************************************************************************
-     * Find Connected Display Connector
-     **************************************************************************/
+    // Log CRTC details
+    log_crtc_details(resources);
+
+    // Find Connected Display Connector
     drmModeConnector *connector = NULL;
     drmModeModeInfo mode;
     int connector_id = -1;
@@ -76,14 +88,19 @@ int initialize_display(int card_num)
     for (int i = 0; i < resources->count_connectors; i++)
     {
         connector = drmModeGetConnector(drm_fd, resources->connectors[i]);
-        if (connector && connector->connection == DRM_MODE_CONNECTED && connector->count_modes > 0)
+        if (connector)
         {
-            mode = connector->modes[0]; // Use the first mode (e.g., 320x480)
-            connector_id = connector->connector_id;
-            DRM_DEBUG_KMS("Connector %d is connected with mode %ux%u\n", connector_id, mode.hdisplay, mode.vdisplay);
-            break;
+            log_connector_details(connector);
+            if (connector->connection == DRM_MODE_CONNECTED && connector->count_modes > 0)
+            {
+                mode = connector->modes[0]; // Use the first mode (e.g., 320x480)
+                connector_id = connector->connector_id;
+                DRM_DEBUG_KMS("Selected connector %d for %s with mode %ux%u\n",
+                              connector_id, device_path, mode.hdisplay, mode.vdisplay);
+                break;
+            }
+            drmModeFreeConnector(connector);
         }
-        drmModeFreeConnector(connector);
     }
 
     if (connector_id < 0)
@@ -94,14 +111,11 @@ int initialize_display(int card_num)
         return 1;
     }
 
-    /***************************************************************************
-     * Create Dumb Buffer
-     **************************************************************************/
+    // Create Dumb Buffer
     struct drm_mode_create_dumb create = {0};
-
-    create.width = mode.hdisplay;  // Set buffer width to match display resolution.
-    create.height = mode.vdisplay; // Set buffer height to match display resolution.
-    create.bpp = 32;               // Bits per pixel (supports 24-bit color with alpha).
+    create.width = mode.hdisplay;
+    create.height = mode.vdisplay;
+    create.bpp = 32;
 
     if (drmIoctl(drm_fd, DRM_IOCTL_MODE_CREATE_DUMB, &create) < 0)
     {
@@ -110,11 +124,10 @@ int initialize_display(int card_num)
         close(drm_fd);
         return 1;
     }
-    DRM_DEBUG_KMS("Dumb buffer created: handle=%u, pitch=%u, size=%llu\n", create.handle, create.pitch, create.size);
+    DRM_DEBUG_KMS("Dumb buffer created: handle=%u, pitch=%u, size=%llu\n",
+                  create.handle, create.pitch, create.size);
 
-    /***************************************************************************
-     * Add Framebuffer
-     **************************************************************************/
+    // Add Framebuffer
     uint32_t fb_id;
     if (drmModeAddFB(drm_fd, create.width, create.height, 24, 32, create.pitch, create.handle, &fb_id))
     {
@@ -125,9 +138,7 @@ int initialize_display(int card_num)
     }
     DRM_DEBUG_KMS("Framebuffer added with ID=%u for %s\n", fb_id, device_path);
 
-    /***************************************************************************
-     * Map Dumb Buffer
-     **************************************************************************/
+    // Map Dumb Buffer
     struct drm_mode_map_dumb map = {0};
     map.handle = create.handle;
 
@@ -149,13 +160,10 @@ int initialize_display(int card_num)
         return 1;
     }
 
-    // Fill the buffer with a solid color (white)
-    memset(fb, 0xFF, create.size);
+    memset(fb, 0xFF, create.size); // Fill the buffer with white for testing
     DRM_DEBUG_KMS("Framebuffer filled with white color for %s\n", device_path);
 
-    /***************************************************************************
-     * Set Display Mode
-     **************************************************************************/
+    // Set Display Mode
     int crtc_id = resources->crtcs[0];
     if (drmModeSetCrtc(drm_fd, crtc_id, fb_id, 0, 0, &connector_id, 1, &mode))
     {
@@ -163,8 +171,12 @@ int initialize_display(int card_num)
     }
     else
     {
-        DRM_DEBUG_KMS("CRTC set successfully for %s with mode %ux%u on connector %d\n", device_path, mode.hdisplay, mode.vdisplay, connector_id);
+        DRM_DEBUG_KMS("CRTC set successfully for %s with mode %ux%u on connector %d\n",
+                      device_path, mode.hdisplay, mode.vdisplay, connector_id);
     }
+
+    // Log framebuffer details
+    log_framebuffer_details(fb_num);
 
     drmModeFreeResources(resources);
     close(drm_fd);
@@ -176,7 +188,7 @@ int main()
     for (int card_num = 0; card_num < 3; card_num++)
     {
         DRM_DEBUG_KMS("Initializing display for card%d\n", card_num);
-        if (initialize_display(card_num) != 0)
+        if (initialize_display(card_num, card_num + 2) != 0)
         {
             DRM_DEBUG_KMS("Failed to initialize card%d\n", card_num);
         }

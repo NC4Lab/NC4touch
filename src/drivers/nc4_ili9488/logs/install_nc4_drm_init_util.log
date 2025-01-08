@@ -126,3 +126,109 @@ Jan 07 17:28:04 raspberrypi nc4_drm_init_util[1913]: nc4_ili9488: [nc4_drm_init_
 Jan 07 17:28:04 raspberrypi nc4_drm_init_util[1913]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
 Jan 07 17:28:04 raspberrypi nc4_drm_init_util[1913]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card2
 Jan 07 17:28:05 raspberrypi nc4_drm_init_util[1913]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card2 with mode 320x480 on connector 31
+Jan 07 18:06:52 raspberrypi sudo[2931]:      nc4 : TTY=pts/1 ; PWD=/home/nc4/TouchscreenApparatus ; USER=root ; COMMAND=/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/utils/nc4_drm_init_util
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Starting DRM initialization for multiple displays
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Opened DRM device: /dev/dri/card0
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Found connected display 0 on connector 31
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Configuring display 0: 320x480
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Dumb buffer created for display 0: handle=1, pitch=1280, size=614400
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Framebuffer added for display 0: ID=38
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Framebuffer filled with white color for display 0
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: Failed to set CRTC for display 0: No such file or directory
+Jan 07 18:06:52 raspberrypi nc4_drm_init_util[2933]: nc4_drm_init_util: DRM initialization complete
+Jan 07 18:10:29 raspberrypi sudo[1329]:      nc4 : TTY=pts/3 ; PWD=/home/nc4/TouchscreenApparatus ; USER=root ; COMMAND=/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/utils/nc4_drm_init_util
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Starting DRM initialization for multiple displays
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Opened DRM device: /dev/dri/card0
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Found connected display 0 on connector 31
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Configuring display 0: 320x480
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Dumb buffer created for display 0: handle=1, pitch=1280, size=614400
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Framebuffer added for display 0: ID=39
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Framebuffer filled with white color for display 0
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: Failed to set CRTC for display 0: No such file or directory
+Jan 07 18:10:29 raspberrypi nc4_drm_init_util[1331]: nc4_drm_init_util: DRM initialization complete
+Jan 07 18:28:27 raspberrypi sudo[1803]:      nc4 : TTY=pts/3 ; PWD=/home/nc4/TouchscreenApparatus ; USER=root ; COMMAND=/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/utils/nc4_drm_init_util
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Initializing display for card0
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Opened DRM device /dev/dri/card0 successfully
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Fetched DRM resources for /dev/dri/card0 successfully
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTCs available: 1
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTC 0: ID=34
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Connector 31: connection=1, count_modes=1, type=19, type_id=1
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Mode 0: 320x480 @ 0Hz
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Selected connector 31 for /dev/dri/card0 with mode 320x480
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer created: handle=1, pitch=1280, size=614400
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer added with ID=38 for /dev/dri/card0
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
+Jan 07 18:28:27 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card0
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card0 with mode 320x480 on connector 31
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer 2 is present at /sys/class/graphics/fb2
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Initializing display for card1
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Opened DRM device /dev/dri/card1 successfully
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Fetched DRM resources for /dev/dri/card1 successfully
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTCs available: 1
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTC 0: ID=34
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Connector 31: connection=1, count_modes=1, type=19, type_id=2
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Mode 0: 320x480 @ 0Hz
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Selected connector 31 for /dev/dri/card1 with mode 320x480
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer created: handle=1, pitch=1280, size=614400
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer added with ID=37 for /dev/dri/card1
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
+Jan 07 18:28:28 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card1
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card1 with mode 320x480 on connector 31
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer 3 is missing or inaccessible at /sys/class/graphics/fb3
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Initializing display for card2
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Opened DRM device /dev/dri/card2 successfully
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Fetched DRM resources for /dev/dri/card2 successfully
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTCs available: 1
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTC 0: ID=34
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Connector 31: connection=1, count_modes=1, type=19, type_id=3
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Mode 0: 320x480 @ 0Hz
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Selected connector 31 for /dev/dri/card2 with mode 320x480
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer created: handle=1, pitch=1280, size=614400
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer added with ID=37 for /dev/dri/card2
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
+Jan 07 18:28:29 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card2
+Jan 07 18:28:30 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card2 with mode 320x480 on connector 31
+Jan 07 18:28:30 raspberrypi nc4_drm_init_util[1805]: nc4_ili9488: [nc4_drm_init_util] Framebuffer 4 is missing or inaccessible at /sys/class/graphics/fb4
+Jan 07 18:31:51 raspberrypi sudo[2102]:      nc4 : TTY=pts/3 ; PWD=/home/nc4/TouchscreenApparatus ; USER=root ; COMMAND=/home/nc4/TouchscreenApparatus/src/drivers/nc4_ili9488/utils/nc4_drm_init_util
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Initializing display for card0
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Opened DRM device /dev/dri/card0 successfully
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Fetched DRM resources for /dev/dri/card0 successfully
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTCs available: 1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTC 0: ID=34
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Connector 31: connection=1, count_modes=1, type=19, type_id=1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Mode 0: 320x480 @ 0Hz
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Selected connector 31 for /dev/dri/card0 with mode 320x480
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer created: handle=1, pitch=1280, size=614400
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer added with ID=39 for /dev/dri/card0
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card0
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card0 with mode 320x480 on connector 31
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer 2 is present at /sys/class/graphics/fb2
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Initializing display for card1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Opened DRM device /dev/dri/card1 successfully
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Fetched DRM resources for /dev/dri/card1 successfully
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTCs available: 1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTC 0: ID=34
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Connector 31: connection=1, count_modes=1, type=19, type_id=2
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Mode 0: 320x480 @ 0Hz
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Selected connector 31 for /dev/dri/card1 with mode 320x480
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer created: handle=1, pitch=1280, size=614400
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer added with ID=39 for /dev/dri/card1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card1 with mode 320x480 on connector 31
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer 3 is missing or inaccessible at /sys/class/graphics/fb3
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Initializing display for card2
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Opened DRM device /dev/dri/card2 successfully
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Fetched DRM resources for /dev/dri/card2 successfully
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTCs available: 1
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTC 0: ID=34
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Connector 31: connection=1, count_modes=1, type=19, type_id=3
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Mode 0: 320x480 @ 0Hz
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Selected connector 31 for /dev/dri/card2 with mode 320x480
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer created: handle=1, pitch=1280, size=614400
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer added with ID=38 for /dev/dri/card2
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Dumb buffer mapped at offset=4295581696
+Jan 07 18:31:51 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer filled with white color for /dev/dri/card2
+Jan 07 18:31:52 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] CRTC set successfully for /dev/dri/card2 with mode 320x480 on connector 31
+Jan 07 18:31:52 raspberrypi nc4_drm_init_util[2104]: nc4_ili9488: [nc4_drm_init_util] Framebuffer 4 is missing or inaccessible at /sys/class/graphics/fb4
