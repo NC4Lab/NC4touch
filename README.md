@@ -359,7 +359,7 @@ sudo micro /etc/wpa_supplicant/wpa_supplicant.conf
    ```bash
    ping 169.254.55.240
    ```
-
+169.254.55.240 ssh-ed25519
 3. If the ping is successful, SSH into the Raspberry Pi:
    ```bash
    ssh nc4@169.254.55.240
@@ -436,72 +436,6 @@ sudo micro /etc/wpa_supplicant/wpa_supplicant.conf
    source ~/.bashrc
    ```
 
-## Setup User Permisions for GPIO and SPI (Optional?)
-
-1. Add the User to the gpio and spi Groups
-   To ensure the user can access GPIO and SPI without sudo, run:
-   ```
-   sudo usermod -aG gpio,spi $(whoami)
-   ```
-
-2. Reboot the Raspberry Pi:
-   ```
-   sudo reboot
-   ```
-
-3. Check Group Membership
-   Verify that the user has been added to the gpio and spi groups:
-   ```
-   groups
-   ```
-   Ensure the output includes both gpio and spi.
-
-4. Test GPIO Pin Configuration:
-   
-   Install libgpiod Tools:
-   Install the GPIO tools package to manage GPIO on the Raspberry Pi 5:
-   ```
-   sudo apt install gpiod -y
-   ```
-   
-   Check GPIO Line Information:
-   Use the gpioinfo command to list all GPIO lines and their statuses:
-   ```
-   gpioinfo
-   ```
-   If this command executes without errors and lists GPIO details, you have sufficient permissions to access GPIO.
-
-5. Check SPI Setup
-
-   Check if the SPI device files are available:
-   ```
-   ls /dev/spi*
-   ```
-   Output should show:
-   ```
-   /dev/spidev0.0
-   /dev/spidev0.1
-   ```
-
-   Check the status of the SPI kernel module:
-   ```
-   lsmod | grep spi
-   ```
-   The output should include lines like:
-   ```
-   spi_bcm2835            49152  0
-   ```
-
-   Check the permissions of the SPI device files:
-   ```
-   ls -l /dev/spi*
-   ```
-   Example output:
-   ```
-   crw-rw---- 1 root spi 153, 0 Dec 10 10:00 /dev/spidev0.0
-   crw-rw---- 1 root spi 153, 1 Dec 10 10:00 /dev/spidev0.1
-   ```
-
 ## Setup access to GitHub
 
 1. Generate a new SSH key:
@@ -559,37 +493,30 @@ sudo micro /etc/wpa_supplicant/wpa_supplicant.conf
    ```
 
 # Working is SSH
+
 1. Open Visual Studio Code on your Windows PC.
 
 2. Press `Ctrl + Shift + P` to open the Command Palette.
 
-
 3. Search for and select:
    ```
-   Remote-SSH: Add New SSH Host...
+   Remote-SSH: Connect to Host...
    ```
-4. Enter the Raspberry Pi's SSH connection string:
+
+4. Select the Raspberry Pi's SSH connection string:
    ```
    nc4@169.254.55.240
    ```
 
-5. Select your config when prompted (e.g., `~/.ssh/config`).
-
-6. Click **Connect**.
-
-7. Go to the repo:
-   ```
-   cd TouchscreenApparatus
-   ```
-
-8. Enter the Pi password `1434` in the VS Code search bar.
+5. Enter the Pi password `1434` in the VS Code search bar.
  
-9. Open the repo in VS Code:
+6. Open the repo in VS Code:
    ```
+
    code .
    ```
 
-10. Close the VS Code instance when you are done.  
+7. Close the VS Code instance when you are done.  
 
 # Enabling additional I2C busses on the Pi
 
