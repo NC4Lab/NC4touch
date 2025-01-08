@@ -16,15 +16,15 @@ if __name__ == "__main__":
     lcd_2 = LCD(framebuffer_device="/dev/fb2", image_dir="data/images")
 
     # Load image to fb0 and fb1
-    lcd_0.load_image("C01.png")
+    lcd_0.load_image("A01.bmp")
     lcd_1.load_image("B01.bmp")
     lcd_2.load_image("C01.bmp")
     time.sleep(2)
 
     # Switch images
-    lcd_0.load_image("B01.bmp")
-    lcd_1.load_image("C01.png")
-    lcd_2.load_image("B01.bmp")
+    lcd_0.load_image("C01.png")
+    lcd_1.load_image("B01.bmp")
+    lcd_2.load_image("A01.bmp")
     time.sleep(2)
 
     # Clear the screen at the end
