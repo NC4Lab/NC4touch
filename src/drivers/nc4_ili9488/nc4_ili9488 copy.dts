@@ -57,6 +57,20 @@
 				dc-gpios = <&gpio 22 0>;
 				backlight = <&backlight>;
 			};
+
+			pitft2: pitft2@2 {
+				compatible = "ili9488";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pitft2_pins>;
+
+				reg = <2>; /* CE2 */
+				spi-max-frequency = <20000000>;
+
+				rotation = <0>;
+				reset-gpios = <&gpio 13 0>;
+				dc-gpios = <&gpio 12 0>;
+				backlight = <&backlight>;
+			};
 		};
 	};
 
@@ -74,6 +88,13 @@
 
 	fragment@2 {
 		target-path = "/soc/spi@7e215080/spidev@1";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@3 {
+		target-path = "/soc/spi@7e215080/spidev@2";
 		__overlay__ {
 			status = "disabled";
 		};
@@ -112,6 +133,22 @@
 	};
 
 	/****************************************************************************
+	 * Fragment 6: GPIO pins for the LCD_2 panel (pitft2)
+	 *   GPIO13 = RESET (out)
+	 *   GPIO12 = DC (out)
+	 *   GPIO27 = Backlight (out, shared)
+	 ****************************************************************************/
+	fragment@6 {
+		target = <&gpio>;
+		__overlay__ {
+			pitft2_pins: pitft2_pins {
+				brcm,pins = <13 12>;
+				brcm,function = <1 1>; /* Set as output */
+			};
+		};
+	};
+
+	/****************************************************************************
 	 * Fragment 7: Shared backlight control for all panels
 	 ****************************************************************************/
 	fragment@7 {
@@ -129,8 +166,10 @@
 	 ****************************************************************************/
 	__overrides__ {
 		speed = <&pitft0>,"spi-max-frequency:0",
-			 <&pitft1>,"spi-max-frequency:0";
+			 <&pitft1>,"spi-max-frequency:0",
+			 <&pitft2>,"spi-max-frequency:0";
 		rotation = <&pitft0>,"rotation:0",
-			    <&pitft1>,"rotation:0";
+			    <&pitft1>,"rotation:0",
+			    <&pitft2>,"rotation:0";
 	};
 };
