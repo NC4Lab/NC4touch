@@ -1,7 +1,7 @@
 import pigpio
 
 class LED:
-    def __init__(self, pi, pin, frequency=5000, range=255, brightness=255):
+    def __init__(self, pi, pin, frequency=5000, range=255, brightness=140):
         self.pi = pi
         self.pin = pin
         self.frequency = frequency
