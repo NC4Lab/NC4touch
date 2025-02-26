@@ -1,7 +1,7 @@
 import pigpio
 
 class Buzzer:
-    def __init__(self, pi, pin, volume=75, frequency=10000):
+    def __init__(self, pi, pin, volume=70, frequency=7000):
         self.pi = pi
         self.pin = pin
         self.volume = volume
