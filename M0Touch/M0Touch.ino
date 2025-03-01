@@ -14,10 +14,9 @@ const int pin0 = 10;
 const int pin1 = 11;
 const int pin2 = 12;
 
-
 int boardID = 0;
 
-// showActive = true means the image is dispalyed and I'm waiting for only 1 touch
+// showActive = true means the image is displayed and I'm waiting for only 1 touch
 bool showActive = false;
 
 
@@ -51,8 +50,6 @@ void setup() {
   while (!Serial) {
     // Wait for native USB on SAMD21
   }
-
-
   setupPinsAndID();
 
   setupDisplayAndSD();
@@ -111,32 +108,31 @@ void processSerialCommand() {
     Serial.print("ID:M0_");
     Serial.println(boardID);
     return;
-  }
-
-  // BLACK => screen black, backlight off, no touch
-  if (cmd.equalsIgnoreCase("BLACK")) {
+  }// BLACK => screen black, backlight off, no touch
+  else if (cmd.equalsIgnoreCase("BLACK")) {
     setBlackScreen(false);
     showActive = false;   // ignore touches
     return;
-  }
-
-  // SHOW => backlight on, allow 1 touch
-  if (cmd.equalsIgnoreCase("SHOW")) {
+  } // SHOW => backlight on, allow 1 touch
+  else if (cmd.equalsIgnoreCase("SHOW")) {
     showPreloadedImage();
     showActive = true;
     Serial.println("ACK:SHOW");
     return;
   }
-
   // 4) IMG:/// => preload BMP while backlight is off
-  if (cmd.startsWith("IMG:")) {
+  else if (cmd.startsWith("IMG:")) {
     String imageID = cmd.substring(4);
     pickPicture(imageID.c_str());
     Serial.print("ACK:IMG ");
     Serial.println(imageID);
     return;
   }
-
+  else {
+    Serial.println("ERR:UNKNOWN_CMD");
+    Serial.println(cmd);
+    return;
+  }
 
 }
 
