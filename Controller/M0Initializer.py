@@ -4,6 +4,7 @@ import pigpio
 import time
 import subprocess
 import os
+import argparse
 
 class M0Initializer:
     reset_pins = [6, 5, 25] # GPIO pins for reset
@@ -52,6 +53,9 @@ class M0Initializer:
         """
         Detects the M0 boards connected to the system.
         """
+        # Reset all M0 boards
+        self.reset_all_m0s()
+        time.sleep(0.1)
         print("Detecting M0 boards.")
         try:
             # Run arduino-cli board list
@@ -119,6 +123,9 @@ class M0Initializer:
         self.reset_m0(reset_pin)
     
     def sync_all_image_folders(self):
+        # Reset all M0 boards
+        self.reset_all_m0s()
+        time.sleep(0.1)
         print("Syncing image folders to all UD drives.")
         for pin in self.reset_pins:
             self.sync_image_folder(pin)
@@ -126,29 +133,48 @@ class M0Initializer:
 
 if __name__ == "__main__":
     m0_init = M0Initializer()
-    
-    # Show menu
-    while True:
-        print("********** M0 Initializer **********")
-        print("1. Reset all M0 boards.")
-        print("2. Detect all M0 boards.")
-        print("3. Upload sketch to all M0 boards.")
-        print("4. Sync image folders to all UD drives.")
-        print("5. Exit.")
-        choice = input("Enter choice: ")
 
-        if choice == "1":
-            m0_init.reset_all_m0s()
-        elif choice == "2":
-            m0_init.detect_all_m0s()
-        elif choice == "3":
-            sketch_path = os.path.abspath("../M0Touch/M0Touch.ino")
-            for port in m0_init.board_ports:
-                m0_init.upload_to_port(port, sketch_path)
-        elif choice == "4":
-            m0_init.sync_all_image_folders()
-        elif choice == "5":
-            break
-        else:
-            print("Invalid choice.")
-        print()
+    # parse arguments
+    parser = argparse.ArgumentParser(description="M0 Initializer")
+    parser.add_argument("-r", "--reset", action="store_true", help="Reset all M0 boards.")
+    parser.add_argument("-d", "--detect", action="store_true", help="Detect all M0 boards.")
+    parser.add_argument("-u", "--upload", action="store_true", help="Upload sketch to all M0 boards.")
+    parser.add_argument("-s", "--sync", action="store_true", help="Sync image folders to all UD drives.")
+    args = parser.parse_args()
+
+    if args.reset:
+        m0_init.reset_all_m0s()
+    elif args.detect:
+        m0_init.detect_all_m0s()
+    elif args.upload:
+        sketch_path = os.path.abspath("../M0Touch/M0Touch.ino")
+        for port in m0_init.board_ports:
+            m0_init.upload_to_port(port, sketch_path)
+    elif args.sync:
+        m0_init.sync_all_image_folders()
+    else:
+        # Show menu
+        while True:
+            print("********** M0 Initializer **********")
+            print("1. Reset all M0 boards.")
+            print("2. Detect all M0 boards.")
+            print("3. Upload sketch to all M0 boards.")
+            print("4. Sync image folders to all UD drives.")
+            print("5. Exit.")
+            choice = input("Enter choice: ")
+
+            if choice == "1":
+                m0_init.reset_all_m0s()
+            elif choice == "2":
+                m0_init.detect_all_m0s()
+            elif choice == "3":
+                sketch_path = os.path.abspath("../M0Touch/M0Touch.ino")
+                for port in m0_init.board_ports:
+                    m0_init.upload_to_port(port, sketch_path)
+            elif choice == "4":
+                m0_init.sync_all_image_folders()
+            elif choice == "5":
+                break
+            else:
+                print("Invalid choice.")
+            print()
