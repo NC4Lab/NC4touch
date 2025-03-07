@@ -84,30 +84,6 @@ class M0Device:
         self.thread = threading.Thread(target=self.read_loop, daemon=True)
         self.thread.start()
     
-    def mountUD(self):
-        """
-        Mounts the UD drive connected to the M0 board by double clicking the reset pin.
-        """
-        print(f"[{self.m0_id}] Mounting UD drive.")
-        try:
-            self.reset()
-            time.sleep(0.1)
-            self.reset()
-        except Exception as e:
-            print(f"[{self.m0_id}] Error mounting UD drive: {e}")
-    
-    def reset(self):
-        """
-        Resets the M0 board by toggling the reset pin.
-        """
-        # print(f"[{self.m0_id}] Resetting M0 board.")
-        try:
-            self.pi.write(self.reset_pin, 0)
-            time.sleep(0.1)
-            self.pi.write(self.reset_pin, 1)
-        except Exception as e:
-            print(f"[{self.m0_id}] Error resetting M0 board: {e}")
-    
     def sync_image_folder(self):
         """
         Syncs the image folder (../data/images) to the UD drive.
