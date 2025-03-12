@@ -5,23 +5,35 @@ import time
 import subprocess
 import os
 import argparse
+import serial
 
 class M0Initializer:
     reset_pins = [6, 5, 25] # GPIO pins for reset
 
-    def __init__(self):
-        self.pi = pigpio.pi()
+    def __init__(self, pi=None):
+        if pi is not None:
+            self.pi = pi
+        else:
+            self.pi = pigpio.pi()
+
         for pin in self.reset_pins:
-            self.pi.set_mode(pin, pigpio.OUTPUT)
+            self.pi.set_mode(pin, pigpio.INPUT)
         
-        self.board_ports = []
+        self.ports = [] # List of tty ports where M0 boards are connected
+        self.device_map = {} # Map of device IDs to ports
 
     def reset_m0(self, reset_pin):
         print(f"Resetting M0 board on pin {reset_pin}.")
         try:
+            # Need to only use GPIO reset pin as ouput during hardware reset
+            # to avoid interference with the serial communication reset
+            self.pi.set_mode(reset_pin, pigpio.OUTPUT)
+            time.sleep(0.01)
             self.pi.write(reset_pin, 0)
-            time.sleep(0.1)
+            time.sleep(0.01)
             self.pi.write(reset_pin, 1)
+            time.sleep(0.01)
+            self.pi.set_mode(reset_pin, pigpio.INPUT)
         except Exception as e:
             print(f"Error resetting M0 board: {e}")
       
@@ -49,36 +61,95 @@ class M0Initializer:
             self.mount_ud(pin)
             time.sleep(6)
     
-    def detect_all_m0s(self):
+    def find_m0_device(self, reset_pin):
         """
-        Detects the M0 boards connected to the system.
+        Finds the port and device ID of the M0 board connected to the given reset pin.
         """
-        # Reset all M0 boards
-        self.reset_all_m0s()
-        time.sleep(0.1)
-        print("Detecting M0 boards.")
+        print(f"Finding M0 board on pin {reset_pin}.")
         try:
-            # Run arduino-cli board list
-            boards = subprocess.check_output("arduino-cli board list", shell=True).decode("utf-8")
-            print(boards)
+            # Mount the UD drive
+            self.reset_m0(reset_pin)
+            time.sleep(1)
 
-            """
-            Output format:
-            Port         Protocol Type              Board Name FQBN Core
-            /dev/ttyACM0 serial   Serial Port (USB) Unknown
-            /dev/ttyACM1 serial   Serial Port (USB) Unknown
-            /dev/ttyACM2 serial   Serial Port (USB) Unknown
-            """
+            # Record current time
+            start_time = time.localtime()
 
-            # Parse the output
-            self.board_ports = []
-            for line in boards.split("\n"):
-                if "serial" in line:
-                    self.board_ports.append(line.split()[0])
-            
+            # Wait for the device to be detected
+            # Check the dmesg log for messages after the start time
+            waiting = True
+            while waiting:
+                dmesg = subprocess.check_output("dmesg -T | tail", shell=True).decode("utf-8")
+                dmesg = dmesg.split("\n")[-2] # Get the latest message
+                # Starts with timestamp, e.g. [Wed Mar 12 15:29:35 2025]
+                timestamp = dmesg.split("]")[0][1:]
+                print(f"{timestamp}: Waiting for device...")
+                # Convert to time struct
+                timestamp = time.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
+                if timestamp > start_time:
+                    waiting = False
+                time.sleep(0.5)
+
+            # Check dmesg for the device ID
+            dmesg = subprocess.check_output("dmesg | tail", shell=True).decode("utf-8")
+            dmesg = dmesg.split("\n")[::-1] # Reverse the list to get the latest messages first
+
+            device_line = [line for line in dmesg if "SerialNumber:" in line][0]
+            port_line = [line for line in dmesg if "ttyACM" in line][0]
+
+            if "SerialNumber:" in device_line and "ttyACM" in port_line:
+                device_id = device_line.split("SerialNumber: ")[1]
+                port = port_line.split("ttyACM")[1].split(":")[0]
+
+                print(f"Found device ID: {device_id} on port /dev/ttyACM{port}")
+                return device_id, f"/dev/ttyACM{port}"
+            else:
+                print("Error finding device ID.")
+                return None, None
         except Exception as e:
-            print(f"Error detecting M0 boards: {e}")
-            return []
+            print(f"Error finding device ID: {e}")
+            return None, None
+    
+    def find_all_m0_devices(self):
+        """
+        Finds the ports and device IDs of all M0 boards connected to the system.
+        """
+        print("Finding all M0 boards.")
+        self.device_map = {}
+        for pin in self.reset_pins:
+            device_id, port = self.find_m0_device(pin)
+            if device_id is not None and port is not None:
+                self.device_map[device_id] = port
+
+    # def detect_all_m0s(self):
+    #     """
+    #     Detects the M0 boards connected to the system.
+    #     """
+    #     # Reset all M0 boards
+    #     self.reset_all_m0s()
+    #     time.sleep(0.1)
+    #     print("Detecting M0 boards.")
+    #     try:
+    #         # Run arduino-cli board list
+    #         boards = subprocess.check_output("arduino-cli board list", shell=True).decode("utf-8")
+    #         print(boards)
+
+    #         """
+    #         Output format:
+    #         Port         Protocol Type              Board Name FQBN Core
+    #         /dev/ttyACM0 serial   Serial Port (USB) Unknown
+    #         /dev/ttyACM1 serial   Serial Port (USB) Unknown
+    #         /dev/ttyACM2 serial   Serial Port (USB) Unknown
+    #         """
+
+    #         # Parse the output
+    #         self.ports = []
+    #         for line in boards.split("\n"):
+    #             if "serial" in line:
+    #                 self.ports.append(line.split()[0])
+            
+    #     except Exception as e:
+    #         print(f"Error detecting M0 boards: {e}")
+    #         return []
     
     def upload_to_port(self, port, sketch_path):
         """
@@ -130,6 +201,74 @@ class M0Initializer:
         for pin in self.reset_pins:
             self.sync_image_folder(pin)
             time.sleep(6)
+    
+    # def serial_interface_m0(self, port):
+    #     """
+    #     Opens a serial interface to the M0 board connected to the given port.
+    #     """
+    #     try:
+    #         ser = serial.Serial(port, 115200)
+    #         # Print initial message
+    #         print(f"Opened serial interface to {port}.")
+    #         time.sleep(0.3)
+    #         return ser
+    #     except Exception as e:
+    #         print(f"Error opening serial interface to {port}: {e}")
+    #         return None
+    
+    # def serial_interface_all_m0s(self):
+    #     """
+    #     Opens serial interfaces to all M0 boards.
+    #     """
+    #     self.ser_map = {}
+    #     for port in self.ports:
+    #         ser = self.serial_interface_m0(port)
+    #         if ser is not None:
+    #             self.ser_map[port] = ser
+    #     return self.ser_map
+        
+    # def query_m0(self, port):
+    #     """
+    #     Queries the M0 board connected to the given port.
+    #     """
+    #     # try:
+    #     ser = self.ser_map[port]
+    #     ser.reset_input_buffer()
+    #     ser.write(b"WHOAREYOU?\n")
+    #     line = ser.readline().decode("utf-8", errors="ignore").strip()
+    #     print(f"Query response from {port}: {line}")
+    #     # except Exception as e:
+    #     #     print(f"Error querying {port}: {e}")
+    
+    # def query_all_m0s(self):
+    #     """
+    #     Searches /dev/ttyACM*, /dev/ttyUSB* for boards that respond with "ID:M0_x"
+    #     when we send "WHOAREYOU?".
+    #     Returns a dict like {"M0_0": "/dev/ttyACM0", "M0_1": "/dev/ttyACM1"}.
+    #     """
+    #     for port in self.ports:
+    #         time.sleep(0.3)
+    #         self.query_m0(port)
+
+        # board_map = {}
+        # ports = serial.tools.list_ports.comports()
+
+        # for p in ports:
+        #     # Check if it's an ACM or USB device
+        #     if "ACM" in p.device or "USB" in p.device:
+        #         try:
+        #             with serial.Serial(p.device, 115200, timeout=1) as ser:
+        #                 time.sleep(0.3)
+        #                 ser.write(b"WHOAREYOU?\n")
+        #                 line = ser.readline().decode("utf-8", errors="ignore").strip()
+        #                 if line.startswith("ID:"):
+        #                     board_id = line.split(":", 1)[1]
+        #                     board_map[board_id] = p.device
+        #                     print(f"Discovered {board_id} on {p.device}")
+        #         except Exception as e:
+        #             print(f"Could not open {p.device}: {e}")
+
+        # return board_map
 
 if __name__ == "__main__":
     m0_init = M0Initializer()
@@ -148,7 +287,7 @@ if __name__ == "__main__":
         m0_init.detect_all_m0s()
     elif args.upload:
         sketch_path = os.path.abspath("../M0Touch/M0Touch.ino")
-        for port in m0_init.board_ports:
+        for port in m0_init.ports:
             m0_init.upload_to_port(port, sketch_path)
     elif args.sync:
         m0_init.sync_all_image_folders()
@@ -169,7 +308,7 @@ if __name__ == "__main__":
                 m0_init.detect_all_m0s()
             elif choice == "3":
                 sketch_path = os.path.abspath("../M0Touch/M0Touch.ino")
-                for port in m0_init.board_ports:
+                for port in m0_init.ports:
                     m0_init.upload_to_port(port, sketch_path)
             elif choice == "4":
                 m0_init.sync_all_image_folders()

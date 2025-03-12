@@ -52,13 +52,17 @@ class M0Device:
     - Provides stop() to end the read thread and close the port.
     """
 
-    def __init__(self, m0_id, port_path, baudrate=115200):
+    def __init__(self, m0_id, port_path, baudrate=115200, pi=None):
         """
         m0_id    : e.g. "M0_0"
         port_path: e.g. "/dev/ttyACM0"
         baudrate : default 115200
         """
-        self.pi = pigpio.pi()
+        if pi is None:
+            self.pi = pigpio.pi()
+        else:
+            self.pi = pi
+
         self.m0_id = m0_id
         self.port_path = port_path
         self.baudrate = baudrate
@@ -83,6 +87,7 @@ class M0Device:
     def read_loop(self):
         print(f"[{self.m0_id}] read_loop started.")
         while not self.stop_flag.is_set():
+            time.sleep(0.1)
             try:
                 if self.ser and self.ser.is_open:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
@@ -93,7 +98,7 @@ class M0Device:
             except Exception as e:
                 print(f"[{self.m0_id}] read_loop error: {e}")
                 # re-open self.ser here
-                self._attempt_reopen()
+                # self._attempt_reopen()
         print(f"[{self.m0_id}] read_loop ending.")
 
     def send_command(self, cmd):
