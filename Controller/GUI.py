@@ -771,17 +771,20 @@ class MultiTrialGUI(QMainWindow):
 
     def on_start_priming(self):
         if not self.trainer or 'reward' not in self.trainer.peripherals:
-            print("No trainer or reward object to prime.")
+            print("No tube to prime.")
             return
         print("Starting to prime feeding tube.")
         self.trainer.peripherals['reward'].prime_feeding_tube()
 
-    def on_stop_priming(self):
+    def on_start_priming(self):
         if not self.trainer or 'reward' not in self.trainer.peripherals:
-            print("No trainer or reward object to stop priming.")
+            print("No trainer or reward object to prime.")
             return
-        print("Stopping priming.")
-        self.trainer.peripherals['reward'].stop_priming()
+        import threading
+        print("Starting to prime feeding tube.")
+        priming_thread = threading.Thread(target=self.trainer.peripherals['reward'].prime_feeding_tube)
+        priming_thread.daemon = True  
+        priming_thread.start()
 
     def save_mouse_name(self):
         name = self.mouse_name_input.text().strip()

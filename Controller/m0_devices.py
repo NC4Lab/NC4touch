@@ -12,8 +12,7 @@ import threading
 import queue
 import serial
 import serial.tools.list_ports
-import pigpio
-import subprocess
+
 
 def discover_m0_boards():
     """
@@ -52,17 +51,12 @@ class M0Device:
     - Provides stop() to end the read thread and close the port.
     """
 
-    def __init__(self, m0_id, port_path, baudrate=115200, pi=None):
+    def __init__(self, m0_id, port_path, baudrate=115200):
         """
         m0_id    : e.g. "M0_0"
         port_path: e.g. "/dev/ttyACM0"
         baudrate : default 115200
         """
-        if pi is None:
-            self.pi = pigpio.pi()
-        else:
-            self.pi = pi
-
         self.m0_id = m0_id
         self.port_path = port_path
         self.baudrate = baudrate
@@ -87,7 +81,6 @@ class M0Device:
     def read_loop(self):
         print(f"[{self.m0_id}] read_loop started.")
         while not self.stop_flag.is_set():
-            time.sleep(0.1)
             try:
                 if self.ser and self.ser.is_open:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
@@ -98,8 +91,23 @@ class M0Device:
             except Exception as e:
                 print(f"[{self.m0_id}] read_loop error: {e}")
                 # re-open self.ser here
-                # self._attempt_reopen()
+                self._attempt_reopen()
         print(f"[{self.m0_id}] read_loop ending.")
+
+    def _attempt_reopen(self):
+        print(f"[{self.m0_id}] Attempting to reinitialize the port {self.port_path}...")
+        try:
+            if self.ser:
+                # Flush input and output buffers
+                self.ser.reset_input_buffer()
+                self.ser.reset_output_buffer()
+                self.ser.close()
+            # Reopen the serial connection
+            self.ser = serial.Serial(self.port_path, self.baudrate, timeout=1)
+            print(f"[{self.m0_id}] Reinitialized port {self.port_path} successfully.")
+        except Exception as e:
+            print(f"[{self.m0_id}] Failed to reinitialize port: {e}")
+            time.sleep(1)
 
     def send_command(self, cmd):
         """
