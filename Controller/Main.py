@@ -287,8 +287,6 @@ class MultiPhaseTraining:
     def initial_touch_phase(self, csv_file_path):
         print("Starting Initial Touch.")
 
-        for dev in self.m0_devices.values():
-            dev._attempt_reopen()
         self.is_session_active = True
 
         trials = self.read_csv(csv_file_path)
@@ -372,6 +370,10 @@ class MultiPhaseTraining:
         for m0_id in self.m0_ports:
             self.send_m0_command(m0_id, "BLACK")
         print("Initial Touch finished.")
+        
+        for dev in self.m0_devices.values():
+            dev._attempt_reopen()
+            time.sleep(0.5)
 
     def _fixed_iti(self, iti_duration=None):
         if not self.is_session_active:
@@ -392,8 +394,6 @@ class MultiPhaseTraining:
     def must_touch_phase(self, csv_file_path):
         print("Starting Must Touch.")
         
-        for dev in self.m0_devices.values():
-            dev._attempt_reopen()
         self.is_session_active = True
 
         trials = self.read_csv(csv_file_path)
@@ -626,6 +626,10 @@ class MultiPhaseTraining:
                 self.send_m0_command(m0_id, "BLACK")
             print("Must Touch training stage finished.")
 
+        for dev in self.m0_devices.values():
+            dev._attempt_reopen()
+            time.sleep(0.5)
+
 
 
 
@@ -633,8 +637,6 @@ class MultiPhaseTraining:
     
         print("Starting Must Initiate.")
 
-        for dev in self.m0_devices.values():
-            dev._attempt_reopen()
         self.is_session_active = True
     
         trials = self.read_csv(csv_file_path)
@@ -851,13 +853,15 @@ class MultiPhaseTraining:
                 self.send_m0_command(m0_id, "BLACK")
             print("Must Initiate training stage finished.")
 
+        for dev in self.m0_devices.values():
+            dev._attempt_reopen()
+            time.sleep(0.5)
+
 
 
     def punish_incorrect_phase(self, csv_file_path):
         print("Starting Punish Incorrect.")
         
-        for dev in self.m0_devices.values():
-            dev._attempt_reopen()
         self.is_session_active = True
         trials = self.read_csv(csv_file_path)
         if not trials:
@@ -1070,13 +1074,16 @@ class MultiPhaseTraining:
                 self.send_m0_command(m0_id, "BLACK")
             print(f"Punish Incorrect Phase finished at {self.session_end_time}.")
 
+        for dev in self.m0_devices.values():
+            dev._attempt_reopen()
+            time.sleep(0.5)
+
 
 
 
     def simple_discrimination_phase(self, csv_file_path):
         print("Starting Simple Discrimination.")
-        for dev in self.m0_devices.values():
-            dev._attempt_reopen()
+
         self.is_session_active = True
         trials = self.read_csv(csv_file_path)
         if not trials:
@@ -1250,6 +1257,9 @@ class MultiPhaseTraining:
             for m0_id in self.m0_ports:
                 self.send_m0_command(m0_id, "BLACK")
             print(f"Simple Discrimination Phase finished at {self.session_end_time}.")
+        for dev in self.m0_devices.values():
+            dev._attempt_reopen()
+            time.sleep(0.5)
 
 
 
