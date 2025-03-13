@@ -64,19 +64,18 @@ class M0Device:
     def read_loop(self):
         print(f"[{self.id}] read_loop started.")
         while not self.stop_flag.is_set():
-            time.sleep(0.1)
             try:
                 if self.ser and self.ser.is_open:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
                     if line:
                         self.message_queue.put((self.id, line))
-                        print(f"[{self.id}] <- {line}")
                 else:
-                    print(f"[{self.id}] Serial port not open.")
+                    time.sleep(0.5)
             except Exception as e:
-                print(f"[{self.id}] Error reading serial port: {e}")
-        
-        print(f"[{self.id}] read_loop stopped.")
+                print(f"[{self.id}] read_loop error: {e}")
+                # re-open self.ser here
+                self._attempt_reopen()
+        print(f"[{self.id}] read_loop ending.")
     
     def send_command(self, cmd):
         """
@@ -239,6 +238,24 @@ class M0Device:
                 print("Error finding device ID.")
         except Exception as e:
             print(f"Error finding device ID: {e}")
+    
+    def _attempt_reopen(self):
+        """
+        Attempts to reopen the serial port.
+        """
+        print(f"[{self.id}] Attempting to reinitialize the port {self.port}...")
+        try:
+            if self.ser:
+                # Flush input and output buffers
+                self.ser.reset_input_buffer()
+                self.ser.reset_output_buffer()
+                self.ser.close()
+            # Reopen the serial connection
+            self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
+            print(f"[{self.id}] Reinitialized port {self.port} successfully.")
+        except Exception as e:
+            print(f"[{self.id}] Failed to reinitialize port: {e}")
+            time.sleep(1)
     
     def initialize(self):
         self.find_device()
