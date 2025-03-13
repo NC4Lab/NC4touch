@@ -240,6 +240,15 @@ class M0Device:
         except Exception as e:
             print(f"Error finding device ID: {e}")
     
+    def initialize(self):
+        self.find_device()
+        time.sleep(1)
+        self.open_serial()
+        time.sleep(1)
+        self.start_read_thread()
+        time.sleep(1)
+        self.send_command("WHOAREYOU?")
+    
     def stop(self):
         """
         Stops the read thread and closes the serial port.

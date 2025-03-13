@@ -9,12 +9,13 @@ class Reward:
         self.is_priming = False
         self.reward_duration_ms = 1000  
 
-        try:
-            self.serial = serial.Serial(serial_port, baudrate, timeout=0.1)
-            print(f"Serial connection established on {serial_port}.")
-        except serial.SerialException as e:
-            self.serial = None
-            print(f"Failed to connect to serial port {serial_port}: {e}")
+        if serial_port:
+            try:
+                self.serial = serial.Serial(serial_port, baudrate, timeout=0.1)
+                print(f"Serial connection established on {serial_port}.")
+            except serial.SerialException as e:
+                self.serial = None
+                print(f"Failed to connect to serial port {serial_port}: {e}")
 
     def setup_reward(self):
         """PWM set up"""
