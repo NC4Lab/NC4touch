@@ -1,6 +1,9 @@
 import pigpio
 
 class Buzzer:
+    """
+    Buzzer class to control a buzzer connected to a Raspberry Pi GPIO pin.
+    """
     def __init__(self, pi, pin, volume=70, frequency=7000):
         self.pi = pi
         self.pin = pin

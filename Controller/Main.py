@@ -130,7 +130,7 @@ class MultiPhaseTraining:
         # Deactivate peripherals
         self.peripherals['reward_led'].deactivate()
         self.peripherals['reward'].stop_reward_dispense()
-        self.peripherals['beam_break'].deactivate_beam_break()
+        self.peripherals['beam_break'].deactivate()
         
         print("Session stopped and EndTraining timestamp logged.")
 
@@ -216,7 +216,7 @@ class MultiPhaseTraining:
                 self.send_m0_command(m0_id, "BLACK")
             self.peripherals['reward_led'].deactivate()
             self.peripherals['reward'].stop_reward_dispense()
-            self.peripherals['beam_break'].deactivate_beam_break()
+            self.peripherals['beam_break'].deactivate()
             print(f"Habituation phase finished at {self.session_end_time}.")
 
     def _large_reward_habituation(self, pump_secs=3.5, iti_duration=10):
@@ -229,7 +229,7 @@ class MultiPhaseTraining:
         print(f"Large_reward_habituation: pumping for {pump_secs} second(s).")
 
         beam_broken = False
-        self.peripherals['beam_break'].deactivate_beam_break()
+        self.peripherals['beam_break'].deactivate()
         self.peripherals['reward_led'].activate()
         self.peripherals['reward'].dispense_reward()
         start_t = time.time()
@@ -238,7 +238,7 @@ class MultiPhaseTraining:
             QApplication.processEvents()
             if not self.is_session_active:
                 break
-            self.peripherals['beam_break'].activate_beam_break()
+            self.peripherals['beam_break'].activate()
             if self.peripherals['beam_break'].sensor_state == 0 and not beam_broken:
                 beam_broken = True
                 print("Beam broken during reward dispense.")
@@ -253,17 +253,17 @@ class MultiPhaseTraining:
                 QApplication.processEvents()
                 if not self.is_session_active:
                     break
-                self.peripherals['beam_break'].activate_beam_break()
+                self.peripherals['beam_break'].activate()
                 time.sleep(0.01)
             if self.peripherals['beam_break'].sensor_state == 0:
                 print("Beam broken.")
             while self.peripherals['beam_break'].sensor_state == 0 and self.is_session_active:
                 QApplication.processEvents()
-                self.peripherals['beam_break'].activate_beam_break()
+                self.peripherals['beam_break'].activate()
                 time.sleep(0.01)
 
         self.peripherals['reward_led'].deactivate()
-        self.peripherals['beam_break'].deactivate_beam_break()
+        self.peripherals['beam_break'].deactivate()
         print("Beam break deactivated. Reward finished.")
 
         if self.is_session_active:
@@ -273,13 +273,13 @@ class MultiPhaseTraining:
             iti_start_time = time.time()
             while (time.time() - iti_start_time) < iti_duration and self.is_session_active:
                 QApplication.processEvents()
-                self.peripherals['beam_break'].activate_beam_break()
+                self.peripherals['beam_break'].activate()
                 time.sleep(0.01)
             while self.peripherals['beam_break'].sensor_state == 0 and self.is_session_active:
                 QApplication.processEvents()
                 print("Beam still broken at end of ITI. Adding 1s delay.")
                 time.sleep(1)
-                self.peripherals['beam_break'].activate_beam_break()
+                self.peripherals['beam_break'].activate()
             print("ITI completed.")
 
         return reward_time
@@ -383,7 +383,7 @@ class MultiPhaseTraining:
         print(f"Starting ITI for {iti_duration}s.")
         start_time = time.time()
         while (time.time() - start_time) < iti_duration and self.is_session_active:
-            self.peripherals['beam_break'].activate_beam_break()
+            self.peripherals['beam_break'].activate()
             time.sleep(0.01)
         print("ITI completed.")
 
@@ -1302,14 +1302,14 @@ class MultiPhaseTraining:
         print(f"large_reward: pumping for {pump_secs} seconds.")
         beam_broken = False
         self.peripherals['reward_led'].activate()
-        self.peripherals['beam_break'].deactivate_beam_break()
+        self.peripherals['beam_break'].deactivate()
         self.peripherals['reward'].dispense_reward(duration_s=pump_secs)
         start_t = time.time()
         while (time.time() - start_t) < pump_secs:
             QApplication.processEvents()
             if not self.is_session_active:
                 break
-            self.peripherals['beam_break'].activate_beam_break()
+            self.peripherals['beam_break'].activate()
             if self.peripherals['beam_break'].sensor_state == 0 and not beam_broken:
                 beam_broken = True
                 print("Beam broken during reward dispense.")
@@ -1322,29 +1322,29 @@ class MultiPhaseTraining:
                 QApplication.processEvents()
                 if not self.is_session_active:
                     break
-                self.peripherals['beam_break'].activate_beam_break()
+                self.peripherals['beam_break'].activate()
                 time.sleep(0.01)
             if self.peripherals['beam_break'].sensor_state == 0:
                 print("Beam broken.")
             while self.peripherals['beam_break'].sensor_state == 0 and self.is_session_active:
                 QApplication.processEvents()
-                self.peripherals['beam_break'].activate_beam_break()
+                self.peripherals['beam_break'].activate()
                 time.sleep(0.01)
         self.peripherals['reward_led'].deactivate()
-        self.peripherals['beam_break'].deactivate_beam_break()
+        self.peripherals['beam_break'].deactivate()
         print("Beam break deactivated. Reward finished.")
         return reward_time
 
     def wait_for_trial_initiation(self):
         from PyQt5.QtWidgets import QApplication
-        self.peripherals['beam_break'].deactivate_beam_break()
+        self.peripherals['beam_break'].deactivate()
         self.peripherals['reward_led'].activate()
         print("Waiting for beam break to initiate trial...")
         while self.peripherals['beam_break'].sensor_state != 0:
             QApplication.processEvents()
             if not self.is_session_active:
                 return False
-            self.peripherals['beam_break'].activate_beam_break()
+            self.peripherals['beam_break'].activate()
             time.sleep(0.01)
         self.peripherals['reward_led'].deactivate()
         print("Beam broken. Now waiting for beam to be unbroken...")
@@ -1352,7 +1352,7 @@ class MultiPhaseTraining:
             QApplication.processEvents()
             if not self.is_session_active:
                 return False
-            self.peripherals['beam_break'].activate_beam_break()
+            self.peripherals['beam_break'].activate()
             time.sleep(0.01)
         print("Beam unbroken. Trial initiated!")
         return True

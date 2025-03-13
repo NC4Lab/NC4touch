@@ -11,8 +11,8 @@ class Buzzer:
         pi.set_PWM_range(pin, 100)
         pi.set_PWM_frequency(pin, 10000)
     
-    def activate_buzzer(self):
+    def activate(self):
         self.pi.set_PWM_dutycycle(self.pin, self.volume)
         
-    def deactivate_buzzer(self):
+    def deactivate(self):
         self.pi.set_PWM_dutycycle(self.pin, 0)

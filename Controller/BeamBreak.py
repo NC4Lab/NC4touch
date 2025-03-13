@@ -2,6 +2,9 @@ import pigpio
 import time
 
 class BeamBreak:
+    """
+    Class to handle the BeamBreak sensor.
+    """
     def __init__(self, pi, pin, debounce_delay=0.2):
         
         self.pi = pi

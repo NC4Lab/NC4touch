@@ -14,7 +14,7 @@ class BeamBreak:
         GPIO.setmode(GPIO.BCM)  
         GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    def activate_beam_break(self):
+    def activate(self):
 
         self.reading = GPIO.input(self.pin)
 
@@ -31,7 +31,7 @@ class BeamBreak:
         self.last_state = self.reading
         time.sleep(0.01)  
 
-    def deactivate_beam_break(self):
+    def deactivate(self):
         self.sensor_state = -1
         self.last_state = -1
         self.last_debounce_time = 0
