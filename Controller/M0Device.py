@@ -10,6 +10,7 @@ import subprocess
 import threading
 import queue
 import serial
+from helpers import wait_for_dmesg
 
 class M0Device:
     """
@@ -17,8 +18,7 @@ class M0Device:
     """
 
     def __init__(self, pi=None, id=None, reset_pin=None,
-                 port=None, serial_number = None, 
-                 baudrate=115200, location=None):
+                 port=None, baudrate=115200, location=None):
         
         if pi is None:
             self.pi = pigpio.pi()
@@ -28,7 +28,6 @@ class M0Device:
         self.id = id
         self.reset_pin = reset_pin
         self.port= port
-        self.serial_number = serial_number
         self.baudrate = baudrate
         self.location = location
 
@@ -39,6 +38,19 @@ class M0Device:
         self.message_queue = queue.Queue()  # to store lines: (id, text)
 
         self.write_lock = threading.Lock()
+    
+    def __del__(self):
+        self.stop()
+    
+    def stop(self):
+        """
+        Stops the read thread and closes the serial port.
+        """
+        self.stop_flag.set()
+        if self.ser and self.ser.is_open:
+            self.ser.close()
+            print(f"[{self.id}] Closed port {self.port}.")
+        print(f"[{self.id}] Stopped.")
     
     def open_serial(self):
         """
@@ -68,6 +80,7 @@ class M0Device:
                 if self.ser and self.ser.is_open:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
                     if line:
+                        print(f"[{self.id}] <- {line}")
                         self.message_queue.put((self.id, line))
                 else:
                     time.sleep(0.5)
@@ -121,26 +134,7 @@ class M0Device:
             time.sleep(0.1)
             self.reset()
             
-            start_time = time.localtime()
-            waiting = True
-            while waiting:
-                time.sleep(0.5)
-                print(f"Waiting for disk...")
-
-                dmesg = subprocess.check_output("dmesg -T", shell=True).decode("utf-8")
-                dmesg = dmesg.split("\n")[:-2]
-
-                timestamps = [line.split("]")[0][1:] for line in dmesg]
-                timestamps = [time.strptime(ts, "%a %b %d %H:%M:%S %Y") for ts in timestamps]
-
-                # Filter for timestamps after start time
-                dmesg = [line for line, ts in zip(dmesg, timestamps) if ts > start_time]
-
-                if dmesg:
-                    sd_line = [line for line in dmesg if "FireBeetle-UDisk" in line]
-                    if sd_line:
-                        waiting = False
-
+            wait_for_dmesg("FireBeetle-UDisk")
             
             # Find the mount location from lsblk
             waiting = True
@@ -203,41 +197,17 @@ class M0Device:
             self.reset()
             time.sleep(1)
 
-            # Record current time
-            start_time = time.localtime()
-
             # Wait for the device to be detected
-            # Check the dmesg log for messages after the start time
-            waiting = True
-            while waiting:
-                dmesg = subprocess.check_output("dmesg -T | tail", shell=True).decode("utf-8")
-                dmesg = dmesg.split("\n") # Get the latest message
+            tty_line = wait_for_dmesg("ttyACM")
 
-                # Starts with timestamp, e.g. [Wed Mar 12 15:29:35 2025]
-                timestamp = dmesg[-2].split("]")[0][1:] # Last timestamp
-                print(f"{timestamp}: Waiting for device...")
-                # Convert to time struct
-                timestamp = time.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
-                if timestamp > start_time:
-                    waiting = False
-                time.sleep(0.5)
+            if tty_line:
+                self.port = "/dev/ttyACM" + tty_line.split("ttyACM")[1].split(":")[0]
 
-            # Check dmesg for the device ID
-            dmesg = subprocess.check_output("dmesg | tail", shell=True).decode("utf-8")
-            dmesg = dmesg.split("\n")[::-1] # Reverse the list to get the latest messages first
-
-            serial_number_line = [line for line in dmesg if "SerialNumber:" in line][0]
-            port_line = [line for line in dmesg if "ttyACM" in line][0]
-
-            if "SerialNumber:" in serial_number_line and "ttyACM" in port_line:
-                self.serial_number = serial_number_line.split("SerialNumber: ")[1]
-                self.port = "/dev/ttyACM" + port_line.split("ttyACM")[1].split(":")[0]
-
-                print(f"Found device ID: {self.serial_number} on port /dev/ttyACM{self.port}")
+                print(f"Found device on port /dev/ttyACM{self.port}")
             else:
-                print("Error finding device ID.")
+                print("Error finding device")
         except Exception as e:
-            print(f"Error finding device ID: {e}")
+            print(f"Error finding device {e}")
     
     def _attempt_reopen(self):
         """
