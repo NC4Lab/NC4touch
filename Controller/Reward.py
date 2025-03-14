@@ -3,19 +3,12 @@ import time
 import serial
 
 class Reward:
-    def __init__(self, pi, pin, serial_port='/dev/ttyUSB0', baudrate=9600):
+    def __init__(self, pi, pin):
         self.pi = pi
         self.pin = pin
         self.is_priming = False
         self.reward_duration_ms = 1000  
-
-        if serial_port:
-            try:
-                self.serial = serial.Serial(serial_port, baudrate, timeout=0.1)
-                print(f"Serial connection established on {serial_port}.")
-            except serial.SerialException as e:
-                self.serial = None
-                print(f"Failed to connect to serial port {serial_port}: {e}")
+        self.setup_reward()
 
     def setup_reward(self):
         """PWM set up"""
