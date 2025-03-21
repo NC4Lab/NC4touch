@@ -91,7 +91,7 @@ class M0Device:
             except Exception as e:
                 print(f"[{self.m0_id}] read_loop error: {e}")
                 # re-open self.ser here
-                self._attempt_reopen()
+                #self._attempt_reopen()
         print(f"[{self.m0_id}] read_loop ending.")
 
     def _attempt_reopen(self):
