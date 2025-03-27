@@ -85,6 +85,7 @@ class M0Device:
                 if self.ser and self.ser.is_open:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
                     if line:
+                        print(f"[{self.m0_id}] {line}")
                         self.message_queue.put((self.m0_id, line))
                 else:
                     time.sleep(0.5)
