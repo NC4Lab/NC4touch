@@ -186,7 +186,7 @@ void scanTouch() {
   tp.w  = numberTillComma(scan_s);
 
   // Check validity
-  if (tp.id == 255 || tp.id == -1) {
+  if (tp.id == 255 || tp.id == -1 || tp.x < 10 || tp.x > 310 || tp.y < 10 || tp.y > 470) {
     tp.isValid = false;
   } else {
     tp.isValid = true;
