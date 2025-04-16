@@ -30,8 +30,10 @@ def discover_m0_boards():
             try:
                 with serial.Serial(p.device, 115200, timeout=1) as ser:
                     time.sleep(0.3)
+                    ser.readlines()
                     ser.write(b"WHOAREYOU?\n")
                     line = ser.readline().decode("utf-8", errors="ignore").strip()
+                    print(f"{line}")
                     if line.startswith("ID:"):
                         board_id = line.split(":", 1)[1]
                         board_map[board_id] = p.device
