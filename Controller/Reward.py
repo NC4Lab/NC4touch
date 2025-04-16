@@ -1,13 +1,12 @@
 import pigpio
 import time
-import serial
 
 class Reward:
     def __init__(self, pi, pin):
         self.pi = pi
         self.pin = pin
         self.is_priming = False
-        self.reward_duration_ms = 1000  
+        self.reward_duration_ms = 1500  
         self.setup_reward()
 
     def setup_reward(self):
@@ -18,6 +17,10 @@ class Reward:
         self.pi.set_PWM_frequency(self.pin, 5000)
 
     def dispense_reward(self, duration_s=None):
+        """
+        Turn on the pump (max duty cycle).
+        If duration_s is given, the main code is responsible for timing and stopping the pump.
+        """
         print(f"Dispensing reward{' (duration_s=' + str(duration_s) + ')' if duration_s else ''}")
         self.pi.set_PWM_dutycycle(self.pin, 255)
 
@@ -28,23 +31,11 @@ class Reward:
     def prime_feeding_tube(self):
         self.is_priming = True
         start_time = time.time()
-
         print("Priming started")
         try:
-            while self.is_priming and (time.time() - start_time) < 20:  # ~20s for priming
+            while self.is_priming and (time.time() - start_time) < 20:  # ~20 seconds max
                 self.pi.set_PWM_dutycycle(self.pin, 255)
-
-                if self.serial and self.serial.in_waiting > 0:
-                    try:
-                        command = self.serial.read().decode('utf-8').strip()
-                        if command == 'x':
-                            self.stop_priming()
-                            break
-                    except UnicodeDecodeError:
-                        print("Failed to decode serial input.")
-
                 time.sleep(0.1)
-
             self.pi.set_PWM_dutycycle(self.pin, 0)
             if self.is_priming:
                 print("Priming finished.")
@@ -53,8 +44,8 @@ class Reward:
             print(f"Error during priming: {e}")
 
     def stop_priming(self):
-        self.is_priming = False
         self.pi.set_PWM_dutycycle(self.pin, 0)
+        self.is_priming = False
         print("Priming stopped.")
 
     def cleanup(self):

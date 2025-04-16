@@ -2,6 +2,7 @@
 
 """
 m0_devices.py
+Combined code for:
 1) discover_m0_boards() to find M0s by sending WHOAREYOU?
 2) M0Device class to handle each M0's serial port in a thread,
    allowing send_command(...) and continuous read of lines.
@@ -92,7 +93,7 @@ class M0Device:
             except Exception as e:
                 print(f"[{self.m0_id}] read_loop error: {e}")
                 # re-open self.ser here
-                #self._attempt_reopen()
+                # self._attempt_reopen()
         print(f"[{self.m0_id}] read_loop ending.")
 
     def _attempt_reopen(self):

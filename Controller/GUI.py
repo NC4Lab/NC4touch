@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import sys
 import os
 import cv2
@@ -29,10 +28,13 @@ from Reward import Reward
 from BeamBreak import BeamBreak
 from Buzzer import Buzzer
 
+# Import our updated video recorder module
+from video_recorder import VideoRecorder
+
 
 class EmittingStream(QObject):
     """
-    A file-like stream that emits a signal whenever text is written.
+    A 'file-like' stream that emits a signal whenever text is written.
     This avoids GUI updates from non-GUI threads that can lead to segfaults.
     """
     textWritten = pyqtSignal(str)
@@ -40,22 +42,6 @@ class EmittingStream(QObject):
         self.textWritten.emit(text)
     def flush(self):
         pass
-
-
-def merge_audio_video(video_path, audio_path):
-    output_file_path = video_path.replace('.avi', '_final.mp4')
-    ffmpeg_command = [
-        'ffmpeg', '-i', video_path,
-        '-i', audio_path,
-        '-c:v', 'copy',
-        '-c:a', 'aac',
-        output_file_path
-    ]
-    try:
-        subprocess.run(ffmpeg_command, check=True)
-        print(f"Video and audio combined into {output_file_path}")
-    except Exception as e:
-        print(f"Failed to combine video and audio: {e}")
 
 
 class MultiTrialGUI(QMainWindow):
@@ -78,7 +64,6 @@ class MultiTrialGUI(QMainWindow):
         self.right_column = QVBoxLayout()
         self.right_column.setContentsMargins(15, 15, 15, 15)
         self.right_column.setSpacing(20)
-
         self.main_layout.addLayout(self.left_column, stretch=1)
         self.main_layout.addLayout(self.right_column, stretch=1)
 
@@ -101,9 +86,8 @@ class MultiTrialGUI(QMainWindow):
         self.video_capture = None
         self.video_timer = None
         self.is_recording = False
-        self.video_writer = None
-        self.recording_process = None  # used for ffmpeg audio
         self.video_file_path = ""
+        self.video_recorder = None  # Will be created after video capture
 
         # Session Timer
         self.session_start_time = None
@@ -113,32 +97,33 @@ class MultiTrialGUI(QMainWindow):
         # A list to store rodent names (history)
         self.mouse_names = []
 
-        # 1) Left Column UI
+        # Initialize GUI components
         self.init_mouse_info_ui()
         self.init_video_ui()
         self.init_graph_ui()
 
-        # 2) Right Column UI
         self.init_discover_button()
         self.init_phase_ui()
-        self.init_parameters_ui()  # New: Parameters UI for ITI
+        self.init_parameters_ui()  # Parameters UI for ITI
         self.init_session_controls()
         self.init_serial_monitor()
 
-        # 3) Initialize pigpio & trainer
+        # Initialize pigpio and trainer
         self.init_hardware()
 
-        # 4) Redirect stdout
+        # Redirect stdout to GUI text monitor
         self.stdout_buffer = ""
         self.emitting_stream = EmittingStream()
         self.emitting_stream.textWritten.connect(self.handle_new_text)
         sys.stdout = self.emitting_stream
 
-        # Disable "Start Training" until rodent name is set
+        # Disable "Start Training" until a rodent name is set
         self.start_training_btn.setEnabled(False)
 
-        # Start camera capture
+        # Start camera capture and create VideoRecorder instance
         self.initialize_video_capture()
+        if self.video_capture is not None and self.video_capture.isOpened():
+            self.video_recorder = VideoRecorder(self.video_capture)
 
     # ---------------- LEFT COLUMN UI ----------------
     def init_mouse_info_ui(self):
@@ -180,11 +165,11 @@ class MultiTrialGUI(QMainWindow):
         mouse_input_layout.addWidget(self.save_mouse_name_button)
         layout.addLayout(mouse_input_layout)
 
-        self.mouse_name_label = QLabel("Current Rodent Name: No Rodent Name Set")
+        self.mouse_name_label = QLabel("Current Mouse Name: No Mouse Name Set")
         self.mouse_name_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #333;")
         layout.addWidget(self.mouse_name_label)
 
-        self.mouse_name_history_label = QLabel("Trained Rodent: (none yet)")
+        self.mouse_name_history_label = QLabel("Trained Mice: (none yet)")
         self.mouse_name_history_label.setStyleSheet("font-size: 12px; color: #555;")
         layout.addWidget(self.mouse_name_history_label)
 
@@ -307,7 +292,7 @@ class MultiTrialGUI(QMainWindow):
         phase_label.setStyleSheet("font-weight: bold;")
 
         self.phase_combo = QComboBox()
-        self.phase_combo.addItems(["Habituation", "Initial Touch", "Must Touch", "Must Initiate", "Punish Incorrect", "Simple Discrimination"])
+        self.phase_combo.addItems(["Habituation", "Initial Touch", "Must Touch", "Must Initiate", "Punish Incorrect", "Simple Discrimination", "Complex Discrimination"])
         self.phase_combo.setStyleSheet("""
             QComboBox {
                 background-color: #FFF7E0;
@@ -479,7 +464,7 @@ class MultiTrialGUI(QMainWindow):
         """)
         self.right_column.addWidget(self.serial_monitor)
 
-    # --------------- Hardware/Trainer Init ---------------
+    # ---------------- Hardware/Trainer Init ----------------
     def init_hardware(self):
         self.pi = pigpio.pi()
         if not self.pi.connected:
@@ -489,22 +474,22 @@ class MultiTrialGUI(QMainWindow):
         Reward_LED_PIN = 21
         Reward_PIN = 27
         BeamBreak_PIN = 4
-        Punishment_LED_PIN = 19
+        Punishment_LED_PIN = 17
         Buzzer_PIN = 16
 
         self.peripherals = {
-            'reward_led': LED(self.pi, Reward_LED_PIN, brightness = 140),
+            'reward_led': LED(self.pi, Reward_LED_PIN, brightness=140),
             'reward':     Reward(self.pi, Reward_PIN),
             'beam_break': BeamBreak(self.pi, BeamBreak_PIN),
-            'punishment_led': LED(self.pi, Punishment_LED_PIN, brightness = 255),
+            'punishment_led': LED(self.pi, Punishment_LED_PIN, brightness=255),
             'buzzer': Buzzer(self.pi, Buzzer_PIN)
         }
+        self.trainer = None
+        #default_board_map = {"M0_0": "/dev/ttyACM0", "M0_1": "/dev/ttyACM1"}
+        #self.trainer = Main.MultiPhaseTraining(self.pi, self.peripherals, default_board_map)
+        #self.trainer.open_realtime_csv("FullSession")
 
-        default_board_map = {"M0_0": "/dev/ttyACM0", "M0_1": "/dev/ttyACM1"}
-        self.trainer = Main.MultiPhaseTraining(self.pi, self.peripherals, default_board_map)
-        self.trainer.open_realtime_csv("FullSession")
-
-    # --------------- STDOUT Redirection ---------------
+    # ---------------- STDOUT Redirection ----------------
     def handle_new_text(self, text):
         self.stdout_buffer += text
         while "\n" in self.stdout_buffer:
@@ -551,7 +536,6 @@ class MultiTrialGUI(QMainWindow):
         self.ax.set_title("Real-Time Training Performance", fontsize=14, fontweight='bold')
         self.ax.set_ylabel("Count", fontsize=12)
         self.ax.set_xlabel("Choice Result", fontsize=12)
-
         self.trial_count_label.setText(f"Trial Count: {self.trial_count}")
         self.canvas.draw()
 
@@ -566,10 +550,9 @@ class MultiTrialGUI(QMainWindow):
         self.ax.bar(categories, [0, 0, 0], color=["#009E73","#D55E00","#0072B2"])
         self.ax.set_ylim([0, 30])
         self.canvas.draw()
-
         self.trial_count_label.setText("Trial Count: 0")
 
-    # --------------- VIDEO CAPTURE ---------------
+    # ---------------- VIDEO CAPTURE ----------------
     def initialize_video_capture(self):
         self.video_capture = cv2.VideoCapture(0, cv2.CAP_V4L2)
         if not self.video_capture.isOpened():
@@ -584,6 +567,9 @@ class MultiTrialGUI(QMainWindow):
         self.video_timer.timeout.connect(self.update_video_feed)
         self.video_timer.start(int(1000 / 30))
 
+        # Create VideoRecorder instance using the video capture
+        self.video_recorder = VideoRecorder(self.video_capture)
+
     def update_video_feed(self):
         if not self.video_capture or not self.video_capture.isOpened():
             return
@@ -594,85 +580,38 @@ class MultiTrialGUI(QMainWindow):
         h, w, ch = frame_rgb.shape
         q_img = QImage(frame_rgb.data, w, h, ch * w, QImage.Format_RGB888)
         self.video_feed_label.setPixmap(QPixmap.fromImage(q_img))
-        if self.is_recording and self.video_writer is not None:
-            self.video_writer.write(frame)
+        # Send frame to VideoRecorder for recording (local or livestream mode)
+        if self.is_recording and self.video_recorder:
+            self.video_recorder.update_recording(frame)
 
     def toggle_recording(self):
         if self.is_recording:
-            self.stop_recording()
+            self.video_recorder.stop_recording()
+            self.is_recording = False
+            self.record_toggle_button.setText("Start Recording")
         else:
-            self.start_recording()
-
-    def start_recording(self):
-        options = QFileDialog.Options()
-        filepath, _ = QFileDialog.getSaveFileName(
-            self, "Save Video", "", "Video Files (*.avi)", options=options
-        )
-        if not filepath:
-            return
-        if not filepath.endswith(".avi"):
-            filepath += ".avi"
-        self.video_file_path = filepath
-
-        frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-        self.video_writer = cv2.VideoWriter(filepath, fourcc, 20.0, (frame_width, frame_height))
-
-        self.is_recording = True
-        self.record_toggle_button.setText("Stop Recording")
-        print(f"Started recording video to {filepath}")
-
-        audio_file_path = filepath.replace('.avi', '.wav')
-        ffmpeg_command = [
-            'ffmpeg',
-            '-f', 'alsa',
-            '-i', 'hw:3,0',
-            audio_file_path
-        ]
-        try:
-            self.recording_process = subprocess.Popen(
-                ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            reply = QMessageBox.question(
+                self,
+                "Livestream Option",
+                "Would you like to livestream your recording?",
+                QMessageBox.Yes | QMessageBox.No
             )
-            print("Audio recording started with FFmpeg (ALSA input).")
-        except Exception as e:
-            self.recording_process = None
-            print(f"Failed to start audio recording (optional): {e}")
-
-    def stop_recording(self):
-        if not self.is_recording:
-            return
-        self.is_recording = False
-        if self.video_writer is not None:
-            self.video_writer.release()
-            self.video_writer = None
-        self.record_toggle_button.setText("Start Recording")
-        print("Stopped recording video.")
-        if self.recording_process:
-            threading.Thread(target=self.terminate_ffmpeg_process, daemon=True).start()
-        audio_file_path = self.video_file_path.replace('.avi', '.wav')
-        if os.path.exists(audio_file_path):
-            merging_thread = threading.Thread(
-                target=merge_audio_video,
-                args=(self.video_file_path, audio_file_path),
-                daemon=True
+            livestream = (reply == QMessageBox.Yes)
+            options = QFileDialog.Options()
+            filepath, _ = QFileDialog.getSaveFileName(
+                self, "Save Video", "", "Video Files (*.avi);;Video Files (*.mp4)", options=options
             )
-            merging_thread.start()
-        else:
-            print("No audio file found; skipping merge.")
+            if not filepath:
+                return
+            rtmp_url = ""
+            if livestream:
+                # Replace YOUR_STREAM_KEY with your actual YouTube stream key.
+                rtmp_url = "rtmp://x.rtmp.youtube.com/live2/myxg-tayp-8cwx-wecv-ftv9"
+            if self.video_recorder.start_recording(filepath, livestream=livestream, stream_url=rtmp_url):
+                self.is_recording = True
+                self.record_toggle_button.setText("Stop Recording")
 
-    def terminate_ffmpeg_process(self):
-        try:
-            self.recording_process.terminate()
-            stdout, stderr = self.recording_process.communicate(timeout=5)
-            print(f"FFmpeg stdout: {stdout.decode(errors='ignore')}")
-            print(f"FFmpeg stderr: {stderr.decode(errors='ignore')}")
-        except Exception as e:
-            print(f"Error terminating ffmpeg process: {e}")
-        finally:
-            self.recording_process = None
-
-    # --------------- SESSION CONTROL SECTION ---------------
+    # ---------------- SESSION CONTROL ----------------
     def on_discover(self):
         boards = m0_devices.discover_m0_boards()
         if boards:
@@ -755,7 +694,8 @@ class MultiTrialGUI(QMainWindow):
             self.trainer.punish_incorrect_phase(self.csv_file)
         elif phase_sel == "Simple Discrimination":
             self.trainer.simple_discrimination_phase(self.csv_file)
-
+        elif phase_sel == "Complex Discrimination":
+            self.trainer.complex_discrimination_phase(self.csv_file)
         print("Phase run finished.")
 
     def on_stop_training(self):
@@ -771,20 +711,17 @@ class MultiTrialGUI(QMainWindow):
 
     def on_start_priming(self):
         if not self.trainer or 'reward' not in self.trainer.peripherals:
-            print("No tube to prime.")
+            print("No trainer or reward object to prime.")
             return
         print("Starting to prime feeding tube.")
         self.trainer.peripherals['reward'].prime_feeding_tube()
 
-    def on_start_priming(self):
+    def on_stop_priming(self):
         if not self.trainer or 'reward' not in self.trainer.peripherals:
-            print("No trainer or reward object to prime.")
+            print("No trainer or reward object to stop priming.")
             return
-        import threading
-        print("Starting to prime feeding tube.")
-        priming_thread = threading.Thread(target=self.trainer.peripherals['reward'].prime_feeding_tube)
-        priming_thread.daemon = True  
-        priming_thread.start()
+        print("Stopping priming.")
+        self.trainer.peripherals['reward'].stop_priming()
 
     def save_mouse_name(self):
         name = self.mouse_name_input.text().strip()
@@ -806,12 +743,33 @@ class MultiTrialGUI(QMainWindow):
         else:
             print("No rodent name entered.")
 
+    # ---------------- SESSION TIMER WITH 60-MINUTE CHECK ----------------
     def update_session_timer(self):
         if self.session_start_time is not None:
             elapsed = time.time() - self.session_start_time
             minutes = int(elapsed // 60)
             seconds = int(elapsed % 60)
             self.session_timer_label.setText(f"Session Time: {minutes:02d}:{seconds:02d}")
+
+            # Check if 60 minutes (3600 seconds) have passed and ensure the popup shows only once
+            if elapsed >= 3600 and not hasattr(self, 'termination_popup_shown'):
+                self.termination_popup_shown = True  # Flag so we only show the popup once
+
+                # Create a non-blocking message box
+                msg = QMessageBox(self)
+                msg.setIcon(QMessageBox.Question)
+                msg.setWindowTitle("Session Timeout")
+                msg.setText("60 minutes have passed since the start of training.\nWould you like to terminate the training session?")
+                msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg.buttonClicked.connect(self.handle_termination_response)
+                msg.show()  # non-blocking
+
+    def handle_termination_response(self, button):
+        if button.text() == "&Yes":
+            print("User chose to terminate the session after 60 minutes.")
+            self.on_stop_training()  # Stop training as if the Stop Training button was pressed
+        else:
+            print("User chose to continue training.")
 
     def closeEvent(self, event):
         if self.video_timer:
