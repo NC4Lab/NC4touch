@@ -33,16 +33,16 @@ class Chamber:
 
     # Initialize M0s
     self.left_m0 = M0Device(pi = self.pi, id = "M0_0", reset_pin = self.reset_pins[0])
-    self.middle_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.reset_pins[1])
+    # self.middle_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.reset_pins[1])
     self.right_m0 = M0Device(pi = self.pi, id = "M0_2", reset_pin = self.reset_pins[2])
 
-    self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
+    self.m0s = [self.left_m0, self.right_m0]
 
     self.reward_LED = LED(pi=self.pi, pin=self.reward_LED_pin, brightness = 140)
     self.punishment_LED = LED(pi=self.pi, pin=self.punishment_LED_pin, brightness = 255)
     self.beambreak = BeamBreak(pi=self.pi, pin=self.beambreak_pin)
     self.buzzer = Buzzer(pi=self.pi, pin=self.buzzer_pin)
-    self.reward = Reward(pi=self.pi, pin=self.reward_pump_pin, serial_port=None)
+    self.reward = Reward(pi=self.pi, pin=self.reward_pump_pin)
   
   def __del__(self):
     self.pi.stop()
@@ -86,18 +86,14 @@ class Chamber:
 
 if __name__ == "__main__":
   chamber = Chamber()
-  # [m0.initialize() for m0 in chamber.m0s]
+  [m0.initialize() for m0 in chamber.m0s]
   # [m0.sync_image_folder() for m0 in chamber.m0s]
 
-  # chamber.reward_LED.turn_on()
-  # chamber.punishment_LED.turn_on()
-  # chamber.buzzer.turn_on()
+  # chamber.reward_LED.deactivate()
+  # chamber.punishment_LED.deactivate()
+  # chamber.buzzer.deactivate()
 
-  # time.sleep(2)
 
-  # chamber.reward_LED.turn_off()
-  # chamber.punishment_LED.turn_off()
-  # chamber.buzzer.turn_off()
 
   print("Chamber initialized.")
   input("Press Enter to exit.")
