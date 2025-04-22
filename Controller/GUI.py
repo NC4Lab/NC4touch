@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 import threading
 
+from Camera import Camera
+
 import pigpio
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -29,10 +31,6 @@ from LED import LED
 from Reward import Reward
 from BeamBreak import BeamBreak
 from Buzzer import Buzzer
-
-# Import our updated video recorder module
-from video_recorder import VideoRecorder
-
 
 class EmittingStream(QObject):
     """
@@ -89,7 +87,6 @@ class MultiTrialGUI(QMainWindow):
         self.video_timer = None
         self.is_recording = False
         self.video_file_path = ""
-        self.video_recorder = None  # Will be created after video capture
 
         # Session Timer
         self.session_start_time = None
@@ -128,8 +125,6 @@ class MultiTrialGUI(QMainWindow):
 
         # Start camera capture and create VideoRecorder instance
         self.initialize_video_capture()
-        if self.video_capture is not None and self.video_capture.isOpened():
-            self.video_recorder = VideoRecorder(self.video_capture)
 
     # ---------------- LEFT COLUMN UI ----------------
     def init_config_file(self):
@@ -570,26 +565,17 @@ class MultiTrialGUI(QMainWindow):
 
     # ---------------- VIDEO CAPTURE ----------------
     def initialize_video_capture(self):
-        self.video_capture = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        if not self.video_capture.isOpened():
-            print("Warning: Could not open camera (index=0) with V4L2.")
-            return
-        self.video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'X264'))
-        self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        self.video_capture.set(cv2.CAP_PROP_FPS, 30)
+        self.camera = Camera()
+        self.camera.initialize_video_capture()
 
         self.video_timer = QTimer(self)
         self.video_timer.timeout.connect(self.update_video_feed)
         self.video_timer.start(int(1000 / 30))
 
-        # Create VideoRecorder instance using the video capture
-        self.video_recorder = VideoRecorder(self.video_capture)
-
     def update_video_feed(self):
-        if not self.video_capture or not self.video_capture.isOpened():
+        if not self.camera.video_capture or not self.camera.video_capture.isOpened():
             return
-        ret, frame = self.video_capture.read()
+        ret, frame = self.camera.video_capture.read()
         if not ret or frame is None:
             return
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -597,12 +583,12 @@ class MultiTrialGUI(QMainWindow):
         q_img = QImage(frame_rgb.data, w, h, ch * w, QImage.Format_RGB888)
         self.video_feed_label.setPixmap(QPixmap.fromImage(q_img))
         # Send frame to VideoRecorder for recording (local or livestream mode)
-        if self.is_recording and self.video_recorder:
-            self.video_recorder.update_recording(frame)
+        if self.is_recording and self.camera.video_recorder:
+            self.camera.video_recorder.update_recording(frame)
 
     def toggle_recording(self):
         if self.is_recording:
-            self.video_recorder.stop_recording()
+            self.camera.video_recorder.stop_recording()
             self.is_recording = False
             self.record_toggle_button.setText("Start Recording")
         else:
@@ -614,10 +600,11 @@ class MultiTrialGUI(QMainWindow):
             )
             livestream = (reply == QMessageBox.Yes)
             options = QFileDialog.Options()
+
+            config_recording_dir = ""
             if "recording_dir" in self.config:
                 config_recording_dir = self.config["recording_dir"]
-            else:
-                config_recording_dir = ""
+
             filepath, _ = QFileDialog.getSaveFileName(
                 self, "Save Video", config_recording_dir, "Video Files (*.avi);;Video Files (*.mp4)", options=options
             )
@@ -631,7 +618,7 @@ class MultiTrialGUI(QMainWindow):
             if livestream:
                 # Replace YOUR_STREAM_KEY with your actual YouTube stream key.
                 rtmp_url = "rtmp://x.rtmp.youtube.com/live2/myxg-tayp-8cwx-wecv-ftv9"
-            if self.video_recorder.start_recording(filepath, livestream=livestream, stream_url=rtmp_url):
+            if self.camera.video_recorder.start_recording(filepath, livestream=livestream, stream_url=rtmp_url):
                 self.is_recording = True
                 self.record_toggle_button.setText("Stop Recording")
     
@@ -653,10 +640,9 @@ class MultiTrialGUI(QMainWindow):
             print("No M0 boards found.")
 
     def on_load_csv(self):
+        config_seq_csv_dir = ""
         if "seq_csv_dir" in self.config:
             config_seq_csv_dir = self.config["seq_csv_dir"]
-        else:
-            config_seq_csv_dir = ""
 
         fname, _ = QFileDialog.getOpenFileName(
             self, "Open Seq CSV", config_seq_csv_dir, "CSV Files (*.csv)"
@@ -673,13 +659,12 @@ class MultiTrialGUI(QMainWindow):
             print("No trainer object to export from.")
             return
         
+        config_data_csv_dir = ""
         if "data_csv_dir" in self.config:
             config_data_csv_dir = self.config["data_csv_dir"]
-        else:
-            config_data_csv_dir = ""
 
         fname, _ = QFileDialog.getSaveFileName(
-            self, "Save CSV", "", "CSV Files (*.csv)"
+            self, "Save CSV", config_data_csv_dir, "CSV Files (*.csv)"
         )
         if fname:
             self.trainer.rodent_id = self.rodent_id

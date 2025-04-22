@@ -9,6 +9,7 @@ from Reward import Reward
 from BeamBreak import BeamBreak
 from Buzzer import Buzzer
 from M0Device import M0Device
+from Camera import Camera
 import time
 import serial
 import serial.tools.list_ports
@@ -43,6 +44,7 @@ class Chamber:
     self.beambreak = BeamBreak(pi=self.pi, pin=self.beambreak_pin)
     self.buzzer = Buzzer(pi=self.pi, pin=self.buzzer_pin)
     self.reward = Reward(pi=self.pi, pin=self.reward_pump_pin)
+    self.camera = Camera(camera_device="/dev/video0")
   
   def __del__(self):
     self.pi.stop()
