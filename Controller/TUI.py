@@ -97,12 +97,13 @@ class TUI:
             return
         print("Stopping priming.")
         self.trainer.peripherals['reward'].stop_priming()
+
+
     
 if __name__ == "__main__":
     tui = TUI()
 
     # Create ncurses window
-    import curses
     stdscr = curses.initscr()
     curses.noecho()
     curses.cbreak()
@@ -134,15 +135,16 @@ if __name__ == "__main__":
             stdscr.addstr(lineIdx, 0, "TUI Menu")
             lineIdx += 1
             stdscr.addstr(lineIdx, 0, "----------------")
+            lineIdx += 1
 
             for i, option in enumerate(options.keys()):
                 stdscr.addstr(lineIdx + i, 0, f"{i + 1}. {option}")
 
-            key = stdscr.getch()
+            key = stdscr.getstr(0, 0).decode("utf-8")
 
             success = False
             for i, option in enumerate(options.keys()):
-                if key == ord(str(i + 1)):
+                if key == str(i + 1):
                     stdscr.addstr(8, 0, f"Selected: {option}")
                     stdscr.refresh()
                     options[option]()
@@ -150,7 +152,7 @@ if __name__ == "__main__":
                     time.sleep(1)
             
             if not success:
-                stdscr.addstr(8, 0, "Invalid option. Please try again.")
+                stdscr.addstr(lineIdx + len(options), 0, "Invalid option. Please try again.")
                 stdscr.refresh()
                 time.sleep(1)
     finally:
