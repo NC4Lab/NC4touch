@@ -14,7 +14,7 @@ from Buzzer import Buzzer
 from Camera import Camera
 
 class SessionController:
-    def __init__(self, session_service):
+    def __init__(self):
         # CSV info
         self.rodent_id = None
         self.csv_file = None
@@ -49,7 +49,7 @@ class SessionController:
         self.video_file_path = video_file_path
         self.is_recording = True
         print(f"Recording started. Video will be saved to {self.video_file_path}.")
-        return self.camera.start_recording(self.video_file_path)
+        return self.camera.video_recorder.start_recording(self.video_file_path)
     
     def stop_recording(self):
         """
@@ -58,7 +58,7 @@ class SessionController:
         if self.is_recording:
             self.is_recording = False
             print("Recording stopped.")
-            return self.camera.stop_recording()
+            return self.camera.video_recorder.stop_recording()
         else:
             print("No recording in progress.")
             return False
@@ -92,7 +92,7 @@ class SessionController:
             'punishment_led': LED(self.pi, Punishment_LED_PIN, brightness=255),
             'buzzer': Buzzer(self.pi, Buzzer_PIN)
         }
-        self.trainer = None
+        # self.trainer = None
         #default_board_map = {"M0_0": "/dev/ttyACM0", "M0_1": "/dev/ttyACM1"}
         #self.trainer = Main.MultiPhaseTraining(self.pi, self.peripherals, default_board_map)
         #self.trainer.open_realtime_csv("FullSession")

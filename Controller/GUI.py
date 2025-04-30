@@ -68,6 +68,8 @@ class MultiTrialGUI(QMainWindow):
         self.config = self.session_controller.config
         self.camera = None
         self.trainer = None
+        self.is_recording = False
+        self.rodent_names = []
 
         self.session_timer = QTimer(self)
         self.session_timer.timeout.connect(self.update_session_timer)
@@ -253,7 +255,6 @@ class MultiTrialGUI(QMainWindow):
             }
         """)
         self.discover_button.clicked.connect(self.session_controller.on_discover)
-        self.trainer = self.session_controller.trainer
         self.right_column.addWidget(self.discover_button)
 
     def init_phase_ui(self):
@@ -589,7 +590,7 @@ class MultiTrialGUI(QMainWindow):
             self, "Save CSV", config_data_csv_dir, "CSV Files (*.csv)"
         )
         if fname:
-            self.trainer.rodent_id = self.rodent_id
+            self.trainer.rodent_id = self.rodent_name
             self.trainer.export_results_csv(fname)
             print(f"Exported trial data to {fname}")
 
@@ -599,10 +600,11 @@ class MultiTrialGUI(QMainWindow):
             print("Export canceled.")
 
     def on_start_training(self):
+        self.trainer = self.session_controller.trainer
         if not self.trainer:
             print("No trainer object available.")
             return
-        if not self.rodent_id:
+        if not self.rodent_name:
             print("Please set rodent name first.")
             return
 
@@ -613,7 +615,7 @@ class MultiTrialGUI(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Confirm Training Phase",
-            f"You have selected the '{phase_sel}' training for rodent '{self.rodent_id}'.\n\nPress OK to proceed.",
+            f"You have selected the '{phase_sel}' training for rodent '{self.rodent_name}'.\n\nPress OK to proceed.",
             QMessageBox.Ok | QMessageBox.Cancel
         )
         if reply == QMessageBox.Cancel:
@@ -633,7 +635,7 @@ class MultiTrialGUI(QMainWindow):
         self.session_start_time = time.time()
         self.session_timer.start(1000)
 
-        print(f"Starting phase: {phase_sel}, rodent={self.rodent_id}")
+        print(f"Starting phase: {phase_sel}, rodent={self.rodent_name}")
         if phase_sel == "Habituation":
             self.trainer.Habituation()
         elif phase_sel == "Initial Touch":
@@ -678,7 +680,7 @@ class MultiTrialGUI(QMainWindow):
     def save_rodent_name(self):
         name = self.rodent_name_input.text().strip()
         if name:
-            self.rodent_id = name
+            self.rodent_name = name
             self.session_controller.rodent_id = name
             if self.trainer:
                 self.trainer.rodent_id = name
