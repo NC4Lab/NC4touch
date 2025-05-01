@@ -21,8 +21,6 @@ class Session:
         self.trainer = None
 
         # Video Recording
-        self.video_capture = None
-        self.video_timer = None
         self.is_recording = False
         self.video_file_path = ""
 
@@ -37,27 +35,6 @@ class Session:
 
         # Initialize config file
         self.init_config_file()
-    
-    def start_recording(self, video_file_path):
-        """
-        Starts video recording and sets the file path for the recorded video.
-        """
-        self.video_file_path = video_file_path
-        self.is_recording = True
-        print(f"Recording started. Video will be saved to {self.video_file_path}.")
-        return self.camera.video_recorder.start_recording(self.video_file_path)
-    
-    def stop_recording(self):
-        """
-        Stops video recording.
-        """
-        if self.is_recording:
-            self.is_recording = False
-            print("Recording stopped.")
-            return self.camera.video_recorder.stop_recording()
-        else:
-            print("No recording in progress.")
-            return False
 
     def init_config_file(self):
         code_dir = os.path.dirname(os.path.realpath(__file__))
@@ -129,14 +106,15 @@ class Session:
         """
         self.camera = Camera(camera_device=camera_device)
 
-        if mode == "video_capture":
-            self.camera.initialize_video_capture()
-        elif mode == "network_stream":
-            self.camera.initialize_network_stream()
-        else:
-            print("Invalid camera mode. Use 'video_capture' or 'network_stream'.")
-            return
-        print("Camera initialized successfully.")
+        # if mode == "video_capture":
+        #     self.camera.initialize_video_capture()
+        # elif mode == "network_stream":
+        #     self.camera.initialize_video_capture()
+        #     self.camera.initialize_network_stream()
+        # else:
+        #     print("Invalid camera mode. Use 'video_capture' or 'network_stream'.")
+        #     return
+        # print("Camera initialized successfully.")
 
         
 

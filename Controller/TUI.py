@@ -1,5 +1,5 @@
 import time
-from Controller.Session import Session
+from Session import Session
 import curses
 import os
 
@@ -12,14 +12,12 @@ class TUI:
         self.trial_count = 0
 
         self.session = Session()
-        self.camera = None
         self.trainer = None
         self.is_recording = False
         self.rodent_names = []
 
         # Setup camera
         self.session.setup_camera(camera_device="/dev/video0", mode="video_capture")
-        self.session.camera.initialize_network_stream()
         self.is_recording = False
 
         self.phase_name = self.session.load_from_config("phase_name")
@@ -28,28 +26,45 @@ class TUI:
         self.seq_csv_dir = self.session.load_from_config("seq_csv_dir")
         self.seq_csv_file = self.session.load_from_config("seq_csv_file")
         self.data_csv_dir = self.session.load_from_config("data_csv_dir")
+        self.video_dir = self.session.load_from_config("video_dir")
 
         self.stdscr = None
         self.run_loop = True
         self.lineIdx = 0
+    
+    def __del__(self):
+        self.tui_exit()
+        self.run_loop = False
 
     def start_recording(self):
+        self.tui_exit()
+        print("Starting video recording...")
+        if not self.session.camera:
+            print("Camera not initialized.")
+            return
         if not self.is_recording:
-            self.session.start_recording()
+            datetime_str = time.strftime("%Y%m%d_%H%M%S")
+            video_file = os.path.join(self.video_dir, f"{datetime_str}_{self.rodent_name}.mp4")
+
+            self.session.camera.start_recording(video_file)
             self.is_recording = True
             print("Recording started.")
         else:
             print("Recording is already in progress.")
+        self.tui_init()
 
     def stop_recording(self):
+        self.tui_exit()
         if self.is_recording:
-            self.session.stop_recording()
+            self.session.camera.stop_recording()
             self.is_recording = False
             print("Recording stopped.")
         else:
             print("No recording in progress to stop.")
+        self.tui_init()
 
     def start_training(self):
+        self.tui_exit()
         self.trainer = self.session.trainer
         if not self.trainer:
             print("Trainer not initialized.")
@@ -82,12 +97,16 @@ class TUI:
             self.trainer.complex_discrimination_phase(csv_file)
         print("Phase run finished.")
 
+        self.tui_init()
+
     def stop_training(self):
+        self.tui_exit()
         if self.trainer:
             self.trainer.stop_session()
             print("Training stopped.")
         else:
             print("No training session to stop.")
+        self.tui_init()
     
     def start_priming(self):
         if not self.trainer or 'reward' not in self.trainer.peripherals:
@@ -213,22 +232,37 @@ class TUI:
         else:
             print("Invalid Data directory entered.")
     
-    def tui_exit(self):
-        self.stdscr.addstr(0, 0, "Exiting TUI...")
+    def set_video_dir(self, video_dir):
+        if os.path.isdir(video_dir):
+            self.video_dir = video_dir
+            print(f"Video directory set to: {self.video_dir}")
+            self.session.save_to_config("video_dir", self.video_dir)
+        else:
+            print("Invalid Video directory entered.")
+    
+    def tui_set_video_dir(self):
+        self.stdscr.clear()
+        self.stdscr.addstr(0, 0, "Enter Video directory: ")
         self.stdscr.refresh()
-        time.sleep(1)
+        video_dir = self.stdscr.getstr(1, 0).decode("utf-8")
+        self.set_video_dir(video_dir)
+    
+    def tui_exit(self):
         curses.nocbreak()
         self.stdscr.keypad(False)
         curses.echo()
         curses.endwin()
-        print("TUI exited.")
-        self.run_loop = False
+    
+    def tui_discover_m0s(self):
+        self.tui_exit()
+        self.session.discover_m0s()
+        self.tui_init()
     
     def tui_show_menu(self):
         self.lineIdx = 0
         # Option dictionary
         options = {
-            "Discover M0s": self.session.discover_m0s,
+            "Discover M0s": self.tui_discover_m0s,
             "Start Recording": self.start_recording,
             "Stop Recording": self.stop_recording,
             "Start Training": self.start_training,
@@ -241,6 +275,7 @@ class TUI:
             f"Set Sequence CSV Directory ({self.seq_csv_dir})": self.tui_set_seq_csv_dir,
             f"Set Sequence CSV File ({self.seq_csv_file})": self.tui_set_seq_csv_file,
             f"Set Data CSV Directory ({self.data_csv_dir})": self.tui_set_data_csv_dir,
+            f"Set Video Directory ({self.video_dir})": self.tui_set_video_dir,
             "Export Data": self.export_data,
             "Exit": exit,
         }

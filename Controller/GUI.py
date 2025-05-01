@@ -94,9 +94,6 @@ class MultiTrialGUI(QMainWindow):
         # Disable "Start Training" until a rodent name is set
         self.start_training_btn.setEnabled(False)
 
-        # Start camera capture and create VideoRecorder instance
-        self.initialize_video_capture()
-
     # ---------------- LEFT COLUMN UI ----------------
 
     def init_rodent_info_ui(self):
