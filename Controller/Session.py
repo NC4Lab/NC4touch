@@ -16,6 +16,9 @@ from Camera import Camera
 
 class Session:
     def __init__(self):
+        # Initialize config file
+        self.init_config_file()
+
         # pigpio/peripherals/trainer
         self.pi = None
         self.peripherals = None
@@ -43,8 +46,6 @@ class Session:
         # Initialize pigpio and trainer
         self.init_hardware()
 
-        # Initialize config file
-        self.init_config_file()
 
     def start_training(self):
         if not self.trainer:
