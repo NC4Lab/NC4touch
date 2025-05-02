@@ -2,7 +2,12 @@ import pigpio
 import time
 
 class Reward:
-    def __init__(self, pi, pin):
+    def __init__(self, pi=None, pin=27):
+        if pi is None:
+            pi = pigpio.pi()
+        if not isinstance(pi, pigpio.pi):
+            raise ValueError("pi must be an instance of pigpio.pi")
+
         self.pi = pi
         self.pin = pin
         self.is_priming = False

@@ -1,7 +1,7 @@
 import time
-from Session import Session
 import curses
-import os
+
+from Session import Session
 class TUI:
     def __init__(self):
         # Counters for tracking progress

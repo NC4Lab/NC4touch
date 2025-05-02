@@ -65,7 +65,7 @@ class MultiTrialGUI(QMainWindow):
         self.trial_count = 0
 
         self.session = Session()
-        self.config = self.session.config
+        self.config = self.session.session_config
         self.camera = None
         self.trainer = None
         self.is_recording = False
@@ -536,7 +536,7 @@ class MultiTrialGUI(QMainWindow):
             if not filepath:
                 return
             
-            self.session.save_to_config("recording_dir", os.path.dirname(filepath))
+            self.session.save_to_session_config("recording_dir", os.path.dirname(filepath))
 
             if self.session.start_recording(filepath):
                 self.is_recording = True
@@ -566,8 +566,8 @@ class MultiTrialGUI(QMainWindow):
             self.csv_file = fname
             print(f"CSV loaded: {fname}")
 
-            self.session.save_to_config("seq_csv_dir", os.path.dirname(fname))
-            self.session.save_to_config("seq_csv_file", fname)
+            self.session.save_to_session_config("seq_csv_dir", os.path.dirname(fname))
+            self.session.save_to_session_config("seq_csv_file", fname)
 
     def on_export_data_csv(self):
         if not self.trainer:
@@ -584,7 +584,7 @@ class MultiTrialGUI(QMainWindow):
             self.trainer.export_results_csv(fname)
             print(f"Exported trial data to {fname}")
 
-            self.session.save_to_config("data_csv_dir", os.path.dirname(fname))
+            self.session.save_to_session_config("data_csv_dir", os.path.dirname(fname))
         else:
             print("Export canceled.")
 

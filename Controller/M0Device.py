@@ -28,11 +28,10 @@ class M0Device:
 
     def __init__(self, pi=None, id=None, reset_pin=None,
                  port=None, baudrate=115200, location=None):
-        
         if pi is None:
-            self.pi = pigpio.pi()
-        else:
-            self.pi = pi
+            pi = pigpio.pi()
+        if not isinstance(pi, pigpio.pi):
+            raise ValueError("pi must be an instance of pigpio.pi")
 
         self.id = id
         self.reset_pin = reset_pin

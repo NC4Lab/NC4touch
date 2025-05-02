@@ -14,21 +14,25 @@ import time
 import serial
 import serial.tools.list_ports
 from helpers import wait_for_dmesg
+import os
+import yaml
 
 class Chamber:
-  def __init__(self,
-               reward_LED_pin = 21,
-               reward_pump_pin = 27,
-               beambreak_pin = 4,
-               punishment_LED_pin = 17,
-               buzzer_pin = 16,
-               reset_pins = [6, 5, 25]):
-    self.reward_LED_pin = reward_LED_pin
-    self.reward_pump_pin = reward_pump_pin
-    self.beambreak_pin = beambreak_pin
-    self.punishment_LED_pin = punishment_LED_pin
-    self.buzzer_pin = buzzer_pin
-    self.reset_pins = reset_pins
+  def __init__(self, chamber_config_file = None):
+    code_dir = os.path.dirname(os.path.realpath(__file__))
+    if not chamber_config_file:
+      self.chamber_config_file = os.path.join(code_dir, 'chamber_config.yaml')
+    else:
+      self.chamber_config_file = chamber_config_file
+
+    self.init_chamber_config_file()
+    self.chamber_id = self.chamber_config.get("chamber_id", "Chamber_0")
+    self.reward_LED_pin = self.chamber_config.get("reward_LED_pin", 21)
+    self.reward_pump_pin = self.chamber_config.get("reward_pump_pin", 27)
+    self.beambreak_pin = self.chamber_config.get("beambreak_pin", 4)
+    self.punishment_LED_pin = self.chamber_config.get("punishment_LED_pin", 17)
+    self.buzzer_pin = self.chamber_config.get("buzzer_pin", 16)
+    self.reset_pins = self.chamber_config.get("reset_pins", [6, 5, 25])
 
     self.pi = pigpio.pi()
 
@@ -45,6 +49,18 @@ class Chamber:
     self.buzzer = Buzzer(pi=self.pi, pin=self.buzzer_pin)
     self.reward = Reward(pi=self.pi, pin=self.reward_pump_pin)
     self.camera = Camera(camera_device="/dev/video0")
+
+  def init_chamber_config_file(self):
+      if os.path.isfile(self.chamber_config_file):
+          with open(self.chamber_config_file, 'r') as file:
+              self.chamber_config = yaml.safe_load(file)
+      else:
+          self.chamber_config = {}
+
+  def save_to_chamber_config(self, key, value):
+      self.chamber_config[key] = value
+      with open(self.chamber_config_file, 'w') as f:
+          yaml.dump(self.chamber_config, f)
   
   def __del__(self):
     self.pi.stop()
