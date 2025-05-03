@@ -26,10 +26,8 @@ class M0Device:
     Represents one M0 board with a persistent serial connection.
     """
 
-    def __init__(self, pi=None, id=None, reset_pin=None,
+    def __init__(self, pi=pigpio.pi(), id=None, reset_pin=None,
                  port=None, baudrate=115200, location=None):
-        if pi is None:
-            pi = pigpio.pi()
         if not isinstance(pi, pigpio.pi):
             raise ValueError("pi must be an instance of pigpio.pi")
 

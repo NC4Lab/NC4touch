@@ -18,14 +18,11 @@ import os
 import yaml
 
 class Chamber:
-  def __init__(self, chamber_config_file = None):
-    code_dir = os.path.dirname(os.path.realpath(__file__))
-    if not chamber_config_file:
-      self.chamber_config_file = os.path.join(code_dir, 'chamber_config.yaml')
-    else:
-      self.chamber_config_file = chamber_config_file
+  def __init__(self, chamber_config = {}):
+    if not isinstance(chamber_config, dict):
+      raise ValueError("chamber_config must be a dictionary")
 
-    self.init_chamber_config_file()
+    self.chamber_config = chamber_config
     self.chamber_id = self.chamber_config.get("chamber_id", "Chamber_0")
     self.reward_LED_pin = self.chamber_config.get("reward_LED_pin", 21)
     self.reward_pump_pin = self.chamber_config.get("reward_pump_pin", 27)
@@ -43,25 +40,13 @@ class Chamber:
 
     self.m0s = [self.left_m0, self.right_m0]
 
-    self.reward_LED = LED(pi=self.pi, pin=self.reward_LED_pin, brightness = 140)
-    self.punishment_LED = LED(pi=self.pi, pin=self.punishment_LED_pin, brightness = 255)
+    self.reward_led = LED(pi=self.pi, pin=self.reward_LED_pin, brightness = 140)
+    self.punishment_led = LED(pi=self.pi, pin=self.punishment_LED_pin, brightness = 255)
     self.beambreak = BeamBreak(pi=self.pi, pin=self.beambreak_pin)
     self.buzzer = Buzzer(pi=self.pi, pin=self.buzzer_pin)
     self.reward = Reward(pi=self.pi, pin=self.reward_pump_pin)
     self.camera = Camera(camera_device="/dev/video0")
 
-  def init_chamber_config_file(self):
-      if os.path.isfile(self.chamber_config_file):
-          with open(self.chamber_config_file, 'r') as file:
-              self.chamber_config = yaml.safe_load(file)
-      else:
-          self.chamber_config = {}
-
-  def save_to_chamber_config(self, key, value):
-      self.chamber_config[key] = value
-      with open(self.chamber_config_file, 'w') as f:
-          yaml.dump(self.chamber_config, f)
-  
   def __del__(self):
     self.pi.stop()
     [m0.stop() for m0 in self.m0s]
@@ -107,12 +92,6 @@ if __name__ == "__main__":
   [m0.initialize() for m0 in chamber.m0s]
 
   # [m0.sync_image_folder() for m0 in chamber.m0s]
-
-  # chamber.reward_LED.deactivate()
-  # chamber.punishment_LED.deactivate()
-  # chamber.buzzer.deactivate()
-
-
 
   print("Chamber initialized.")
   input("Press Enter to exit.")

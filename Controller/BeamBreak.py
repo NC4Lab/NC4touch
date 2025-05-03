@@ -11,14 +11,14 @@ class BeamBreak:
         self.pi = pi
         self.pin = pin
         self.debounce_delay = debounce_delay
-        self.sensor_state = 0
+        self.state = 0
         self.last_state = 0
         self.last_debounce_time = 0
 
         self.pi.set_mode(self.pin, pigpio.INPUT)
         self.pi.set_pull_up_down(self.pin, pigpio.PUD_UP)
 
-    def activate_beam_break(self):
+    def activate(self):
         reading = self.pi.read(self.pin)
 
         if reading != self.last_state:
@@ -31,7 +31,7 @@ class BeamBreak:
 
         self.last_state = reading
 
-    def deactivate_beam_break(self):
+    def deactivate(self):
         self.sensor_state = -1
         self.last_state = -1
         self.last_debounce_time = 0

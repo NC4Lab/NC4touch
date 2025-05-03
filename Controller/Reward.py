@@ -2,9 +2,7 @@ import pigpio
 import time
 
 class Reward:
-    def __init__(self, pi=None, pin=27):
-        if pi is None:
-            pi = pigpio.pi()
+    def __init__(self, pi=pigpio.pi(), pin=27):
         if not isinstance(pi, pigpio.pi):
             raise ValueError("pi must be an instance of pigpio.pi")
 
@@ -21,7 +19,7 @@ class Reward:
         self.pi.set_PWM_range(self.pin, 255)
         self.pi.set_PWM_frequency(self.pin, 5000)
 
-    def dispense_reward(self, duration_s=None):
+    def dispense(self, duration_s=None):
         """
         Turn on the pump (max duty cycle).
         If duration_s is given, the main code is responsible for timing and stopping the pump.
@@ -29,7 +27,7 @@ class Reward:
         print(f"Dispensing reward{' (duration_s=' + str(duration_s) + ')' if duration_s else ''}")
         self.pi.set_PWM_dutycycle(self.pin, 255)
 
-    def stop_reward_dispense(self):
+    def stop(self):
         self.pi.set_PWM_dutycycle(self.pin, 0)
         print("Reward dispensing stopped.")
 
@@ -54,5 +52,5 @@ class Reward:
         print("Priming stopped.")
 
     def cleanup(self):
-        self.stop_reward_dispense()  
+        self.stop()  
         self.pi.set_PWM_dutycycle(self.pin, 0)

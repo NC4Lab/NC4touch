@@ -2,6 +2,7 @@ import time
 import curses
 
 from Session import Session
+from Trainer import get_trainers
 class TUI:
     def __init__(self):
         # Counters for tracking progress
@@ -69,30 +70,22 @@ class TUI:
         rodent_name = self.stdscr.getstr(1, 0).decode("utf-8")
         self.session.set_rodent_name(rodent_name)
     
-    def tui_set_phase_name(self):
-        phases = [
-            "Habituation",
-            "Initial Touch",
-            "Must Touch",
-            "Must Initiate",
-            "Punish Incorrect",
-            "Simple Discrimination",
-            "Complex Discrimination"
-        ]
+    def tui_set_trainer_name(self):
+        trainers = get_trainers()
 
         self.stdscr.clear()
         self.lineIdx = 0
-        self.stdscr.addstr(self.lineIdx, 0, "Select Phase:")
+        self.stdscr.addstr(self.lineIdx, 0, "Select Trainer:")
         self.lineIdx += 1
-        for i, phase in enumerate(phases):
-            self.stdscr.addstr(self.lineIdx, 0, f"{i + 1}. {phase}")
+        for i, trainer in enumerate(trainers):
+            self.stdscr.addstr(self.lineIdx, 0, f"{i + 1}. {trainer}")
             self.lineIdx += 1
         self.stdscr.addstr(self.lineIdx, 0, "Enter your choice: ")
         self.stdscr.refresh()
         key = self.stdscr.getstr(self.lineIdx + 1, 0).decode("utf-8")
-        if key.isdigit() and 1 <= int(key) <= len(phases):
-            phase_name = phases[int(key) - 1]
-            self.session.set_phase_name(phase_name)
+        if key.isdigit() and 1 <= int(key) <= len(trainers):
+            trainer_name = trainers[int(key) - 1]
+            self.session.set_trainer_name(trainer_name)
         else:
             self.stdscr.addstr(self.lineIdx + 2, 0, "Invalid choice")
     
@@ -162,7 +155,7 @@ class TUI:
             "Start Priming": self.tui_start_priming,
             "Stop Priming": self.tui_stop_priming,
             f"Set Rodent Name ({self.session.rodent_name})": self.tui_set_rodent_name,
-            f"Set Phase Name ({self.session.phase_name})": self.tui_set_phase_name,
+            f"Set Phase Name ({self.session.trainer_name})": self.tui_set_trainer_name,
             f"Set ITI Duration ({self.session.iti_duration})": self.tui_set_iti_duration,
             f"Set Sequence CSV Directory ({self.session.seq_csv_dir})": self.tui_set_seq_csv_dir,
             f"Set Sequence CSV File ({self.session.seq_csv_file})": self.tui_set_seq_csv_file,
