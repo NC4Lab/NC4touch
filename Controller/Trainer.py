@@ -8,6 +8,7 @@ def get_trainers():
     Returns a list of available trainers.
     """
     return [
+        "DoNothingTrainer",
         "Habituation",
         # Add more trainers as needed
     ]
@@ -27,11 +28,6 @@ class Trainer(ABC):
         self.chamber = chamber
 
         self.trainer_config = trainer_config
-        self.rodent_name = trainer_config.get("rodent_name", "TestRodent")
-        self.trainer_name = trainer_config.get("trainer_name", "DefaultTrainer")
-        self.iti_duration = trainer_config.get("iti_duration", 10)
-        self.seq_csv_dir = trainer_config.get("seq_csv_dir", "sequences")
-        self.seq_csv_file = trainer_config.get("seq_csv_file", "sequences.csv")
 
         self.num_trials = 0  # Number of trials
         self.current_trial = 0

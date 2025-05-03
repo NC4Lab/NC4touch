@@ -23,7 +23,7 @@ class Chamber:
       raise ValueError("chamber_config must be a dictionary")
 
     self.chamber_config = chamber_config
-    self.chamber_id = self.chamber_config.get("chamber_id", "Chamber_0")
+    self.chamber_name = self.chamber_config.get("chamber_name", "Chamber0")
     self.reward_LED_pin = self.chamber_config.get("reward_LED_pin", 21)
     self.reward_pump_pin = self.chamber_config.get("reward_pump_pin", 27)
     self.beambreak_pin = self.chamber_config.get("beambreak_pin", 4)

@@ -6,8 +6,6 @@ import netifaces
 
 # Local modules
 from Chamber import Chamber
-from Trainer import Trainer
-from Trainer import get_trainers
 
 class Session:
     """
@@ -38,8 +36,8 @@ class Session:
         self.chamber_config = self.load_config(self.chamber_config_file)
         self.trainer_config = self.load_config(self.trainer_config_file)
 
-        self.trainer_name = self.session_config.get("trainer_name", "Habituation")
-        self.rodent_name = self.session_config.get("rodent_name", "test_rodent")
+        self.trainer_name = self.session_config.get("trainer_name", "DoNothingTrainer")
+        self.rodent_name = self.session_config.get("rodent_name", "TestRodent")
         self.iti_duration = self.session_config.get("iti_duration", 10)
         self.seq_csv_dir = self.session_config.get("seq_csv_dir", os.path.join(code_dir, "sequences"))
         self.seq_csv_file = self.session_config.get("seq_csv_file", "sequences.csv")
@@ -47,50 +45,39 @@ class Session:
         self.video_dir = self.session_config.get("video_dir", os.path.join(code_dir, "videos"))
 
         self.chamber = Chamber(self.chamber_config)
-        self.trainer = Trainer(self.trainer_config, self.chamber)
-        self.trainer.iti_duration = self.iti_duration
-        self.trainer.seq_csv_dir = self.seq_csv_dir
-        self.trainer.seq_csv_file = self.seq_csv_file
 
-        self.trainer_name = None
+        self.set_trainer_name('DoNothingTrainer')
 
         # Video Recording
-        self.is_recording = False
-
-        # Initialize the trainer
-        # self.init_trainer()
-
-    def init_trainer(self):
-        self.trainer = Main.MultiPhaseTraining(self.pi, self.peripherals, self.m0_boards)
-        print("Trainer updated with discovered boards.")
-        self.trainer.open_realtime_csv("FullSession_ReDiscovered")
+        self.is_video_recording = False
 
     def start_training(self):
         if not self.trainer:
             print("Trainer not initialized.")
             return
-        if not self.rodent_name:
-            print("Rodent ID not set.")
-            return
         
+        self.trainer.rodent_name = self.rodent_name
+        self.trainer.iti_duration = self.iti_duration
+        self.trainer.seq_csv_dir = self.seq_csv_dir
+        self.trainer.seq_csv_file = self.seq_csv_file
+        self.trainer.start_training()
+        print("Training session started.")
 
-        
-
-    def stop_recording(self):
-        if self.is_recording:
+    def stop_video_recording(self):
+        if self.is_video_recording:
             self.chamber.camera.stop_recording()
-            self.is_recording = False
+            self.is_video_recording = False
             print("Recording stopped.")
         else:
             print("No recording in progress to stop.")
     
-    def start_recording(self):
-        if not self.is_recording:
+    def start_video_recording(self):
+        if not self.is_video_recording:
             datetime_str = time.strftime("%Y%m%d_%H%M%S")
-            video_file = os.path.join(self.video_dir, f"{datetime_str}_{self.rodent_name}.mp4")
+            video_file = os.path.join(self.video_dir, f"{datetime_str}_{self.chamber.chamber_name}_{self.rodent_name}.mp4")
 
             self.chamber.camera.start_recording(video_file)
-            self.is_recording = True
+            self.is_video_recording = True
             print("Recording started to:", video_file)
         else:
             print("Recording is already in progress.")
@@ -151,11 +138,23 @@ class Session:
     
     def set_trainer_name(self, trainer_name):
         if trainer_name:
-            self.trainer_name = trainer_name
-            print(f"Trainer name set to: {self.trainer_name}")
+            try:
+                # Dynamically load the trainer class based on the name
+                exec(f"from {trainer_name} import {trainer_name}")
+                self.trainer = exec(trainer_name)(self.trainer_config, self.chamber)
+                self.trainer_name = trainer_name
+            except ImportError as e:
+                print(f"Error loading trainer {trainer_name}: {e}")
+                return
+            except Exception as e:
+                print(f"Error initializing trainer {trainer_name}: {e}")
+                return
+
+            print(f"Trainer loaded: {self.trainer_name}")
             self.save_to_session_config("trainer_name", trainer_name)
         else:
             print("No Trainer name entered.")
+            self.trainer = None
 
     def set_rodent_name(self, rodent_name):
         if rodent_name:
@@ -164,7 +163,6 @@ class Session:
             self.save_to_session_config("rodent_name", rodent_name)
         else:
             print("No Rodent name entered.")
-    
 
     def export_data(self):
         if not self.trainer:
@@ -175,38 +173,13 @@ class Session:
             return
         
         datetime_str = time.strftime("%Y%m%d_%H%M%S")
-        csv_file = os.path.join(self.data_csv_dir, f"{datetime_str}_{self.rodent_name}_data.csv")
-        self.trainer.export_results_csv(csv_file)
-        print(f"Data exported to {csv_file}.")
-    
-
-    def stop_priming(self):
-        if not self.trainer or 'reward' not in self.trainer.peripherals:
-            print("No trainer or reward object to stop priming.")
-            return
-        print("Stopping priming.")
-        self.trainer.peripherals['reward'].stop_priming()
-
-    def start_priming(self):
-        if not self.trainer or 'reward' not in self.trainer.peripherals:
-            print("No trainer or reward object to prime.")
-            return
-        print("Starting to prime feeding tube.")
-        self.trainer.peripherals['reward'].prime_feeding_tube()
+        data_csv_file = os.path.join(self.data_csv_dir, f"{datetime_str}_{self.chamber.chamber_name}_{self.rodent_name}_data.csv")
+        self.trainer.export_results_csv(data_csv_file)
+        print(f"Data exported to {data_csv_file}.")
 
     def stop_training(self):
         if self.trainer:
-            self.trainer.stop_session()
+            self.trainer.end_training()
             print("Training stopped.")
         else:
             print("No training session to stop.")
-
-    def discover_m0s(self):
-        self.m0_boards = m0_devices.discover_m0_boards()
-        if self.m0_boards:
-            print("Discovered boards:")
-            for bid, dev in self.m0_boards.items():
-                print(f" - {bid} => {dev}")
-            self.init_trainer()
-        else:
-            print("No M0 boards found.")

@@ -19,14 +19,14 @@ class TUI:
         self.tui_exit()
         self.run_loop = False
     
-    def tui_start_recording(self):
+    def tui_start_video_recording(self):
         self.tui_exit()
-        self.session.start_recording()
+        self.session.start_video_recording()
         self.tui_init()
     
-    def tui_stop_recording(self):
+    def tui_stop_video_recording(self):
         self.tui_exit()
-        self.session.stop_recording()
+        self.session.stop_video_recording()
         self.tui_init()
 
     def tui_start_training(self):
@@ -41,12 +41,12 @@ class TUI:
     
     def tui_start_priming(self):
         self.tui_exit()
-        self.session.start_priming()
+        self.session.chamber.reward.prime_feeding_tube()
         self.tui_init()
     
     def tui_stop_priming(self):
         self.tui_exit()
-        self.session.stop_priming()
+        self.session.chamber.reward.stop_priming()
         self.tui_init()
     
     def tui_export_data(self):
@@ -129,7 +129,7 @@ class TUI:
 
     def tui_discover_m0s(self):
         self.tui_exit()
-        self.session.discover_m0s()
+        self.session.chamber.discover_m0_boards()
         self.tui_init()
     
     def tui_exit(self):
@@ -148,19 +148,19 @@ class TUI:
         # Option dictionary
         options = {
             "Discover M0s": self.tui_discover_m0s,
-            "Start Recording": self.tui_start_recording,
-            "Stop Recording": self.tui_stop_recording,
-            "Start Training": self.tui_start_training,
-            "Stop Training": self.tui_stop_training,
-            "Start Priming": self.tui_start_priming,
-            "Stop Priming": self.tui_stop_priming,
             f"Set Rodent Name ({self.session.rodent_name})": self.tui_set_rodent_name,
-            f"Set Phase Name ({self.session.trainer_name})": self.tui_set_trainer_name,
+            f"Set Trainer Name ({self.session.trainer_name})": self.tui_set_trainer_name,
             f"Set ITI Duration ({self.session.iti_duration})": self.tui_set_iti_duration,
             f"Set Sequence CSV Directory ({self.session.seq_csv_dir})": self.tui_set_seq_csv_dir,
             f"Set Sequence CSV File ({self.session.seq_csv_file})": self.tui_set_seq_csv_file,
             f"Set Data CSV Directory ({self.session.data_csv_dir})": self.tui_set_data_csv_dir,
             f"Set Video Directory ({self.session.video_dir})": self.tui_set_video_dir,
+            "Start Recording": self.tui_start_video_recording,
+            "Stop Recording": self.tui_stop_video_recording,
+            "Start Training": self.tui_start_training,
+            "Stop Training": self.tui_stop_training,
+            "Start Priming": self.tui_start_priming,
+            "Stop Priming": self.tui_stop_priming,
             "Export Data": self.tui_export_data,
             "Exit": exit,
         }

@@ -522,7 +522,7 @@ class MultiTrialGUI(QMainWindow):
 
     def toggle_recording(self):
         if self.is_recording:
-            self.session.stop_recording()
+            self.session.stop_video_recording()
             self.is_recording = False
             self.record_toggle_button.setText("Start Recording")
         else:
@@ -538,7 +538,7 @@ class MultiTrialGUI(QMainWindow):
             
             self.session.save_to_session_config("recording_dir", os.path.dirname(filepath))
 
-            if self.session.start_recording(filepath):
+            if self.session.start_video_recording(filepath):
                 self.is_recording = True
                 self.record_toggle_button.setText("Stop Recording")
 
