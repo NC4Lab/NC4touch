@@ -23,7 +23,7 @@ class Trainer(ABC):
     and pigpio-based hardware for reward, LED, beam break, etc.
     """
 
-    def __init__(self, trainer_config = {}, chamber = None):
+    def __init__(self, chamber, trainer_config = {}):
         if not isinstance(chamber, Chamber):
             logger.error("chamber must be an instance of Chamber")
             raise ValueError("chamber must be an instance of Chamber")
@@ -31,7 +31,6 @@ class Trainer(ABC):
         if not isinstance(trainer_config, dict):
             logger.error("trainer_config must be a dictionary")
             raise ValueError("trainer_config must be a dictionary")
-
 
         self.chamber = chamber
         self.trainer_config = trainer_config

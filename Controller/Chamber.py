@@ -26,8 +26,6 @@ class Chamber:
   def __init__(self, chamber_config = {}):
     if not isinstance(chamber_config, dict):
       logger.error("chamber_config must be a dictionary")
-    
-    print("Initializing Chamber...")
       chamber_config = {}
 
     self.chamber_config = chamber_config

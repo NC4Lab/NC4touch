@@ -4,11 +4,12 @@ import pigpio
 import yaml
 import netifaces
 import importlib
-import threading
 import logging
 
 # Local modules
 from Chamber import Chamber
+from Trainer import Trainer
+from DoNothingTrainer import DoNothingTrainer
 
 import logging
 session_logger = logging.getLogger('session_logger')
@@ -32,8 +33,6 @@ class Session:
 
         # Initialize config files
         self.session_config = self.load_config(self.session_config_file)
-        self.chamber_config = self.load_config(self.chamber_config_file)
-        self.trainer_config = self.load_config(self.trainer_config_file)
 
         self.trainer_name = self.session_config.get("trainer_name", "DoNothingTrainer")
         self.rodent_name = self.session_config.get("rodent_name", "TestRodent")
@@ -45,9 +44,6 @@ class Session:
 
         self.chamber = Chamber()
         self.set_trainer_name('DoNothingTrainer')
-        self.training_timer_interval = 0.1
-        self.training_timer = None
-        self.trainer = None
 
         # Video Recording
         self.is_video_recording = False
@@ -55,6 +51,9 @@ class Session:
     def start_training(self):
         if not self.trainer:
             logger.error("Trainer not initialized.")
+            return
+        if not isinstance(self.trainer, Trainer):
+            logger.error("Trainer is not an instance of Trainer.")
             return
         
         self.trainer.rodent_name = self.rodent_name
@@ -143,7 +142,7 @@ class Session:
                 # Dynamically load the trainer class based on the name
                 module = importlib.import_module(f"{trainer_name}")
                 trainer_class = getattr(module, trainer_name)
-                self.trainer = trainer_class(self.trainer_config, self.chamber)
+                self.trainer = trainer_class(self.chamber, {})
                 self.trainer_name = trainer_name
             except ImportError as e:
                 logger.error(f"Error loading trainer {trainer_name}: {e}")
@@ -156,7 +155,7 @@ class Session:
             self.save_to_session_config("trainer_name", trainer_name)
         else:
             logger.error("No Trainer name entered.")
-            self.trainer = None
+            self.trainer = DoNothingTrainer(self.chamber, {})
 
     def set_rodent_name(self, rodent_name):
         if rodent_name:
