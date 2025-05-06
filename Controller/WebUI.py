@@ -9,8 +9,7 @@ from Session import Session
 
 import logging
 session_logger = logging.getLogger('session_logger')
-logger = session_logger.getChild(__name__)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(f"session_logger.{__name__}")
 
 class LogElementHandler(logging.Handler):
     """A logging handler that emits messages to a log element.
@@ -78,13 +77,15 @@ class WebUI:
                 
                 with ui.row():
                     ui.label('Trainer:').style('width: 200px;')
-                    self.trainer_select = ui.select(get_trainers(), on_change = lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
+                    self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change = lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
 
 
             with ui.column().style('width: 800px; margin: auto; padding: 20px;'):
                 with ui.row():
                     log = ui.log(max_lines=10).classes('w-full')
                     handler = LogElementHandler(log)
+                    formatter = logging.Formatter('[%(asctime)s:%(name)s] %(message)s')
+                    handler.setFormatter(formatter)
                     session_logger.addHandler(handler)
                     ui.context.client.on_disconnect(lambda: logger.removeHandler(handler))
                     ui.label('Log Level:').style('width: 200px;')
@@ -95,6 +96,11 @@ class WebUI:
                     # Show video stream from the camera
                     ui.label('Camera Stream:').style('width: 800px;')
                     ui.image(source=f"http://{self.ip}:{self.video_port}/stream").style('width: 640px; height: 480px;')
+                
+                with ui.row():
+                    # Reinitialize the camera
+                    self.reinitialize_camera_button = ui.button("Reinitialize Camera").on_click(self.session.chamber.camera.reinitialize)
+                    self.reinitialize_camera_button.style('width: 200px; margin-top: 20px;')
 
         with ui.row().style('justify-content: center; margin-top: 20px;'):
             self.start_training_button = ui.button("Start Training").on_click(self.session.start_training)

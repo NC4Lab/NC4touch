@@ -3,9 +3,7 @@ import subprocess
 import netifaces
 
 import logging
-session_logger = logging.getLogger('session_logger')
-logger = session_logger.getChild(__name__)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(f"session_logger.{__name__}")
 
 def get_ip_address(interface="eth0"):
     """

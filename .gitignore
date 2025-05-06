@@ -7,3 +7,6 @@
 *.mod
 *.mod.c
 *~
+*.csv
+Controller/venv/
+*.yaml

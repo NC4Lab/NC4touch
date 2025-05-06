@@ -1,8 +1,6 @@
 import pigpio
 import logging
-session_logger = logging.getLogger('session_logger')
-logger = session_logger.getChild(__name__)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(f"session_logger.{__name__}")
 
 class Buzzer:
     def __init__(self, pi=pigpio.pi(), pin=16, volume=60, frequency=6000):

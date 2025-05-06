@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import pigpio
 import yaml
@@ -13,10 +14,14 @@ from DoNothingTrainer import DoNothingTrainer
 import logging
 session_logger = logging.getLogger('session_logger')
 session_logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
+handler = logging.StreamHandler(stream=sys.stdout)
 handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
 session_logger.addHandler(handler)
+
 logger = logging.getLogger(f"session_logger.{__name__}")
+
 class Session:
     """
     This class manages the session configuration, hardware initialization, and training phases.
@@ -41,19 +46,26 @@ class Session:
         self.seq_csv_file = self.session_config.get("seq_csv_file", "sequences.csv")
         self.data_csv_dir = self.session_config.get("data_csv_dir", os.path.join(code_dir, "data"))
         self.video_dir = self.session_config.get("video_dir", os.path.join(code_dir, "videos"))
+        self.run_interval = self.session_config.get("run_interval", 0.1)
 
         self.chamber = Chamber()
         self.set_trainer_name('DoNothingTrainer')
+        self.trainer = DoNothingTrainer(self.chamber, {})
+        self.session_timer = threading.Timer(0.1, self.trainer.run_training)
 
         # Video Recording
         self.is_video_recording = False
 
-        self.session_timer = threading.Timer(0.1, self.trainer.run_training)
-
     def start_training(self):
-        if not self.trainer:
-            logger.error("Trainer not initialized.")
+        try:
+            module = importlib.import_module(f"{self.trainer_name}")
+            trainer_class = getattr(module, self.trainer_name)
+            self.trainer = trainer_class(self.chamber, {})
+            logger.debug(f"Trainer class loaded: {self.trainer}")
+        except ImportError as e:
+            logger.error(f"Error loading trainer class {self.trainer_name}: {e}")
             return
+
         if not isinstance(self.trainer, Trainer):
             logger.error("Trainer is not an instance of Trainer.")
             return
@@ -63,8 +75,21 @@ class Session:
         self.trainer.seq_csv_dir = self.seq_csv_dir
         self.trainer.seq_csv_file = self.seq_csv_file
         self.trainer.start_training()
+        self.session_timer = threading.Timer(self.run_interval, self.run_training)
         self.session_timer.start()
         logger.info("Training session started.")
+    
+    def run_training(self):
+        self.session_timer.cancel()
+        self.trainer.run_training()
+        self.session_timer = threading.Timer(self.run_interval, self.run_training)
+        self.session_timer.start()
+    
+    def toggle_video_recording(self):
+        if self.is_video_recording:
+            self.stop_video_recording()
+        else:
+            self.start_video_recording()
 
     def stop_video_recording(self):
         if self.is_video_recording:
@@ -144,19 +169,12 @@ class Session:
         if trainer_name:
             try:
                 # Dynamically load the trainer class based on the name
-                module = importlib.import_module(f"{trainer_name}")
-                trainer_class = getattr(module, trainer_name)
-                self.trainer = trainer_class(self.chamber, {})
                 self.trainer_name = trainer_name
-                logger.debug(f"Trainer initialized: {self.trainer_name}")
-            except ImportError as e:
-                logger.error(f"Error loading trainer {trainer_name}: {e}")
-                return
+                logger.debug(f"Trainer name set: {self.trainer_name}")
             except Exception as e:
-                logger.error(f"Error initializing trainer {trainer_name}: {e}")
+                logger.error(f"Error setting trainer name {trainer_name}: {e}")
                 return
 
-            logger.debug(f"Trainer loaded: {self.trainer_name}")
             self.save_to_session_config("trainer_name", trainer_name)
         else:
             logger.error("No Trainer name entered.")

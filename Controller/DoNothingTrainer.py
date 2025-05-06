@@ -1,6 +1,9 @@
 from Trainer import Trainer
 from Chamber import Chamber
 
+import logging
+logger = logging.getLogger(f"session_logger.{__name__}")
+
 class DoNothingTrainer(Trainer):
     """
     A trainer that does nothing. This is useful for testing purposes.
@@ -11,12 +14,12 @@ class DoNothingTrainer(Trainer):
 
     def start_training(self):
         """Start the training session."""
-        print(f"{self.trainer_name}: Training started.")
+        logger.info(f"Starting training session...")
     
     def run_training(self):
         """Run the training session."""
-        print(f"{self.trainer_name}: Running training session...")
+        logger.debug(f"Running training session...")
 
     def stop_training(self):
         """Stop the training session."""
-        print(f"{self.trainer_name}: Training stopped.")
+        logger.info(f"Stopping training session...")

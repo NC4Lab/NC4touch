@@ -1,8 +1,6 @@
 import pigpio
 import logging
-session_logger = logging.getLogger('session_logger')
-logger = session_logger.getChild(__name__)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(f"session_logger.{__name__}")
 
 class LED:
     def __init__(self, pi=pigpio.pi(), pin=21, r_pin=None, g_pin=None, b_pin=None, frequency=5000, range=255, brightness=140):

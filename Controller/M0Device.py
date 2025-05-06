@@ -15,9 +15,7 @@ from enum import Enum
 import os
 
 import logging
-session_logger = logging.getLogger('session_logger')
-logger = session_logger.getChild(__name__)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(f"session_logger.{__name__}")
 
 class M0Mode(Enum):
     UNINITIALIZED = 0
