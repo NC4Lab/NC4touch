@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 class HabituationState(Enum):
-    """Enum for different states in the habituation phase."""
+    """Enum for different states in the habituation trainer."""
     IDLE = -1
     START_TRAINING = 0
     START_TRIAL = 1
@@ -23,9 +23,9 @@ class HabituationState(Enum):
 
 class Habituation(Trainer):
     """
-    Habituation phase for the rodent training session.
+    Habituation trainer for the rodent training session.
 
-    In the Habituation phase, the animal is exposed to the reward system
+    In Habituation , the animal is exposed to the reward system
     without any additional stimuli. The goal is to get the animal used to the
     reward system and the environment.
 
