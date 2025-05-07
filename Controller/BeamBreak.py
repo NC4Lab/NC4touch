@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 class BeamBreak:
-    def __init__(self, pi=None, pin=4, debounce_delay=0.2):
+    def __init__(self, pi=None, pin=4, beam_break_memory=0.2):
         if pi is None:
             pi = pigpio.pi()
         if not isinstance(pi, pigpio.pi):
@@ -15,48 +15,37 @@ class BeamBreak:
 
         self.pi = pi
         self.pin = pin
-        self.debounce_delay = debounce_delay
-        self.state = 0
-        self.last_state = 0
-        self.last_debounce_time = 0
-        self.is_active = False
+
+        self.last_break_time = time.time()
+        self.beam_break_memory = beam_break_memory  # 200 ms
         self.read_interval = 0.05  # 50 ms
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
+        self.state = 1  # 1 = beam not broken, 0 = beam broken
 
         self.pi.set_mode(self.pin, pigpio.INPUT)
         self.pi.set_pull_up_down(self.pin, pigpio.PUD_UP)
     
-    def read(self):
-        reading = self.pi.read(self.pin)
-
-        if reading != self.last_state:
-            self.last_debounce_time = time.time()
-
-        if (time.time() - self.last_debounce_time) > self.debounce_delay:
-            if reading != self.state:
-                self.state = reading
-                logger.debug(f"BeamBreak state changed to: {self.state}")
-
-        self.last_state = reading
-    
     def _read_loop(self):
+        """Internal method to read the beam break state."""
         self.read_timer.cancel()
+        current_time = time.time()
 
         reading = self.pi.read(self.pin)
-        if reading != self.last_state:
-            self.last_debounce_time = time.time()
+        if reading == 0: # Beam is broken
+            self.last_break_time = current_time
+            self.state = 0
+        elif current_time - self.last_break_time > self.beam_break_memory:
+            self.state = 1
 
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
         self.read_timer.start()
 
     def activate(self):
-        self.is_active = True
         self.read_timer.cancel()
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
         self.read_timer.start()
+        logger.debug("BeamBreak activated.")
 
     def deactivate(self):
-        self.state = -1
-        self.last_state = -1
-        self.last_debounce_time = 0
+        self.read_timer.cancel()
         logger.debug("BeamBreak deactivated.")

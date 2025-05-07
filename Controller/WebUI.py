@@ -11,6 +11,10 @@ import logging
 session_logger = logging.getLogger('session_logger')
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+#TODO: Button to detect M0s
+#TODO: Button to upload code to M0s
+#TODO: Button to upload images to M0s
+
 class LogElementHandler(logging.Handler):
     """A logging handler that emits messages to a log element.
         https://nicegui.io/documentation/log    
