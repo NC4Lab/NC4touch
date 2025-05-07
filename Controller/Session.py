@@ -9,7 +9,7 @@ import threading
 # Local modules
 from Chamber import Chamber
 from Trainer import Trainer
-from DoNothingTrainer import DoNothingTrainer
+from Config import Config
 
 import logging
 session_logger = logging.getLogger('session_logger')
@@ -32,44 +32,42 @@ session_logger.addHandler(file_handler)
 
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-#TODO: Add config file for chamber
 #TODO: Fix camera reinitialization
-#TODO: Browse buttons for directories
+#TODO: Browse buttons for directories in WebUI
 
 class Session:
     """
     This class manages the session configuration, hardware initialization, and training phases.
     It uses the Chamber class to manage the hardware components and the Trainer class to manage the training phases.
     """
-    def __init__(self, session_config_file=None):
-        code_dir = os.path.dirname(os.path.realpath(__file__))
-
-        # Find and load the config files
-        if not session_config_file:
-            self.session_config_file = os.path.join(code_dir, 'session_config.yaml')
-        else:
-            self.session_config_file = session_config_file
-
-        # Initialize config files
-        self.session_config = self.load_config(self.session_config_file)
-
-        self.trainer_name = self.session_config.get("trainer_name", "DoNothingTrainer")
-        self.rodent_name = self.session_config.get("rodent_name", "TestRodent")
-        self.iti_duration = self.session_config.get("iti_duration", 10)
-        self.trainer_seq_dir = self.session_config.get("seq_csv_dir", os.path.join(code_dir, "sequences"))
-        self.trainer_seq_file = self.session_config.get("seq_csv_file", "sequences.csv")
-        self.data_dir = self.session_config.get("data_dir", os.path.join(code_dir, "data"))
-        self.video_dir = self.session_config.get("video_dir", os.path.join(code_dir, "videos"))
-        self.run_interval = self.session_config.get("run_interval", 0.1)
-        self.priming_duration = self.session_config.get("priming_duration", 20)
-
+    def __init__(self, session_config = {}, session_config_file='~/session_config.yaml'):
+        """
+        Initializes the session with the given configuration.
+        """
+        code_dir = os.path.dirname(os.path.abspath(__file__))
+        self.config = Config(config=session_config, config_file=session_config_file)
+        
+        # Construct session config by loading parameters from session_config argument > session_config_file > default values
+        self.config.ensure_param("trainer_name", "DoNothingTrainer")
+        self.config.ensure_param("rodent_name", "TestRodent")
+        self.config.ensure_param("iti_duration", 10)
+        self.config.ensure_param("seq_csv_dir", os.path.join(code_dir, "sequences"))
+        self.config.ensure_param("seq_csv_file", "sequences.csv")
+        self.config.ensure_param("data_dir", "~/data")
+        self.config.ensure_param("video_dir", "~/videos")
+        self.config.ensure_param("run_interval", 0.1)
+        self.config.ensure_param("priming_duration", 20)
+        self.config.ensure_param("chamber_name", "Chamber0")
+        
         # Initialize directories in case they don't exist
         os.makedirs(self.data_dir, exist_ok=True)
         os.makedirs(self.video_dir, exist_ok=True)
 
-        self.chamber = Chamber()
-        self.set_trainer_name('DoNothingTrainer')
-        self.trainer = DoNothingTrainer(self.chamber, {})
+        chamber_config = {
+            "chamber_name": self.chamber_name,
+            }
+        self.chamber = Chamber(chamber_config=chamber_config)
+        self.set_trainer_name(self.config["trainer_name"])
         self.session_timer = threading.Timer(0.1, self.trainer.run_training)
 
         self.priming_timer = threading.Timer(0.1, self.run_priming)
@@ -92,17 +90,16 @@ class Session:
                 logger.info(f"Log file copied to {new_log_file}")
             except Exception as e:
                 logger.error(f"Error copying log file: {e}")
-
+    
+    def set_chamber_name(self, chamber_name):
+        if chamber_name:
+            self.config["chamber_name"] = chamber_name
+            self.chamber.config["chamber_name"] = chamber_name
+            logger.debug(f"Chamber name set to: {self.chamber_name}")
+        else:
+            logger.error("No Chamber name entered.")
+    
     def start_training(self):
-        try:
-            module = importlib.import_module(f"{self.trainer_name}")
-            trainer_class = getattr(module, self.trainer_name)
-            self.trainer = trainer_class(self.chamber, {})
-            logger.debug(f"Trainer class loaded: {self.trainer}")
-        except ImportError as e:
-            logger.error(f"Error loading trainer class {self.trainer_name}: {e}")
-            return
-
         if not isinstance(self.trainer, Trainer):
             logger.error("Trainer is not an instance of Trainer.")
             return
@@ -111,6 +108,7 @@ class Session:
         self.trainer.iti_duration = self.iti_duration
         self.trainer.seq_csv_dir = self.trainer_seq_dir
         self.trainer.seq_csv_file = self.trainer_seq_file
+        self.trainer.data_dir = self.data_dir
         self.trainer.start_training()
 
         self.session_timer.cancel()
@@ -158,66 +156,55 @@ class Session:
             logger.error(f"Config file {config_file} not found.")
             return {}
 
-    def save_to_session_config(self, key, value):
-        self.session_config[key] = value
-        with open(self.session_config_file, 'w') as f:
-            yaml.dump(self.session_config, f)
-
     def set_iti_duration(self, iti_duration):
         if isinstance(iti_duration, int) and iti_duration > 0:
-            self.iti_duration = iti_duration
+            self.config["iti_duration"] = iti_duration
             logger.debug(f"ITI Duration set to: {self.iti_duration} seconds")
-            self.save_to_session_config("iti_duration", self.iti_duration)
         else:
             logger.error("Invalid ITI Duration entered. Must be a positive integer.")
 
     def set_trainer_seq_dir(self, trainer_seq_dir):
         if os.path.isdir(trainer_seq_dir):
-            self.trainer_seq_dir = trainer_seq_dir
+            self.config["trainer_seq_dir"] = trainer_seq_dir
             logger.debug(f"Trainer Seq directory set to: {self.trainer_seq_dir}")
-            self.save_to_session_config("trainer_seq_dir", self.trainer_seq_dir)
         else:
             logger.error("Invalid Sequence directory entered.")
 
     def set_trainer_seq_file(self, trainer_seq_file):
-        if os.path.isfile(os.path.join(self.trainer_seq_dir, trainer_seq_file)):
-            self.trainer_seq_file = trainer_seq_file
+        if os.path.isfile(os.path.join(self.config["trainer_seq_dir"], trainer_seq_file)):
+            self.config["trainer_seq_file"] = trainer_seq_file
             logger.debug(f"Trainer Seq file set to: {self.trainer_seq_file}")
-            self.save_to_session_config("trainer_seq_file", self.trainer_seq_file)
         else:
             logger.error("Invalid Sequence file entered.")
 
     def set_video_dir(self, video_dir):
         if os.path.isdir(video_dir):
-            self.video_dir = video_dir
+            self.config["video_dir"] = video_dir
             logger.debug(f"Video directory set to: {self.video_dir}")
-            self.save_to_session_config("video_dir", self.video_dir)
         else:
             logger.error("Invalid Video directory entered.")
 
     def set_data_dir(self, data_dir):
         if os.path.isdir(data_dir):
-            self.data_dir = data_dir
+            self.config["data_dir"] = data_dir
             logger.debug(f"Data CSV directory set to: {self.data_dir}")
-            self.save_to_session_config("data_csv_dir", self.data_dir)
         else:
             logger.error("Invalid Data directory entered.")
     
     def set_trainer_name(self, trainer_name):
-        logger.info(f"Setting trainer name to: {trainer_name}")
-        if trainer_name:
-            try:
-                # Dynamically load the trainer class based on the name
-                self.trainer_name = trainer_name
-                logger.debug(f"Trainer name set: {self.trainer_name}")
-            except Exception as e:
-                logger.error(f"Error setting trainer name {trainer_name}: {e}")
-                return
-
-            self.save_to_session_config("trainer_name", trainer_name)
-        else:
-            logger.error("No Trainer name entered.")
-            self.trainer = DoNothingTrainer(self.chamber, {})
+        try:
+            module = importlib.import_module(f"{trainer_name}")
+            trainer_class = getattr(module, trainer_name)
+            self.trainer = trainer_class(self.chamber, {})
+            logger.debug(f"Trainer class loaded: {self.trainer}")
+            self.config["trainer_name"] = trainer_name
+            logger.info(f"Setting trainer name to: {trainer_name}")
+        except ImportError as e:
+            logger.error(f"Error loading trainer class {trainer_name}: {e}")
+            return
+        except Exception as e:
+            logger.error(f"Error initializing trainer class {trainer_name}: {e}")
+            return
 
     def set_rodent_name(self, rodent_name):
         if rodent_name:

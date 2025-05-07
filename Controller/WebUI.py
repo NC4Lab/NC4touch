@@ -45,6 +45,11 @@ class WebUI:
         with ui.row().style('justify-content: left; margin-top: 20px;'):
             with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
                 with ui.row():
+                    ui.label('Chamber Name:').style('width: 200px;')
+                    self.chamber_name_input = ui.input(self.session.chamber_name).style('width: 200px;')
+                    self.chamber_name_input.on('change', lambda e: self.session.set_chamber_name(e.value))
+
+                with ui.row():
                     ui.label('Rodent Name:').style('width: 200px;')
                     self.rodent_name_input = ui.input(self.session.rodent_name).style('width: 200px;')
                     self.rodent_name_input.on('change', lambda e: self.session.set_rodent_name(e.value))

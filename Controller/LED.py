@@ -2,7 +2,10 @@ import pigpio
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+# TODO: LED color
+
 class LED:
+    """Class to control an LED using PWM on a Raspberry Pi."""
     def __init__(self, pi=pigpio.pi(), pin=21, r_pin=None, g_pin=None, b_pin=None, frequency=5000, range=255, brightness=140):
         if not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
