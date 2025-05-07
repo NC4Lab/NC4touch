@@ -268,8 +268,8 @@ class GUI(QMainWindow):
             }
         """)
 
-        self.load_seq_csv_btn = QPushButton("Load Sequence CSV")
-        self.load_seq_csv_btn.setStyleSheet("""
+        self.load_trainer_seq_btn = QPushButton("Load Trainer Sequence")
+        self.load_trainer_seq_btn.setStyleSheet("""
             QPushButton {
                 background-color: #F0E442;
                 color: black;
@@ -280,11 +280,11 @@ class GUI(QMainWindow):
                 background-color: #F4E97E;
             }
         """)
-        self.load_seq_csv_btn.clicked.connect(self.on_load_seq_csv)
+        self.load_trainer_seq_btn.clicked.connect(self.on_load_trainer_seq)
 
         trainer_layout.addWidget(trainer_label)
         trainer_layout.addWidget(self.trainer_combo)
-        trainer_layout.addWidget(self.load_seq_csv_btn)
+        trainer_layout.addWidget(self.load_trainer_seq_btn)
         self.right_column.addLayout(trainer_layout)
 
     def init_parameters_ui(self):
@@ -338,8 +338,8 @@ class GUI(QMainWindow):
         session_layout = QHBoxLayout()
         session_layout.setSpacing(10)
 
-        self.export_data_csv_btn = QPushButton("Export Data CSV")
-        self.export_data_csv_btn.setStyleSheet("""
+        self.export_data_btn = QPushButton("Export Data")
+        self.export_data_btn.setStyleSheet("""
             QPushButton {
                 background-color: #0072B2;
                 color: white;
@@ -350,8 +350,8 @@ class GUI(QMainWindow):
                 background-color: #1082C2;
             }
         """)
-        self.export_data_csv_btn.clicked.connect(self.on_export_data_csv)
-        session_layout.addWidget(self.export_data_csv_btn)
+        self.export_data_btn.clicked.connect(self.on_export_data)
+        session_layout.addWidget(self.export_data_btn)
 
         self.start_training_btn = QPushButton("Start Training")
         self.start_training_btn.setStyleSheet("""
@@ -536,28 +536,28 @@ class GUI(QMainWindow):
                 self.is_recording = True
                 self.record_toggle_button.setText("Stop Recording")
 
-    def on_load_seq_csv(self):
+    def on_load_trainer_seq(self):
         fname, _ = QFileDialog.getOpenFileName(
-            self, "Open Sequence CSV", self.session.seq_csv_dir, "CSV Files (*.csv)"
+            self, "Open Trainer Sequence", self.session.trainer_seq_dir, "CSV Files (*.csv)"
         )
         if fname:
-            self.seq_csv_file = fname
-            logger.info(f"CSV file loaded: {fname}")
+            self.trainer_seq_file = fname
+            logger.info(f"Sequence file loaded: {fname}")
 
-            self.session.set_seq_csv_dir(os.path.dirname(fname))
-            self.session.set_seq_csv_file(fname)
+            self.session.set_trainer_seq_dir(os.path.dirname(fname))
+            self.session.set_trainer_seq_file(fname)
 
-    def on_export_data_csv(self):
+    def on_export_data(self):
         if not self.trainer:
             logger.warning("No trainer object to export from.")
             return
         
         fname, _ = QFileDialog.getSaveFileName(
-            self, "Save Data CSV", self.session.data_csv_dir, "CSV Files (*.csv)"
+            self, "Save Data", self.session.data_dir, "CSV Files (*.csv)"
         )
         if fname:
-            self.session.set_data_csv_dir(os.path.dirname(fname))
-            self.trainer.export_results_csv(fname)
+            self.session.set_data_dir(os.path.dirname(fname))
+            self.session.export_data(fname)
             logger.info(f"Exported trial data to {fname}")
         else:
             logger.warning("Export canceled by user.")

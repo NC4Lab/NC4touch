@@ -55,20 +55,20 @@ class WebUI:
                     self.iti_duration_input.on('change', lambda e: self.session.set_iti_duration(int(e.value)))
 
                 with ui.row():
-                    ui.label('Sequence CSV Directory:').style('width: 200px;')
-                    self.seq_csv_dir_input = ui.input(self.session.seq_csv_dir).style('width: 200px;')
-                    self.seq_csv_dir_input.on('change', lambda e: self.session.set_seq_csv_dir(e.value))
+                    ui.label('Trainer Sequence Directory:').style('width: 200px;')
+                    self.seq_csv_dir_input = ui.input(self.session.trainer_seq_dir).style('width: 200px;')
+                    self.seq_csv_dir_input.on('change', lambda e: self.session.set_trainer_seq_dir(e.value))
 
                 with ui.row():
-                    ui.label('Sequence CSV File:').style('width: 200px;')
-                    self.seq_csv_file_input = ui.input(self.session.seq_csv_file).style('width: 200px;')
-                    self.seq_csv_dir_input.on('change', lambda e: self.session.set_seq_csv_file(e.value))
+                    ui.label('Trainer Sequence File:').style('width: 200px;')
+                    self.trainer_seq_file_input = ui.input(self.session.trainer_seq_file).style('width: 200px;')
+                    self.seq_csv_dir_input.on('change', lambda e: self.session.set_trainer_seq_file(e.value))
             
             with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
                 with ui.row():
-                    ui.label('Data CSV Directory:').style('width: 200px;')
-                    self.data_csv_dir_input = ui.input(self.session.data_csv_dir).style('width: 200px;')
-                    self.data_csv_dir_input.on('change', lambda e: self.session.set_data_csv_dir(e.value))
+                    ui.label('Data Directory:').style('width: 200px;')
+                    self.data_dir_input = ui.input(self.session.data_dir).style('width: 200px;')
+                    self.data_dir_input.on('change', lambda e: self.session.set_data_dir(e.value))
 
                 with ui.row():
                     ui.label('Video Directory:').style('width: 200px;')

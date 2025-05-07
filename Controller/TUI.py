@@ -103,26 +103,26 @@ class TUI:
         else:
             logger.error("Invalid ITI Duration entered.")
     
-    def tui_set_seq_csv_dir(self):
+    def tui_set_trainer_seq_dir(self):
         self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "Enter Sequence CSV directory: ")
+        self.stdscr.addstr(0, 0, "Enter Trainer Sequence directory: ")
         self.stdscr.refresh()
-        csv_dir = self.stdscr.getstr(1, 0).decode("utf-8")
-        self.session.set_seq_csv_dir(csv_dir)
+        trainer_seq_dir = self.stdscr.getstr(1, 0).decode("utf-8")
+        self.session.set_trainer_seq_dir(trainer_seq_dir)
     
-    def tui_set_seq_csv_file(self):
+    def tui_set_trainer_seq_file(self):
         self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "Enter Sequence CSV file: ")
+        self.stdscr.addstr(0, 0, "Enter Trainer Sequence file: ")
         self.stdscr.refresh()
-        csv_file = self.stdscr.getstr(1, 0).decode("utf-8")
-        self.session.set_seq_csv_file(csv_file)
+        trainer_seq_file = self.stdscr.getstr(1, 0).decode("utf-8")
+        self.session.set_trainer_seq_file(trainer_seq_file)
     
-    def tui_set_data_csv_dir(self):
+    def tui_set_data_dir(self):
         self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "Enter Data CSV directory: ")
+        self.stdscr.addstr(0, 0, "Enter Data directory: ")
         self.stdscr.refresh()
-        csv_dir = self.stdscr.getstr(1, 0).decode("utf-8")
-        self.session.set_data_csv_dir(csv_dir)
+        data_dir = self.stdscr.getstr(1, 0).decode("utf-8")
+        self.session.set_data_dir(data_dir)
     
     def tui_set_video_dir(self):
         self.stdscr.clear()
@@ -155,9 +155,9 @@ class TUI:
             f"Set Rodent Name ({self.session.rodent_name})": self.tui_set_rodent_name,
             f"Set Trainer Name ({self.session.trainer_name})": self.tui_set_trainer_name,
             f"Set ITI Duration ({self.session.iti_duration})": self.tui_set_iti_duration,
-            f"Set Sequence CSV Directory ({self.session.seq_csv_dir})": self.tui_set_seq_csv_dir,
-            f"Set Sequence CSV File ({self.session.seq_csv_file})": self.tui_set_seq_csv_file,
-            f"Set Data CSV Directory ({self.session.data_csv_dir})": self.tui_set_data_csv_dir,
+            f"Set Trainer Sequence Directory ({self.session.trainer_seq_dir})": self.tui_set_trainer_seq_dir,
+            f"Set Trainer Sequence File ({self.session.trainer_seq_file})": self.tui_set_trainer_seq_file,
+            f"Set Data Directory ({self.session.data_dir})": self.tui_set_data_dir,
             f"Set Video Directory ({self.session.video_dir})": self.tui_set_video_dir,
             "Start Recording": self.tui_start_video_recording,
             "Stop Recording": self.tui_stop_video_recording,

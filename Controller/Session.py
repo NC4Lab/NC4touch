@@ -14,13 +14,27 @@ from DoNothingTrainer import DoNothingTrainer
 import logging
 session_logger = logging.getLogger('session_logger')
 session_logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(stream=sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-session_logger.addHandler(handler)
+
+# Create a stream handler for logging to the console
+stream_handler = logging.StreamHandler(stream=sys.stdout)
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(asctime)s:%(name)s:%(levelname)s] %(message)s')
+stream_handler.setFormatter(formatter)
+session_logger.addHandler(stream_handler)
+
+# Create a file handler for logging to a file
+current_time = time.strftime("%Y%m%d_%H%M%S")
+session_log_file = os.path.join(os.path.dirname(__file__), f"{current_time}_session_log.log")
+file_handler = logging.FileHandler(session_log_file)
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+session_logger.addHandler(file_handler)
 
 logger = logging.getLogger(f"session_logger.{__name__}")
+
+#TODO: Add config file for chamber
+#TODO: Fix camera reinitialization
+#TODO: Browse buttons for directories
 
 class Session:
     """
@@ -42,12 +56,16 @@ class Session:
         self.trainer_name = self.session_config.get("trainer_name", "DoNothingTrainer")
         self.rodent_name = self.session_config.get("rodent_name", "TestRodent")
         self.iti_duration = self.session_config.get("iti_duration", 10)
-        self.seq_csv_dir = self.session_config.get("seq_csv_dir", os.path.join(code_dir, "sequences"))
-        self.seq_csv_file = self.session_config.get("seq_csv_file", "sequences.csv")
-        self.data_csv_dir = self.session_config.get("data_csv_dir", os.path.join(code_dir, "data"))
+        self.trainer_seq_dir = self.session_config.get("seq_csv_dir", os.path.join(code_dir, "sequences"))
+        self.trainer_seq_file = self.session_config.get("seq_csv_file", "sequences.csv")
+        self.data_dir = self.session_config.get("data_dir", os.path.join(code_dir, "data"))
         self.video_dir = self.session_config.get("video_dir", os.path.join(code_dir, "videos"))
         self.run_interval = self.session_config.get("run_interval", 0.1)
         self.priming_duration = self.session_config.get("priming_duration", 20)
+
+        # Initialize directories in case they don't exist
+        os.makedirs(self.data_dir, exist_ok=True)
+        os.makedirs(self.video_dir, exist_ok=True)
 
         self.chamber = Chamber()
         self.set_trainer_name('DoNothingTrainer')
@@ -59,6 +77,21 @@ class Session:
 
         # Video Recording
         self.is_video_recording = False
+    
+    def __del__(self):
+        # Stop the session timer if it's running
+        if self.session_timer.is_alive():
+            self.session_timer.cancel()
+        if self.priming_timer.is_alive():
+            self.priming_timer.cancel()
+        # Copy log file to data directory
+        if os.path.isfile(session_log_file):
+            new_log_file = os.path.join(self.data_dir, os.path.basename(self.session_log_file))
+            try:
+                os.rename(session_log_file, new_log_file)
+                logger.info(f"Log file copied to {new_log_file}")
+            except Exception as e:
+                logger.error(f"Error copying log file: {e}")
 
     def start_training(self):
         try:
@@ -76,8 +109,8 @@ class Session:
         
         self.trainer.rodent_name = self.rodent_name
         self.trainer.iti_duration = self.iti_duration
-        self.trainer.seq_csv_dir = self.seq_csv_dir
-        self.trainer.seq_csv_file = self.seq_csv_file
+        self.trainer.seq_csv_dir = self.trainer_seq_dir
+        self.trainer.seq_csv_file = self.trainer_seq_file
         self.trainer.start_training()
 
         self.session_timer.cancel()
@@ -138,21 +171,21 @@ class Session:
         else:
             logger.error("Invalid ITI Duration entered. Must be a positive integer.")
 
-    def set_seq_csv_dir(self, seq_csv_dir):
-        if os.path.isdir(seq_csv_dir):
-            self.seq_csv_dir = seq_csv_dir
-            logger.debug(f"Seq CSV directory set to: {self.seq_csv_dir}")
-            self.save_to_session_config("seq_csv_dir", self.seq_csv_dir)
+    def set_trainer_seq_dir(self, trainer_seq_dir):
+        if os.path.isdir(trainer_seq_dir):
+            self.trainer_seq_dir = trainer_seq_dir
+            logger.debug(f"Trainer Seq directory set to: {self.trainer_seq_dir}")
+            self.save_to_session_config("trainer_seq_dir", self.trainer_seq_dir)
         else:
             logger.error("Invalid Sequence directory entered.")
 
-    def set_seq_csv_file(self, seq_csv_file):
-        if os.path.isfile(os.path.join(self.seq_csv_dir, seq_csv_file)):
-            self.seq_csv_file = seq_csv_file
-            logger.debug(f"Seq CSV file set to: {self.seq_csv_file}")
-            self.save_to_session_config("seq_csv_file", self.seq_csv_file)
+    def set_trainer_seq_file(self, trainer_seq_file):
+        if os.path.isfile(os.path.join(self.trainer_seq_dir, trainer_seq_file)):
+            self.trainer_seq_file = trainer_seq_file
+            logger.debug(f"Trainer Seq file set to: {self.trainer_seq_file}")
+            self.save_to_session_config("trainer_seq_file", self.trainer_seq_file)
         else:
-            logger.error("Invalid Sequence CSV file entered.")
+            logger.error("Invalid Sequence file entered.")
 
     def set_video_dir(self, video_dir):
         if os.path.isdir(video_dir):
@@ -162,11 +195,11 @@ class Session:
         else:
             logger.error("Invalid Video directory entered.")
 
-    def set_data_csv_dir(self, data_csv_dir):
-        if os.path.isdir(data_csv_dir):
-            self.data_csv_dir = data_csv_dir
-            logger.debug(f"Data CSV directory set to: {self.data_csv_dir}")
-            self.save_to_session_config("data_csv_dir", self.data_csv_dir)
+    def set_data_dir(self, data_dir):
+        if os.path.isdir(data_dir):
+            self.data_dir = data_dir
+            logger.debug(f"Data CSV directory set to: {self.data_dir}")
+            self.save_to_session_config("data_csv_dir", self.data_dir)
         else:
             logger.error("Invalid Data directory entered.")
     
@@ -203,7 +236,7 @@ class Session:
             return
         
         datetime_str = time.strftime("%Y%m%d_%H%M%S")
-        data_csv_file = os.path.join(self.data_csv_dir, f"{datetime_str}_{self.chamber.chamber_name}_{self.rodent_name}_data.csv")
+        data_csv_file = os.path.join(self.data_dir, f"{datetime_str}_{self.chamber.chamber_name}_{self.rodent_name}_data.csv")
         self.trainer.export_results_csv(data_csv_file)
         logger.info(f"Data exported to {data_csv_file}")
 
