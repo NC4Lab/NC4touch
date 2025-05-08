@@ -77,8 +77,7 @@ class WebUI:
                     self.data_dir_input.on('change', lambda e: self.session.set_data_dir(e.value))
                 
                 with ui.row():
-                    local_file_picker(self.session.config["video_dir"], "Select Video Directory", "Select").on_change(lambda e: self.session.set_video_dir(e.value))
-                    ui.label('Video Directory:').style('width: 200px;')
+                    self.video_dir_picker = ui.button("Select Video Dir").on_click(lambda e: local_file_picker(directory=self.session.config["video_dir"]))
 
                 with ui.row():
                     ui.label('Video Directory:').style('width: 200px;')

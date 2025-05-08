@@ -34,6 +34,8 @@ class M0Device:
         if not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
+        
+        self.pi = pi
 
         self.id = id
         self.reset_pin = reset_pin
