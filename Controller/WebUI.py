@@ -6,14 +6,11 @@ import logging
 from Trainer import get_trainers
 from helpers import get_ip_address
 from Session import Session
+from local_file_picker import local_file_picker
 
 import logging
 session_logger = logging.getLogger('session_logger')
 logger = logging.getLogger(f"session_logger.{__name__}")
-
-#TODO: Button to detect M0s
-#TODO: Button to upload code to M0s
-#TODO: Button to upload images to M0s
 
 class LogElementHandler(logging.Handler):
     """A logging handler that emits messages to a log element.
@@ -32,18 +29,17 @@ class LogElementHandler(logging.Handler):
             self.handleError(record)
 
 class WebUI:
-    def __init__(self):
+    def __init__(self, video_port=8080, ui_port=8081):
         # Initialize session and chamber
         logger.info("Initializing WebUI...")
         self.session = Session()
 
         self.ip = get_ip_address()
-        self.video_port = 8080
-        self.ui_port = 8081
+        self.video_port = video_port
+        self.ui_port = ui_port
 
         # Initialize UI
         self.init_ui()
-
 
     def init_ui(self):
         ui.label('Chamber Control Panel').style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
@@ -79,6 +75,10 @@ class WebUI:
                     ui.label('Data Directory:').style('width: 200px;')
                     self.data_dir_input = ui.input(self.session.config["data_dir"]).style('width: 200px;')
                     self.data_dir_input.on('change', lambda e: self.session.set_data_dir(e.value))
+                
+                with ui.row():
+                    local_file_picker(self.session.config["video_dir"], "Select Video Directory", "Select").on_change(lambda e: self.session.set_video_dir(e.value))
+                    ui.label('Video Directory:').style('width: 200px;')
 
                 with ui.row():
                     ui.label('Video Directory:').style('width: 200px;')
@@ -88,19 +88,24 @@ class WebUI:
                 with ui.row():
                     ui.label('Trainer:').style('width: 200px;')
                     self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change = lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
-
+                
+                with ui.card():
+                    ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    self.initialize_button = ui.button("Initialize").on_click(self.session.chamber.m0_initialize)
+                    self.sync_images_button = ui.button("Sync Images").on_click(self.session.chamber.m0_sync_images)
+                    self.upload_code_button = ui.button("Upload Code").on_click(self.session.chamber.m0_upload_sketches)
 
             with ui.column().style('width: 800px; margin: auto; padding: 20px;'):
                 with ui.row():
                     log = ui.log(max_lines=10).classes('w-full')
-                    handler = LogElementHandler(log)
+                    self.log_handler = LogElementHandler(log)
                     formatter = logging.Formatter('[%(asctime)s:%(name)s] %(message)s')
-                    handler.setFormatter(formatter)
-                    session_logger.addHandler(handler)
-                    ui.context.client.on_disconnect(lambda: logger.removeHandler(handler))
+                    self.log_handler.setFormatter(formatter)
+                    session_logger.addHandler(self.log_handler)
+                    ui.context.client.on_disconnect(lambda: logger.removeHandler(self.log_handler))
                     ui.label('Log Level:').style('width: 200px;')
                     self.log_level_input = ui.select(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], value='DEBUG').style('width: 200px;')
-                    self.log_level_input.on('change', lambda e: logger.setLevel(getattr(logging, e.value)))
+                    self.log_level_input.on('change', lambda e: self.log_handler.setLevel(getattr(logging, e.value)))
 
                 with ui.row():
                     # Show video stream from the camera
@@ -120,6 +125,5 @@ class WebUI:
             self.start_priming_button = ui.button("Start Priming").on_click(self.session.start_priming)
             self.stop_priming_button = ui.button("Stop Priming").on_click(self.session.stop_priming)
 
-# if __name__ in {'__main__'}:
 web_ui = WebUI()
-ui.run(host="192.168.1.3", port=8081, title="Chamber Control Panel", show=False)
+ui.run(host=web_ui.ip, port=web_ui.ui_port, title="Chamber Control Panel", show=False)

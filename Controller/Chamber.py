@@ -83,11 +83,19 @@ class Chamber:
                 logger.error(f"Could not open {p.device}: {e}")
 
     return board_map
-
-
-  def initialize(self):
+  
+  def m0_initialize(self):
     # Initialize all the devices
     [m0.initialize() for m0 in self.m0s]
+  
+  def m0_sync_images(self):
+    # Sync the image folders for all M0s
+    [m0.sync_image_folder() for m0 in self.m0s]
+
+  def m0_upload_sketches(self):
+    # Upload sketches to all M0s
+    [m0.upload_sketch() for m0 in self.m0s]
+
   
   def default_state(self):
     #TODO: Turn screens off
