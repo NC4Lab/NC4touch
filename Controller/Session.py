@@ -32,9 +32,7 @@ session_logger.addHandler(file_handler)
 
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-#TODO: Fix camera reinitialization
-#TODO: Browse buttons for directories in WebUI
-#TODO: Remove autofocus from camera
+#TODO: Make camera reinitialization more reliable
 
 class Session:
     """

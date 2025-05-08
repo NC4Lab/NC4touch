@@ -5,6 +5,9 @@ from helpers import get_ip_address
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+#TODO: Set camera parameter using https://community.octoprint.org/t/disable-autofocus-on-usb-webcam-config-using-v4l2-ctl-on-linux/30393
+#TODO: Test ustreamer with options given in https://github.com/pikvm/ustreamer
+
 class Camera:
     def __init__(self, device="/dev/video0", stream_port=8080):
         self.device = device

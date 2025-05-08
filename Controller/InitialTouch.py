@@ -8,6 +8,8 @@ from Chamber import Chamber
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+#TODO: Complete the InitialTouch trainer class
+
 class InitialTouchState(Enum):
     """Enum for different states in the initial touch trainer."""
     IDLE = -1
