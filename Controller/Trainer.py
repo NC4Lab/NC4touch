@@ -16,6 +16,7 @@ def get_trainers():
         "DoNothingTrainer",
         "Habituation",
         "InitialTouch",
+        "PRL",
         # Add more trainers as needed
     ]
 
