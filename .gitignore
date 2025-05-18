@@ -10,3 +10,6 @@
 *.csv
 Controller/venv/
 *.yaml
+*.json
+*.mp4
+*.log

@@ -95,7 +95,7 @@ class Session:
         if chamber_name:
             self.config["chamber_name"] = chamber_name
             self.chamber.config["chamber_name"] = chamber_name
-            logger.debug(f"Chamber name set to: {self.chamber_name}")
+            logger.debug(f"Chamber name set to: {chamber_name}")
         else:
             logger.error("No Chamber name entered.")
     

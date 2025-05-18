@@ -49,13 +49,13 @@ class WebUI:
             with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
                 with ui.row():
                     ui.label('Chamber Name:').style('width: 200px;')
-                    self.chamber_name_input = ui.input(self.session.config["chamber_name"]).style('width: 200px;')
-                    self.chamber_name_input.on_change(lambda e: self.session.set_chamber_name(e.value))
+                    self.chamber_name_input = ui.input(self.session.config["chamber_name"],
+                                                       on_change = lambda e:self.session.set_chamber_name(e.value)).style('width: 200px;')
 
                 with ui.row():
                     ui.label('Rodent Name:').style('width: 200px;')
-                    self.rodent_name_input = ui.input(self.session.config["rodent_name"]).style('width: 200px;')
-                    self.rodent_name_input.on_change(lambda e: self.session.set_rodent_name(e.value))
+                    self.rodent_name_input = ui.input(self.session.config["rodent_name"],
+                                                      on_change = lambda e: self.session.set_rodent_name(e.value)).style('width: 200px;')
                 
                 with ui.row():
                     ui.label('ITI Duration (s):').style('width: 200px;')
