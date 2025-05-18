@@ -6,17 +6,11 @@ import logging
 from Trainer import get_trainers
 from helpers import get_ip_address
 from Session import Session
-from path_picker import file_picker, dir_picker
+from Controller.file_picker import file_picker
 
 import logging
 session_logger = logging.getLogger('session_logger')
 logger = logging.getLogger(f"session_logger.{__name__}")
-
-async def choose_file():
-    files = await app.native.main_window.create_file_dialog(allow_multiple=True)
-    for file in files:
-        ui.notify(file)
-
 
 #TODO: Work on the UI to make it more user friendly and visually appealing
 
@@ -75,31 +69,27 @@ class WebUI:
 
                 with ui.row():
                     ui.label('Trainer Sequence File:').style('width: 200px;')
+                    self.trainer_seq_file_button = ui.button("Select File").on_click(
+                        lambda: self.pick_file(self.session.set_trainer_seq_file, directory=self.session.config["trainer_seq_dir"], multiple=False)).style('width: 200px;')
+                    
                     self.trainer_seq_file_input = ui.input(self.session.config["trainer_seq_file"],
                                                           on_change=lambda e: self.session.set_trainer_seq_file(e.value)).style('width: 200px;')
             
             with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
                 with ui.row():
                     ui.label('Data Directory:').style('width: 200px;')
-                    self.data_dir_picker = ui.button("Select Data Dir").on_click(lambda e: dir_picker(directory=self.session.config["data_dir"]))
-                    self.data_dir_picker.style('width: 200px;')
-
-                    self.data_dir_input = ui.input(self.session.config["data_dir"]).style('width: 200px;')
-                    self.data_dir_input.on('change', lambda e: self.session.set_data_dir(e.value))
+                    self.data_dir_input = ui.input(self.session.config["data_dir"],
+                                                   on_change=lambda e: self.session.set_data_dir(e.value)).style('width: 200px;')
                 
                 with ui.row():
-                    self.video_dir_picker = ui.button("Select Video Dir").on_click(lambda e: file_picker(directory=self.session.config["video_dir"]))
-                    ui.button('choose file', on_click=choose_file)
-
-                with ui.row():
                     ui.label('Video Directory:').style('width: 200px;')
-                    self.video_dir_input = ui.input(self.session.config["video_dir"]).style('width: 200px;')
-                    self.video_dir_input.on('change', lambda e: self.session.set_video_dir(e.value))
+                    self.video_dir_input = ui.input(self.session.config["video_dir"],
+                                                    on_change=lambda e: self.session.set_video_dir(e.value)).style('width: 200px;')
                 
                 with ui.row():
                     ui.label('Trainer:').style('width: 200px;')
-                    self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change = lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
-                
+                    self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change=lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
+
                 with ui.card():
                     ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                     with ui.column():
@@ -145,6 +135,13 @@ class WebUI:
             self.stop_training_button = ui.button("Stop Training").on_click(self.session.stop_training)
             self.start_priming_button = ui.button("Start Priming").on_click(self.session.start_priming)
             self.stop_priming_button = ui.button("Stop Priming").on_click(self.session.stop_priming)
+    
+    async def pick_file(self, call_func, directory = '.', multiple = False) -> None:
+        result = await file_picker(directory = directory, multiple = multiple)
+        if result is None:
+            logger.warning("File picker cancelled")
+            return
+        call_func(result)
 
 web_ui = WebUI()
 ui.run(host=web_ui.ip, port=web_ui.ui_port, title="Chamber Control Panel", show=False, native=True)
