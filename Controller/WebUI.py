@@ -6,7 +6,7 @@ import logging
 from Trainer import get_trainers
 from helpers import get_ip_address
 from Session import Session
-from local_file_picker import local_file_picker
+from Controller.path_picker import file_picker, dir_picker
 
 import logging
 session_logger = logging.getLogger('session_logger')
@@ -59,27 +59,30 @@ class WebUI:
                 
                 with ui.row():
                     ui.label('ITI Duration (s):').style('width: 200px;')
-                    self.iti_duration_input = ui.input(str(self.session.config["iti_duration"])).style('width: 200px;')
-                    self.iti_duration_input.on('change', lambda e: self.session.set_iti_duration(int(e.value)))
+                    self.iti_duration_input = ui.input(str(self.session.config["iti_duration"]),
+                                                       on_change = lambda e: self.session.set_iti_duration(int(e.value))).style('width: 200px;')
 
                 with ui.row():
                     ui.label('Trainer Sequence Directory:').style('width: 200px;')
-                    self.seq_csv_dir_input = ui.input(self.session.config["trainer_seq_dir"]).style('width: 200px;')
-                    self.seq_csv_dir_input.on('change', lambda e: self.session.set_trainer_seq_dir(e.value))
+                    self.trainer_seq_dir_input = ui.input(self.session.config["trainer_seq_dir"],
+                                                          on_change=lambda e: self.session.set_trainer_seq_dir(e.value)).style('width: 200px;')
 
                 with ui.row():
                     ui.label('Trainer Sequence File:').style('width: 200px;')
-                    self.trainer_seq_file_input = ui.input(self.session.config["trainer_seq_file"]).style('width: 200px;')
-                    self.seq_csv_dir_input.on('change', lambda e: self.session.set_trainer_seq_file(e.value))
+                    self.trainer_seq_file_input = ui.input(self.session.config["trainer_seq_file"],
+                                                          on_change=lambda e: self.session.set_trainer_seq_file(e.value)).style('width: 200px;')
             
             with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
                 with ui.row():
                     ui.label('Data Directory:').style('width: 200px;')
+                    self.data_dir_picker = ui.button("Select Data Dir").on_click(lambda e: dir_picker(directory=self.session.config["data_dir"]))
+                    self.data_dir_picker.style('width: 200px;')
+
                     self.data_dir_input = ui.input(self.session.config["data_dir"]).style('width: 200px;')
                     self.data_dir_input.on('change', lambda e: self.session.set_data_dir(e.value))
                 
                 with ui.row():
-                    self.video_dir_picker = ui.button("Select Video Dir").on_click(lambda e: local_file_picker(directory=self.session.config["video_dir"]))
+                    self.video_dir_picker = ui.button("Select Video Dir").on_click(lambda e: file_picker(directory=self.session.config["video_dir"]))
 
                 with ui.row():
                     ui.label('Video Directory:').style('width: 200px;')
