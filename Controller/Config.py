@@ -1,15 +1,17 @@
 import os
 import yaml
+from os.path import expanduser
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
-
 
 class Config:
     """
     This class manages the configuration of the session, chamber and trainer
     """
     def __init__(self, config = {}, config_file = '~/config.yaml'):
+        config_file = expanduser(config_file)
+        
         if not isinstance(config, dict):
             logger.error("config must be a dictionary")
             config = {}
@@ -54,7 +56,7 @@ class Config:
     def ensure_param(self, param, default_value):
         if param not in self.config:
             self.config[param] = default_value
-            # logger.debug(f"Config parameter {param} not found. Setting to default value: {default_value}")
+            logger.debug(f"Config parameter {param} not found. Setting to default value: {default_value}")
             self.save_config_file()
         # else:
             # logger.debug(f"Config parameter {param} already exists with value: {self.config[param]}")

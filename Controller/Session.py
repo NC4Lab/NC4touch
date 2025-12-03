@@ -51,8 +51,8 @@ class Session:
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
         self.config.ensure_param("rodent_name", "TestRodent")
         self.config.ensure_param("iti_duration", 10)
-        self.config.ensure_param("seq_csv_dir", os.path.join(code_dir, "sequences"))
-        self.config.ensure_param("seq_csv_file", "sequences.csv")
+        self.config.ensure_param("trainer_seq_dir", os.path.join(code_dir, "sequences"))
+        self.config.ensure_param("trainer_seq_file", "sequences.csv")
         self.config.ensure_param("data_dir", "/mnt/shared/data")
         self.config.ensure_param("video_dir", "/mnt/shared/videos")
         self.config.ensure_param("run_interval", 0.1)
@@ -107,8 +107,8 @@ class Session:
         trainer_config = {"rodent_name": self.config["rodent_name"],
                           "chamber_name": self.config["chamber_name"],
                           "iti_duration": self.config["iti_duration"],
-                          "seq_csv_dir": self.config["seq_csv_dir"],
-                          "seq_csv_file": self.config["seq_csv_file"],
+                          "trainer_seq_dir": self.config["trainer_seq_dir"],
+                          "trainer_seq_file": self.config["trainer_seq_file"],
                           "data_dir": self.config["data_dir"]}
         self.trainer.config.update_with_dict(trainer_config)
         self.trainer.start_training()
