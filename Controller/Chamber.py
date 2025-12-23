@@ -7,6 +7,9 @@ import pigpio
 import time
 import serial
 import serial.tools.list_ports
+import subprocess
+import json
+import os
 
 from LED import LED
 from Reward import Reward
@@ -34,17 +37,27 @@ class Chamber:
     self.config.ensure_param("beambreak_pin", 4)
     self.config.ensure_param("punishment_LED_pin", 17)
     self.config.ensure_param("buzzer_pin", 16)
-    self.config.ensure_param("reset_pins", [6, 5, 25])
+    self.config.ensure_param("reset_pins", [25, 5, 6])
     self.config.ensure_param("camera_device", "/dev/video0")
+
+    self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
     self.pi = pigpio.pi()
 
     # Initialize M0s
     self.left_m0 = M0Device(pi = self.pi, id = "M0_0", reset_pin = self.config["reset_pins"][0])
-    # self.middle_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.config["reset_pins"][1])
-    self.right_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.config["reset_pins"][2])
+    self.middle_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.config["reset_pins"][1])
+    self.right_m0 = M0Device(pi = self.pi, id = "M0_2", reset_pin = self.config["reset_pins"][2])
 
-    self.m0s = [self.left_m0, self.right_m0]
+    self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
+    self.arduino_cli_discover()
+
+    if len(self.discovered_boards) >= len(self.m0s):
+        for i, m0 in enumerate(self.m0s):
+            m0.port = self.discovered_boards[i]
+            logger.info(f"Set {m0.id} serial port to {m0.port}")
+    else:
+        logger.error("Not enough M0 boards discovered. Please check the connections.")
 
     self.reward_led = LED(pi=self.pi, pin=self.config["reward_LED_pin"], brightness = 140)
     self.punishment_led = LED(pi=self.pi, pin=self.config["punishment_LED_pin"], brightness = 255)
@@ -56,6 +69,55 @@ class Chamber:
   def __del__(self):
     self.pi.stop()
     [m0.stop() for m0 in self.m0s]
+
+  def compile_sketch(self, sketch_path=None):
+      """
+      Compiles the M0Touch sketch using arduino-cli.
+      """
+      if sketch_path is None:
+          sketch_path = os.path.join(self.code_dir, "../M0Touch/M0Touch.ino")
+
+      logger.info(f"Compiling sketch.")
+
+      try:
+          # Run arduino-cli compile
+          compile = subprocess.check_output(f"arduino-cli compile -b DFRobot:samd:mzero_bl {sketch_path}", shell=True).decode("utf-8")
+          logger.info(f"Compile output: {compile}")
+          
+          if "error" in compile.lower():
+              logger.error(f"Error compiling sketch: {compile}")
+          else:
+              logger.info(f"Sketch compiled successfully.")
+
+      except Exception as e:
+          logger.error(f"Error compiling sketch: {e}")
+
+    
+  def arduino_cli_discover(self):
+    """
+    Uses arduino-cli to discover connected boards.
+    Looks for boards with VID: 0x2341 and PID: 0x0244 (DFRobot M0)
+    """
+    # Reset all the M0 boards in order before discovery
+    self.m0_reset()
+    time.sleep(3)
+
+    logger.info("Discovering M0 boards using arduino-cli...")
+    self.discovered_boards = []
+
+    try:
+        result = subprocess.run(['arduino-cli', 'board', 'list', '--format', 'json'], capture_output=True, text=True)
+        boards = json.loads(result.stdout)
+
+        for board in boards['detected_ports']:
+            props = board['port']['properties']
+            if 'pid' in props and 'vid' in props and props['pid'] == '0x0244' and props['vid'] == '0x2341':
+                self.discovered_boards.append(board['port']['address'])
+                logger.debug(f"Discovered M0 board on {board['port']['address']}")
+
+    except Exception as e:
+        logger.error(f"Error discovering boards with arduino-cli: {e}")
+
   
   def m0_discover(self):
     """
@@ -63,6 +125,8 @@ class Chamber:
     when we send "WHOAREYOU?".
     Returns a dict like {"M0_0": "/dev/ttyACM0", "M0_1": "/dev/ttyACM1"}.
     """
+    logger.info("Discovering M0 boards...")
+
     board_map = {}
     ports = serial.tools.list_ports.comports()
 
@@ -81,16 +145,16 @@ class Chamber:
             except Exception as e:
                 logger.error(f"Could not open {p.device}: {e}")
       
-    if len(board_map) == 0:
-        logger.error("No M0 boards found. Please check the connections.")
-    else:
-        logger.info(f"Discovered M0 boards: {board_map}")
-        for m0 in self.m0s:
-            if m0.id in board_map:
-                m0.port = board_map[m0.id]
-                logger.info(f"Set {m0.id} serial port to {board_map[m0.id]}")
-            else:
-                logger.error(f"{m0.id} not found in discovered boards. Please check the connections.")
+    # if len(board_map) == 0:
+    #     logger.error("No M0 boards found. Please check the connections.")
+    # else:
+    #     logger.info(f"Discovered M0 boards: {board_map}")
+    #     for m0 in self.m0s:
+    #         if m0.id in board_map:
+    #             m0.port = board_map[m0.id]
+    #             logger.info(f"Set {m0.id} serial port to {board_map[m0.id]}")
+    #         else:
+    #             logger.error(f"{m0.id} not found in discovered boards. Please check the connections.")
 
   def m0_send_command(self, command):
     """
@@ -100,6 +164,7 @@ class Chamber:
 
   def m0_reset(self):
     # Reset all the M0 boards
+    logger.info("Resetting M0 boards...")
     [m0.reset() for m0 in self.m0s]
   
   def m0_initialize(self):
@@ -112,7 +177,7 @@ class Chamber:
 
   def m0_upload_sketches(self):
     # Upload sketches to all M0s
-    self.m0s[0].compile_sketch()
+    self.compile_sketch()
     [m0.upload_sketch() for m0 in self.m0s]
   
   def m0_clear(self):

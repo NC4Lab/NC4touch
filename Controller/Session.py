@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import pigpio
 import yaml
 import importlib
 import threading

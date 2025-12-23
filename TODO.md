@@ -1,0 +1,1 @@
+- Move logs into dedicated log folder and add to .gitignore

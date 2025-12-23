@@ -53,6 +53,8 @@ class M0Device:
 
         self.is_touched = False
 
+        self.code_dir = os.path.dirname(os.path.abspath(__file__))
+
         self.mode = M0Mode.UNINITIALIZED
     
     def __del__(self):
@@ -77,6 +79,18 @@ class M0Device:
         self.start_read_thread()
         time.sleep(1)
         self.send_command("WHOAREYOU?")
+    
+    def arduino_cli_find_device(self):
+        """
+        Lists the connected Arduino boards using arduino-cli.
+        """
+        try:
+            output = subprocess.check_output("arduino-cli board list", shell=True).decode("utf-8")
+            logger.info(f"Arduino CLI Boards:\n{output}")
+            return output
+        except Exception as e:
+            logger.error(f"Error listing Arduino boards: {e}")
+            return ""
     
     def find_device(self):
         """
@@ -240,26 +254,13 @@ class M0Device:
         except Exception as e:
             logger.error(f"[{self.id}] Error mounting UD drive: {e}")
 
-    def compile_sketch(self, sketch_path="../M0Touch/M0Touch.ino"):
-        logger.info(f"Compiling sketch.")
-        try:
-            # Run arduino-cli compile
-            compile = subprocess.check_output(f"arduino-cli compile --b DFRobot:samd:mzero_bl {sketch_path}", shell=True).decode("utf-8")
-            logger.info(f"Compile output: {compile}")
-            
-            if "error" in compile.lower():
-                logger.error(f"Error compiling sketch: {compile}")
-            else:
-                logger.info(f"Sketch compiled successfully.")
-
-        except Exception as e:
-            logger.error(f"Error compiling sketch: {e}")
-
-    
-    def upload_sketch(self, sketch_path="../M0Touch/M0Touch.ino"):
+    def upload_sketch(self, sketch_path=None):
         """
         Uploads the given sketch to the M0 board.
         """
+
+        if sketch_path is None:
+            sketch_path = os.path.join(self.code_dir, "../M0Touch/M0Touch.ino")
 
         if self.mode == M0Mode.SERIAL_COMM:
             self.stop_read_thread()
@@ -282,11 +283,14 @@ class M0Device:
         except Exception as e:
             logger.error(f"[{self.id}] Error uploading sketch: {e}")
     
-    def sync_image_folder(self, image_folder="../data/images"):
+    def sync_image_folder(self, image_folder=None):
         """
         Syncs the image folder to the UD drive connected to the M0 board.
         """
+
         logger.info(f"[{self.id}] Syncing image folder to UD drive.")
+        if image_folder is None:
+            image_folder = os.path.join(self.code_dir, "../data/images")
 
         # Mount the UD drive
         self.mount_ud()
