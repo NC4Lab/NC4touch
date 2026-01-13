@@ -161,7 +161,7 @@ class VirtualChamberGUI:
         self.reward_led_label = ttk.Label(led_frame, text="● OFF", foreground='gray')
         self.reward_led_label.pack()
 
-        ttk.Label(led_frame, text="Punishment LED:", pady=(10, 0)).pack()
+        ttk.Label(led_frame, text="Punishment LED:").pack(pady=(10, 0))
         self.punishment_led_label = ttk.Label(led_frame, text="● OFF", foreground='gray')
         self.punishment_led_label.pack()
 
@@ -173,7 +173,7 @@ class VirtualChamberGUI:
         self.buzzer_label = ttk.Label(misc_frame, text="● Silent", foreground='gray')
         self.buzzer_label.pack()
 
-        ttk.Label(misc_frame, text="Reward Pump:", pady=(10, 0)).pack()
+        ttk.Label(misc_frame, text="Reward Pump:").pack(pady=(10, 0))
         self.reward_label = ttk.Label(misc_frame, text="● Stopped", foreground='gray')
         self.reward_label.pack()
 

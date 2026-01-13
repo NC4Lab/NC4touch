@@ -7,10 +7,7 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 
 
 class VirtualLED:
-    """
-    Virtual implementation of LED controller.
-    Maintains the same API as the real LED class.
-    """
+    # Virtual LED class - mimics physical LED API
 
     def __init__(self, pi=None, pin=21, rgb_pins=None, frequency=5000, range=255, brightness=140):
         self.pin = pin
@@ -59,7 +56,7 @@ class VirtualLED:
         logger.debug(f"Virtual LED brightness set to {brightness}")
 
     def set_color(self, r, g, b):
-        """Set RGB color (0-255 for each channel)."""
+        # Set LED color
         if not self.show_color:
             logger.warning("Virtual LED does not support RGB")
             return
@@ -70,14 +67,22 @@ class VirtualLED:
         logger.info(f"Virtual LED color set to RGB({r}, {g}, {b})")
 
     def pulse(self, duration=1.0):
-        """Pulse the LED (not implemented in base LED, but common usage)."""
+        # Pulse effect
         logger.info(f"Virtual LED pulsing for {duration}s")
         self.on()
+
+    def activate(self):
+        """Activate the LED (alias for on() to match physical LED API)."""
+        self.on()
+
+    def deactivate(self):
+        """Deactivate the LED (alias for off() to match physical LED API)."""
+        self.off()
 
     # ===== Virtual-specific methods =====
 
     def get_state(self):
-        """Get current LED state."""
+        # Return current LED state
         return {
             'is_on': self._is_on,
             'brightness': self._current_brightness,

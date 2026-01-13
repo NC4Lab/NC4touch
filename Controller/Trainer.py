@@ -9,9 +9,7 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 def get_trainers():
-    """
-    Returns a list of available trainers.
-    """
+    # List of available trainers
     return [
         "DoNothingTrainer",
         "Habituation",
@@ -20,15 +18,19 @@ def get_trainers():
     ]
 
 class Trainer(ABC):
-    """
-    Orchestrates phases for rodent training using M0 boards for visual stimuli,
-    and pigpio-based hardware for reward, LED, beam break, etc.
-    """
+    # Base trainer class for running training sessions
 
     def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_config.yaml'):
-        if not isinstance(chamber, Chamber):
-            logger.error("chamber must be an instance of Chamber")
-            raise ValueError("chamber must be an instance of Chamber")
+        # Accept both Chamber and VirtualChamber
+        try:
+            from Virtual.VirtualChamber import VirtualChamber
+            valid_chamber = isinstance(chamber, (Chamber, VirtualChamber))
+        except ImportError:
+            valid_chamber = isinstance(chamber, Chamber)
+        
+        if not valid_chamber:
+            logger.error("chamber must be an instance of Chamber or VirtualChamber")
+            raise ValueError("chamber must be an instance of Chamber or VirtualChamber")
 
         self.chamber = chamber
         self.config = Config(config = trainer_config, config_file = trainer_config_file)
@@ -40,9 +42,7 @@ class Trainer(ABC):
         self.data_file = None
     
     def read_trainer_seq_file(self, csv_file_path, num_columns):
-        """
-        Reads a CSV file containing trial sequences.
-        """
+        # Read trial sequence from CSV file
         trials = []
         try:
             with open(csv_file_path, 'r') as f:
@@ -59,9 +59,7 @@ class Trainer(ABC):
         return trials
 
     def open_data_file(self):
-        """
-        Opens a json file for writing trial data.
-        """
+        # Create a new JSON file for trial data
         if self.data_file is None:
             date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             chamber_name = self.chamber.config["name"]
@@ -88,9 +86,7 @@ class Trainer(ABC):
             logger.warning("Data file already open. Skipping creation.")
     
     def close_data_file(self):
-        """
-        Closes the data file.
-        """
+        # Close the data file when done
         if self.data_file:
             logger.info(f"Closing data file: {self.data_filename}")
 
@@ -100,9 +96,7 @@ class Trainer(ABC):
             logger.warning("Data file is already closed.")
     
     def write_event(self, event, data):
-        """
-        Writes a single event to the YAML file.
-        """
+        # Write a single event to the data file
         if self.data_file:
             event_data = {
                 "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
@@ -115,26 +109,14 @@ class Trainer(ABC):
     
     @abstractmethod
     def start_training(self):
-        """
-        Starts the trainer.
-        This should be overridden in subclasses to implement specific training logic.
-        """
-        raise NotImplementedError("start_training() must be implemented in subclasses.")
+        pass
     
     @abstractmethod
     def run_training(self):
-        """
-        Main loop for running the trainer.
-        This should be overridden in subclasses to implement specific training logic.
-        """
-        raise NotImplementedError("run_training() must be implemented in subclasses.")
+        pass
     
     @abstractmethod
     def stop_training(self):
-        """
-        Ends the trainer.
-        This should be overridden in subclasses to implement specific training logic.
-        """
-        raise NotImplementedError("stop_training() must be implemented in subclasses.")
+        pass
     
     

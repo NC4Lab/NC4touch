@@ -42,6 +42,7 @@ class VirtualChamber:
 
         self.config = Config(config=chamber_config, config_file=chamber_config_file)
         self.config.ensure_param("chamber_name", "VirtualChamber")
+        self.config.ensure_param("name", "VirtualChamber")  # Alias for compatibility with Trainer
         self.config.ensure_param("reward_LED_pin", 21)
         self.config.ensure_param("reward_pump_pin", 27)
         self.config.ensure_param("beambreak_pin", 4)
@@ -150,6 +151,25 @@ class VirtualChamber:
             m0.initialize()
             time.sleep(0.1)
         logger.info("All virtual M0 devices initialized")
+
+    def m0_send_command(self, command):
+        """
+        Sends a command to all M0 boards.
+        """
+        for m0 in self.m0s:
+            m0.send_command(command)
+        logger.debug(f"Virtual Chamber: sent command '{command}' to all M0s")
+
+    def default_state(self):
+        """
+        Reset chamber to default state (all hardware off/clear).
+        """
+        self.m0_send_command("CLEAR")
+        self.reward_led.deactivate()
+        self.punishment_led.deactivate()
+        self.buzzer.deactivate()
+        self.reward.stop()
+        logger.info("Virtual Chamber: reset to default state")
 
     # ===== Virtual-specific methods for simulation and testing =====
 

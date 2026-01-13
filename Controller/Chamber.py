@@ -3,10 +3,16 @@
 # Manu Madhav
 # 2025
 
-import pigpio
+try:
+    import pigpio
+except ImportError:
+    pigpio = None
+try:
+    import serial
+    import serial.tools.list_ports
+except ImportError:
+    serial = None
 import time
-import serial
-import serial.tools.list_ports
 import subprocess
 import json
 import os
@@ -42,7 +48,7 @@ class Chamber:
 
     self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
-    self.pi = pigpio.pi()
+    self.pi = pigpio.pi() if pigpio is not None else None
 
     # Initialize M0s
     self.left_m0 = M0Device(pi = self.pi, id = "M0_0", reset_pin = self.config["reset_pins"][0])

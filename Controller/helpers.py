@@ -1,6 +1,9 @@
 import time
 import subprocess
-import netifaces
+try:
+    import netifaces
+except ImportError:
+    netifaces = None
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -11,6 +14,10 @@ def get_ip_address(interface="eth0"):
     Returns:
         str: The IP address of the machine.
     """
+    if netifaces is None:
+        logger.warning("netifaces module not available, cannot get IP address")
+        return None
+    
     try:
         # Get the IP address of the interface
         ip_address = netifaces.ifaddresses(interface)[netifaces.AF_INET][0]['addr']

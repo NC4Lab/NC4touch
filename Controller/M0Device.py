@@ -4,12 +4,18 @@
 # Manu Madhav
 # 2025
 
-import pigpio
+try:
+    import pigpio
+except ImportError:
+    pigpio = None
+try:
+    import serial
+except ImportError:
+    serial = None
 import time
 import subprocess
 import threading
 import queue
-import serial
 from helpers import wait_for_dmesg
 from enum import Enum
 import os
@@ -31,7 +37,7 @@ class M0Device:
 
     def __init__(self, pi, id=None, reset_pin=None,
                  port=None, baudrate=115200, location=None):
-        if not isinstance(pi, pigpio.pi):
+        if pigpio is not None and not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
         
