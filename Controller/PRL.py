@@ -30,18 +30,19 @@ class PRL(Trainer):
     In PRL , the animal is required to respond to a randomly assigned "high reward probability" 
     or "low reward probability" lever. 
 
-    The trainer will dispense a reward for a set duration at 80%/20%, and the animal will
+    ##GITHUB EXAMPLE TEST
+
+    The trainer will dispense a reward for a set duration at 80%/20% (high/low) set in config, and the animal will
     interact with the reward system. The trainer will also monitor
     the beam break sensor to detect if the animal is interacting with the reward
     system. If the beam is broken, the trainer will turn off the reward LED. Once the reward is 
     dispensed, the trainer will wait for a set duration for the beam to be broken before moving on.
 
-    The trainer will next wait for a set ITI duration before starting the next trial. If the animal breaks the beam during the
-    ITI, one second will be added to the ITI duration.
+    The trainer will next wait for a set ITI duration before starting the next trial.
 
     The trainer will repeat this process for a set number of trials.
 
-    At a set trial number, the trainer will switch the probability of the reward to 20%/80% until the end of the training session.
+    At a set trial number, the trainer will switch the probability of the reward to 20%/80% (adjust in config) until the end of the training session.
 
 
     State machine:
@@ -55,24 +56,26 @@ class PRL(Trainer):
         # This allows for easy modification of the trainer parameters without changing the code.
         # The trainer will also reinitialize with these parameters.
         # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
-        self.config.ensure_param("trainer_name", "PRL")
+        self.config.ensure_param("trainer_name", "ProbabilisticReversalLearning")  # Name of the trainer
         self.config.ensure_param("num_trials", 60)  # Number of trials to run
         self.config.ensure_param("high_reward_probability", 0.9)  # Probability of high reward
         self.config.ensure_param("low_reward_probability", 0.1)
-        self.config.ensure_param("reward_pump_secs", 3.5)  # Duration for which the reward pump is activated
+        self.config.ensure_param("reward_pump_secs", 1.5)  # Duration for which the reward pump is activated
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
 
 
         # Local variables used by the trainer during the training session and not set in the config file.
+        self.config.ensure_param("touch_timeout", 30) # Timeout for waiting for touch
+        self.config.ensure_param("trial_to_reverse", 30) # Trial at which to reverse reward probabilities
         self.reward_start_time = time.time()
         self.reward_collected = False
         self.last_beam_break_time = time.time()
         self.iti_start_time = time.time()
 
-        self.left_image = None
-        self.right_image = None
+        self.left_image = "A01.bmp"
+        self.right_image = "B01.bmp"
         self.left_reward_probability = 0
         self.right_reward_probability = 0
         self.current_trial = 0
@@ -146,12 +149,12 @@ class PRL(Trainer):
                 if self.current_trial == self.config["trial_to_reverse"]:
                     # Reverse the reward probabilities
                     logger.info("Reversing reward probabilities...")
-                    if self.left_reward_probability() == self.config["high_reward_probability"]:
-                        self.left_reward_probability=(self.config["low_reward_probability"])
-                        self.right_reward_probability=(self.config["high_reward_probability"])
+                    if self.left_reward_probability == self.config["high_reward_probability"]:
+                        self.left_reward_probability = self.config["low_reward_probability"]
+                        self.right_reward_probability = self.config["high_reward_probability"]
                     else:
-                        self.left_reward_probability=(self.config["high_reward_probability"])
-                        self.right_reward_probability=(self.config["low_reward_probability"])
+                        self.left_reward_probability = self.config["high_reward_probability"]
+                        self.right_reward_probability = self.config["low_reward_probability"]
                 # Load images for the current trial
                 self.load_images()
                 # Show images on the M0 devices
@@ -160,7 +163,7 @@ class PRL(Trainer):
                 self.trial_start_time = current_time
                 # Move to WAIT_FOR_TOUCH state
                 logger.info(f"Images loaded for trial {self.current_trial}: {self.left_image}, {self.right_image}")
-                logger.info(f"Reward probabilities set for trial {self.current_trial}: {self.chamber.touchscreen_1.get_reward_probability()}, {self.chamber.touchscreen_2.get_reward_probability()}")
+                logger.info(f"Reward probabilities set for trial {self.current_trial}: {self.left_reward_probability} (left), {self.right_reward_probability} (right)")
                 self.write_event("ImagesLoaded", self.current_trial)
                 self.write_event("RewardProbabilitiesSet", self.current_trial)
                 self.show_images()
@@ -278,8 +281,10 @@ class PRL(Trainer):
             # ITI_START state, preparing for the ITI period
             logger.debug("Current state: ITI_START")
             self.write_event("ITIStart", self.current_trial)
-            self.chamber.beambreak.activate()
+            #self.chamber.beambreak.activate()
             self.chamber.reward_led.deactivate()
+            # Turn off house lights during ITI
+            # self.chamber.house_lights.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
             self.iti_start_time = current_time
             self.state = PRLState.ITI
@@ -289,11 +294,12 @@ class PRL(Trainer):
             logger.debug("Current state: ITI")
             if current_time - self.iti_start_time < self.current_trial_iti:
                 # Check if beam break is detected during ITI
-                if self.chamber.beambreak.state==False:
-                    logger.info("Beam broken during ITI. Adding 1 second to ITI duration.")
-                    self.write_event("BeamBreakDuringITI", self.current_trial)
-                    if self.current_trial_iti < self.config["max_iti_duration"]:
-                        self.current_trial_iti += 1
+                # if self.chamber.beambreak.state==False:
+                #     logger.info("Beam broken during ITI. Adding 1 second to ITI duration.")
+                #     self.write_event("BeamBreakDuringITI", self.current_trial)
+                #     if self.current_trial_iti < self.config["max_iti_duration"]:
+                #         self.current_trial_iti += 1
+                pass
             else:
                 logger.info(f"ITI duration of {self.current_trial_iti} seconds completed")
                 self.state = PRLState.END_TRIAL

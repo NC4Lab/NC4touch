@@ -1,4 +1,7 @@
-import pigpio
+try:
+    import pigpio
+except ImportError:
+    pigpio = None
 import time
 import threading
 
@@ -7,9 +10,9 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 
 class BeamBreak:
     def __init__(self, pi=None, pin=4, beam_break_memory=0.2):
-        if pi is None:
+        if pi is None and pigpio is not None:
             pi = pigpio.pi()
-        if not isinstance(pi, pigpio.pi):
+        if pigpio is not None and not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
 

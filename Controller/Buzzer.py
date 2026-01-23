@@ -1,10 +1,15 @@
-import pigpio
+try:
+    import pigpio
+except ImportError:
+    pigpio = None
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 class Buzzer:
-    def __init__(self, pi=pigpio.pi(), pin=16, volume=60, frequency=6000):
-        if not isinstance(pi, pigpio.pi):
+    def __init__(self, pi=None, pin=16, volume=60, frequency=6000):
+        if pi is None and pigpio is not None:
+            pi = pigpio.pi()
+        if pigpio is not None and not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
 
