@@ -19,7 +19,8 @@ class LED:
         self.frequency = frequency
         self.range = range
         self.brightness = brightness
-        self.color = (brightness, brightness, brightness)  # Default to white
+        self.color = color  # Default to white
+        self.active = False # Default to inactive
 
         # Check if RGB pins are provided
         if rgb_pins is not None and len(rgb_pins) == 3:
@@ -49,22 +50,35 @@ class LED:
         """Clean up the LED by stopping the PWM."""
         self.deactivate()
     
-    def set_color(self, r, g, b):
+    def set_color(self, color):
         """Set the color of the LED."""
-        self.color = (r, g, b)
+        self.color = color
         logger.debug(f"LED color set to {self.color}")
 
+        if self.active:
+            self.activate()
+
+    def set_brightness(self, brightness):
+        """Set the brightness of the LED."""
+        self.brightness = brightness
+        logger.debug(f"LED brightness set to {self.brightness}")
+
+        if self.active:
+            self.activate()
+
     def activate(self):
-        """Activate the LED with the current brightness or color."""
+        """Activate the LED with the current brightness and/or color."""
         if self.show_color:
             r, g, b = self.color
-            self.pi.set_PWM_dutycycle(self.r_pin, r)
-            self.pi.set_PWM_dutycycle(self.g_pin, g)
-            self.pi.set_PWM_dutycycle(self.b_pin, b)
+            self.pi.set_PWM_dutycycle(self.r_pin, r * self.brightness // 255)
+            self.pi.set_PWM_dutycycle(self.g_pin, g * self.brightness // 255)
+            self.pi.set_PWM_dutycycle(self.b_pin, b * self.brightness // 255)
         else:
             self.pi.set_PWM_dutycycle(self.pin, self.brightness)
-        logger.debug(f"LED activated")
 
+        self.active = True
+        logger.debug(f"LED activated")
+    
     def deactivate(self):
         """Deactivate the LED."""
         if self.show_color:
@@ -73,4 +87,6 @@ class LED:
             self.pi.set_PWM_dutycycle(self.b_pin, 0)
         else:
             self.pi.set_PWM_dutycycle(self.pin, 0)
+
+        self.active = False
         logger.debug(f"LED deactivated")
