@@ -47,6 +47,7 @@ class VirtualChamber:
         self.config.ensure_param("reward_pump_pin", 27)
         self.config.ensure_param("beambreak_pin", 4)
         self.config.ensure_param("punishment_LED_pin", 17)
+        self.config.ensure_param("house_LED_pin", 20)
         self.config.ensure_param("buzzer_pin", 16)
         self.config.ensure_param("reset_pins", [25, 5, 6])
         self.config.ensure_param("camera_device", "/dev/video0")
@@ -97,6 +98,11 @@ class VirtualChamber:
             pin=self.config["punishment_LED_pin"],
             brightness=255
         )
+        self.house_led = VirtualLED(
+            pi=self.pi,
+            pin=self.config["house_LED_pin"],
+            brightness=255
+        )
         self.beambreak = VirtualBeamBreak(
             pi=self.pi,
             pin=self.config["beambreak_pin"]
@@ -121,6 +127,7 @@ class VirtualChamber:
         logger.info(f"  - Virtual Reward Pump")
         logger.info(f"  - Virtual Beam Break Sensor")
         logger.info(f"  - 2 Virtual LEDs (reward/punishment)")
+        logger.info(f"  - Virtual House LED")
         logger.info(f"  - Virtual Buzzer")
         logger.info("="*60)
 
@@ -168,6 +175,14 @@ class VirtualChamber:
             m0.send_command(command)
         logger.debug(f"Virtual Chamber: sent command '{command}' to all M0s")
 
+    def m0_show_image(self):
+        """Virtual method - show images on all M0s."""
+        self.m0_send_command("SHOW")
+
+    def m0_clear(self):
+        """Virtual method - clear images on all M0s."""
+        self.m0_send_command("BLACK")
+
     def default_state(self):
         """
         Reset chamber to default state (all hardware off/clear).
@@ -175,6 +190,7 @@ class VirtualChamber:
         self.m0_send_command("CLEAR")
         self.reward_led.deactivate()
         self.punishment_led.deactivate()
+        self.house_led.deactivate()
         self.buzzer.deactivate()
         self.reward.stop()
         logger.info("Virtual Chamber: reset to default state")
@@ -202,6 +218,7 @@ class VirtualChamber:
             },
             'reward_led': self.reward_led.get_state(),
             'punishment_led': self.punishment_led.get_state(),
+            'house_led': self.house_led.get_state(),
             'beambreak': {
                 'state': self.beambreak.state,
                 'last_break': self.beambreak.last_break_time
