@@ -34,14 +34,32 @@ class WebUI:
     def __init__(self, video_port=8080, ui_port=8081):
         # Initialize session and chamber
         logger.info("Initializing WebUI...")
-        self.session = Session()
-
         self.ip = get_ip_address()
+        chamber_name = self.derive_chamber_name(self.ip)
+        session_config = {"chamber_name": chamber_name} if chamber_name else {}
+        self.session = Session(session_config=session_config)
         self.video_port = video_port
         self.ui_port = ui_port
 
         # Initialize UI
         self.init_ui()
+
+    def derive_chamber_name(self, ip_address):
+        if not ip_address:
+            return None
+
+        try:
+            last_octet = int(ip_address.split(".")[-1])
+        except (ValueError, IndexError):
+            logger.warning(f"Could not parse IP address: {ip_address}")
+            return None
+
+        chamber_number = last_octet - 10
+        if chamber_number <= 0:
+            logger.warning(f"Derived invalid chamber number from IP: {ip_address}")
+            return None
+
+        return f"Chamber{chamber_number}"
 
     def init_ui(self):
         ui.label('Chamber Control Panel').style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
