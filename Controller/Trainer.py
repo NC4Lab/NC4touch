@@ -72,7 +72,8 @@ class Trainer(ABC):
             chamber_name = self.chamber.config["chamber_name"]
             rodent_name = self.config["rodent_name"]
             trainer_name = self.config["trainer_name"]
-            data_dir = self.config.get("data_dir", "/mnt/shared/data")
+            data_dir = self.config["data_dir"] or "/mnt/shared/data"
+            os.makedirs(data_dir, exist_ok=True)
             self.data_filename = f"{date_str}_{chamber_name}_{trainer_name}_{rodent_name}_data.json"
             self.data_filepath = os.path.join(data_dir, self.data_filename)
             
@@ -85,7 +86,7 @@ class Trainer(ABC):
                 "header": {
                     "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
                     "rodent": self.config["rodent_name"],
-                    "chamber": self.chamber.config["name"],
+                    "chamber": self.chamber.config["chamber_name"],
                     "trainer": self.config["trainer_name"],
                 }
             }
