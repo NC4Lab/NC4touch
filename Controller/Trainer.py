@@ -102,7 +102,7 @@ class Trainer(ABC):
             self.data_file.close()
             self.data_file = None
         else:
-            logger.warning("Data file is already closed.")
+            logger.debug("Data file already closed; skipping.")
     
     def write_event(self, event, data):
         # Write a single event to the data file
