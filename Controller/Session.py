@@ -119,6 +119,7 @@ class Session:
         
         trainer_config = {"rodent_name": self.config["rodent_name"],
                           "chamber_name": self.config["chamber_name"],
+                          "trainer_name": self.config["trainer_name"],
                           "iti_duration": self.config["iti_duration"],
                           "trainer_seq_dir": self.config["trainer_seq_dir"],
                           "trainer_seq_file": self.config["trainer_seq_file"],

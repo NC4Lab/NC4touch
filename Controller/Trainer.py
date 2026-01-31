@@ -1,5 +1,6 @@
 import json
 import csv
+import os
 from Chamber import Chamber
 from datetime import datetime
 from abc import ABC, abstractmethod
@@ -68,13 +69,15 @@ class Trainer(ABC):
         # Create a new JSON file for trial data
         if self.data_file is None:
             date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            chamber_name = self.chamber.config["name"]
+            chamber_name = self.chamber.config["chamber_name"]
             rodent_name = self.config["rodent_name"]
             trainer_name = self.config["trainer_name"]
+            data_dir = self.config.get("data_dir", "/mnt/shared/data")
             self.data_filename = f"{date_str}_{chamber_name}_{trainer_name}_{rodent_name}_data.json"
+            self.data_filepath = os.path.join(data_dir, self.data_filename)
             
-            logger.info(f"Creating data file: {self.data_filename}")
-            self.data_file = open(self.data_filename, "w")
+            logger.info(f"Creating data file: {self.data_filepath}")
+            self.data_file = open(self.data_filepath, "w")
             self.data_file.write("# NC4Touch training data\n")
 
             # Create a header with metadata

@@ -27,7 +27,7 @@ class SoundTest(Trainer):
         super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
 
         self.config.ensure_param("trainer_name", "SoundTest")
-        self.config.ensure_param("num_loops", 5)
+        self.config.ensure_param("num_loops", 1)
         self.config.ensure_param("step_duration", 10.0)
 
         self.state_start_time = time.time()
