@@ -90,14 +90,15 @@ class Session:
         """Clean up the session by stopping timers and copying log files."""
         logger.info("Cleaning up session...")
         # Stop the session timer if it's running
-        if self.session_timer.is_alive():
+        if hasattr(self, 'session_timer') and self.session_timer.is_alive():
             self.session_timer.cancel()
-        if self.priming_timer.is_alive():
+        if hasattr(self, 'priming_timer') and self.priming_timer.is_alive():
             self.priming_timer.cancel()
         # Copy log file to data directory
-        if os.path.isfile(session_log_file):
-            new_log_file = os.path.join(self.data_dir, os.path.basename(self.session_log_file))
+        if hasattr(self, 'config') and os.path.isfile(session_log_file):
             try:
+                data_dir = self.config["data_dir"] or "/mnt/shared/data"
+                new_log_file = os.path.join(data_dir, os.path.basename(session_log_file))
                 os.rename(session_log_file, new_log_file)
                 logger.info(f"Log file copied to {new_log_file}")
             except Exception as e:

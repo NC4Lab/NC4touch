@@ -14,6 +14,12 @@ def get_trainers():
         "DoNothingTrainer",
         "Habituation",
         "InitialTouch",
+        "MustTouch",
+        "Punish_Incorrect",
+        "Simple_Discrimination",
+        "Complex_Discrimination",
+        "PRL",
+        "SoundTest",
         # Add more trainers as needed
     ]
 
