@@ -78,32 +78,16 @@ class M0Device:
             logger.info(f"[{self.id}] Closed port {self.port}.")
         logger.info(f"[{self.id}] Stopped.")
         self.mode = M0Mode.UNINITIALIZED
-
+    
     def initialize(self):
         """
-        Initializes the M0 board by finding the device, opening the serial port,
-        starting the read thread, and sending the WHOAREYOU? command.
+        Initializes the M0Device by opening the serial port and starting the read thread.
         """
-        logger.info(f"[{self.id}] Initializing M0Device...")
-        self.find_device()
-        time.sleep(1)
         self.open_serial()
         time.sleep(1)
         self.start_read_thread()
         time.sleep(1)
         self.send_command("WHOAREYOU?")
-    
-    def arduino_cli_find_device(self):
-        """
-        Lists the connected Arduino boards using arduino-cli.
-        """
-        try:
-            output = subprocess.check_output("arduino-cli board list", shell=True).decode("utf-8")
-            logger.info(f"Arduino CLI Boards:\n{output}")
-            return output
-        except Exception as e:
-            logger.error(f"Error listing Arduino boards: {e}")
-            return ""
     
     def find_device(self):
         """

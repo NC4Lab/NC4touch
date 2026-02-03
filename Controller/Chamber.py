@@ -58,13 +58,7 @@ class Chamber:
 
     self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
     self.arduino_cli_discover()
-
-    if len(self.discovered_boards) >= len(self.m0s):
-        for i, m0 in enumerate(self.m0s):
-            m0.port = self.discovered_boards[i]
-            logger.info(f"Set {m0.id} serial port to {m0.port}")
-    else:
-        logger.error("Not enough M0 boards discovered. Please check the connections.")
+    self.m0_initialize()
 
     self.reward_led = LED(pi=self.pi, pin=self.config["reward_LED_pin"], brightness = 140)
     self.punishment_led = LED(pi=self.pi, pin=self.config["punishment_LED_pin"], brightness = 255)
@@ -114,16 +108,24 @@ class Chamber:
 
     logger.info("Discovering M0 boards using arduino-cli...")
     self.discovered_boards = []
-
     try:
         result = subprocess.run([f"~/bin/arduino-cli board list --format json"], capture_output=True, shell=True)
         boards = json.loads(result.stdout)
 
+        # Look for DFRobot M0 boards
         for board in boards['detected_ports']:
             props = board['port']['properties']
             if 'pid' in props and 'vid' in props and props['pid'] == '0x0244' and props['vid'] == '0x2341':
                 self.discovered_boards.append(board['port']['address'])
                 logger.debug(f"Discovered M0 board on {board['port']['address']}")
+        
+        # Assign discovered ports to M0 devices
+        if len(self.discovered_boards) >= len(self.m0s):
+            for i, m0 in enumerate(self.m0s):
+                m0.port = self.discovered_boards[i]
+                logger.info(f"Set {m0.id} serial port to {m0.port}")
+        else:
+            logger.error("Not enough M0 boards discovered. Please check the connections.")
 
     except Exception as e:
         logger.error(f"Error discovering boards with arduino-cli: {e}")
