@@ -162,7 +162,6 @@ class Habituation(Trainer):
             logger.debug("Current state: ITI_START")
             self.write_event("ITIStart", self.current_trial)
             self.chamber.beambreak.activate()
-            self.chamber.house_led.deactivate()
             self.chamber.reward_led.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
             self.iti_start_time = current_time
