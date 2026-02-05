@@ -14,6 +14,6 @@ MANU
 - Pump not working
 
 - C3
-- Pump runs green LED instead, clearly a wiring problem
+- ~~Pump runs green LED instead, clearly a wiring problem~~
 
 - ~~C4 fully functional~~

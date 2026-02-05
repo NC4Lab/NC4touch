@@ -288,7 +288,7 @@ class M0Device:
 
         logger.info(f"[{self.id}] Syncing image folder to UD drive.")
         if image_folder is None:
-            image_folder = os.path.join(self.code_dir, "../data/images")
+            image_folder = os.path.join(self.code_dir, "../images")
 
         # Mount the UD drive
         self.mount_ud()
