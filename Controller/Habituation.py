@@ -51,7 +51,7 @@ class Habituation(Trainer):
         # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
         self.config.ensure_param("trainer_name", "Habituation")
         self.config.ensure_param("num_trials", 30)  # Number of trials to run
-        self.config.ensure_param("reward_pump_secs", 1)  # Duration for which the reward pump is activated
+        self.config.ensure_param("reward_pump_secs", 0.5)  # Duration for which the reward pump is activated
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
