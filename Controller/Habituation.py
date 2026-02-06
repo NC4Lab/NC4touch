@@ -54,7 +54,7 @@ class Habituation(Trainer):
         self.config.ensure_param("reward_pump_secs", 0.5)  # Duration for which the reward pump is activated
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
-        self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
+        self.config.ensure_param("max_iti_duration", 20) # Maximum ITI duration
 
         # Local variables used by the trainer during the training session and not set in the config file.
         self.reward_start_time = time.time()
@@ -92,14 +92,14 @@ class Habituation(Trainer):
             logger.debug("Current state: START_TRAINING")
             logger.info("Starting training session...")
             self.write_event("StartTraining", 1)
-
+            self.chamber.house_led.activate()
             self.current_trial = 0
             self.state = HabituationState.START_TRIAL
 
         elif self.state == HabituationState.START_TRIAL:
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
-            self.chamber.adjust_house_led_brightness(200)
+            self.chamber.house_led.set_brightness(200)
             self.current_trial += 1
             if self.current_trial < self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
@@ -160,8 +160,8 @@ class Habituation(Trainer):
         elif self.state == HabituationState.ITI_START:
             # ITI_START state, preparing for the ITI period
             logger.debug("Current state: ITI_START")
-            self.chamber.adjust_house_led_brightness(20)
-            self.write_event("ITIStart", self.current_trial) 
+            self.chamber.house_led.set_brightness(50)
+            self.write_event("ITIStart", self.current_trial)
             self.chamber.beambreak.activate()
             self.chamber.reward_led.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
