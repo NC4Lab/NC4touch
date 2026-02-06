@@ -80,7 +80,7 @@ class Camera:
         else:
             logger.warning("No network stream to terminate.")
     
-    def start_recording(self, output_file="/mnt/shared/output.mp4"):
+    def start_recording(self, output_file="/mnt/shared/output.ts"):
         if not self.video_recorder:
             cmd = f"ustreamer-dump --sink=demo::ustreamer::sink --output - | ffmpeg -use_wallclock_as_timestamps 1 -i pipe: -c:v libx264 {output_file}"
             logger.debug(f"Starting recording with command: {cmd}")

@@ -178,7 +178,7 @@ class Session:
             rodent_name = self.config["rodent_name"]
             video_dir = self.config["video_dir"]
                         
-            video_file = os.path.join(video_dir, f"{datetime_str}_{chamber_name}_{rodent_name}.mp4")
+            video_file = os.path.join(video_dir, f"{datetime_str}_{chamber_name}_{rodent_name}.ts")
 
             self.chamber.camera.start_recording(video_file)
             self.is_video_recording = True
