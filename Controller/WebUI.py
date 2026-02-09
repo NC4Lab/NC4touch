@@ -33,15 +33,16 @@ class LogElementHandler(logging.Handler):
 class WebUI:
     def __init__(self, video_port=8080, ui_port=8081):
         # Initialize session and chamber
-        logger.info("Initializing WebUI...")
         self.ip = get_ip_address()
+        self.ui_port = ui_port
         self.chamber_name = self.derive_chamber_name(self.ip)
+        ui.run(host=self.ip, port=self.ui_port, title=f"{self.chamber_name} Control Panel", show=False)
+        logger.info("Initializing WebUI...")
+        self.video_port = video_port
         session_config = {"chamber_name": self.chamber_name} if self.chamber_name else {}
         self.session = Session(session_config=session_config)
-        self.video_port = video_port
-        self.ui_port = ui_port
 
-        # Initialize UI
+        # Initialize UI elements
         self.init_ui()
 
     def derive_chamber_name(self, ip_address):
@@ -185,4 +186,3 @@ class WebUI:
             self.session.chamber.house_led.activate()
 
 web_ui = WebUI()
-ui.run(host=web_ui.ip, port=web_ui.ui_port, title="Chamber Control Panel", show=False)
