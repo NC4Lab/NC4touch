@@ -150,6 +150,7 @@ class M0Device:
 
             self.mode = M0Mode.SERIAL_COMM
             logger.info(f"[{self.id}] Started serial comm.")
+            self.send_command("WHOAREYOU?")  # prompt the device to send its ID
         else:
             logger.error(f"[{self.id}] Cannot start serial comm in mode {self.mode}.")
     
@@ -200,9 +201,14 @@ class M0Device:
                     if line:
                         logger.info(f"[{self.id}] <- {line}")
                         self.message_queue.put((self.id, line))
+                        
                         if line.startswith("TOUCH"):
                             self.is_touched = True
                             logger.debug(f"[{self.id}] Touch detected.")
+                        if line.startswith("ID:"):
+                            self.id = line.split("ID:")[1]
+                            logger.info(f"[{self.id}] Updated device ID from serial message.")                        
+
                         else:
                             self.is_touched = False
             except Exception as e:

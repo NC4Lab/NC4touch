@@ -81,9 +81,11 @@ void setupPinsAndID() {
   pinMode(pin1, INPUT);
   pinMode(pin2, INPUT);
 
-  if (digitalRead(pin0) == HIGH) boardID |= (1 << 0);
+  // Address is Pin0*4 + Pin1*2 + Pin2*1
+  // e.g. 0 0 0 => ID 0; 0 0 1 => ID 1; 0 1 0 => ID 2; ... 1 1 1 => ID 7
+  if (digitalRead(pin0) == HIGH) boardID |= (1 << 2);
   if (digitalRead(pin1) == HIGH) boardID |= (1 << 1);
-  if (digitalRead(pin2) == HIGH) boardID |= (1 << 2);
+  if (digitalRead(pin2) == HIGH) boardID |= (1 << 0);
 }
 
 void printSDFileList(File dir) {
@@ -129,25 +131,30 @@ void processSerialCommand() {
   if (cmd.length() == 0) return;
 
 
-  if (cmd.equalsIgnoreCase("WHOAREYOU?")) {
+  if (cmd.equalsIgnoreCase("WHOAREYOU?")) { // identify myself using the 3 pins
     Serial.print("ID:M0_");
     Serial.println(boardID);
     return;
-  }// BLACK => screen black, backlight off, no touch
-  else if (cmd.equalsIgnoreCase("BLACK")) {
+  }
+  else if (cmd.equalsIgnoreCase("BLACK")) { // backlight off, show black screen, detect 1 touch
     setBlackScreen(false);
-    showActive = true;   // ignore touches
+    showActive = true;   // detect 1 touch
     Serial.println("ACK:BLACK");
     return;
   } // SHOW => backlight on, allow 1 touch
-  else if (cmd.equalsIgnoreCase("SHOW")) {
+  else if (cmd.equalsIgnoreCase("OFF")) { // backlight off, show black screen, ignore touches
+    setBlackScreen(false);
+    showActive = false;   // ignore touches
+    Serial.println("ACK:OFF");
+    return;
+  }
+  else if (cmd.equalsIgnoreCase("SHOW")) { // backlight on, detect 1 touch
     showPreloadedImage();
-    showActive = true;
+    showActive = true;  // detect 1 touch
     Serial.println("ACK:SHOW");
     return;
   }
-  // 4) IMG:/// => preload BMP while backlight is off
-  else if (cmd.startsWith("IMG:")) {
+  else if (cmd.startsWith("IMG:")) { // preload image with backlight off, wait for SHOW command to show it
     String imageID = cmd.substring(4);
     pickPicture(imageID.c_str());
     Serial.print("ACK:IMG ");

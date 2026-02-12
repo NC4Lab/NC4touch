@@ -115,8 +115,8 @@ class InitialTouch(Trainer):
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.left_m0.send_command("BLACK")
-        self.chamber.right_m0.send_command("BLACK")
+        self.chamber.left_m0.send_command("OFF")
+        self.chamber.right_m0.send_command("OFF")
     
     def run_training(self):
         """Main loop for running the training session."""

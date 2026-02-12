@@ -2,6 +2,7 @@
 from nicegui import ui, app
 from datetime import datetime
 import logging
+import asyncio
 
 from Trainer import get_trainers
 from helpers import get_ip_address
@@ -68,165 +69,154 @@ class WebUI:
         # Update M0 port and mode labels
         self.left_m0_port_label.set_text(f"Port: {self.session.chamber.m0s[0].port}")
         self.left_m0_mode_label.set_text(f"Mode: {self.session.chamber.m0s[0].mode.name}")
-        self.left_m0_port_label.update()
-        self.left_m0_mode_label.update()
 
         self.middle_m0_port_label.set_text(f"Port: {self.session.chamber.m0s[1].port}")
         self.middle_m0_mode_label.set_text(f"Mode: {self.session.chamber.m0s[1].mode.name}")
-        self.middle_m0_port_label.update()
-        self.middle_m0_mode_label.update()
 
         self.right_m0_port_label.set_text(f"Port: {self.session.chamber.m0s[2].port}")
         self.right_m0_mode_label.set_text(f"Mode: {self.session.chamber.m0s[2].mode.name}")
-        self.right_m0_port_label.update()
-        self.right_m0_mode_label.update()
 
-    def m0_discover(self):
+    async def m0_discover(self):
         self.session.chamber.arduino_cli_discover()
-        time.sleep(0.5)  # Wait a moment for discovery to complete before updating labels
+        await asyncio.sleep(0.5)  # Wait a moment for discovery to complete before updating labels
         self.update_m0_status_labels()
+        await asyncio.sleep(0.5)  # Update labels again after a short delay to ensure they reflect the latest status
     
-    def m0_reopen_serial(self):
+    async def m0_reopen_serial(self):
         self.session.chamber.m0_reopen_serial()
-        time.sleep(0.5)  # Wait a moment for the serial port to reopen before updating labels
+        await asyncio.sleep(0.5)  # Wait a moment for the serial port to reopen before updating labels
+        self.session.chamber.m0_remap()  # Remap M0s after reopening serial to ensure correct mapping
+        await asyncio.sleep(0.5)  # Wait a moment for remapping to complete before updating labels
         self.update_m0_status_labels()
+        await asyncio.sleep(0.5)  # Update labels again after a short delay to ensure they reflect the latest status
     
-    def m0_close_serial(self):
+    async def m0_close_serial(self):
         self.session.chamber.m0_close_serial()
-        time.sleep(0.5)  # Wait a moment for the serial port to close before updating labels
+        await asyncio.sleep(0.5)  # Wait a moment for the serial port to close before updating labels
         self.update_m0_status_labels()
+        await asyncio.sleep(0.5)  # Update labels again after a short delay to ensure they reflect the latest status
     
-    def m0_sync_images(self):
+    async def m0_sync_images(self):
         self.session.chamber.m0_sync_images()
-        time.sleep(0.5)  # Wait a moment for the images to sync before updating labels
+        await asyncio.sleep(0.5)  # Wait a moment for the images to sync before updating labels
         self.update_m0_status_labels()
+        await asyncio.sleep(0.5)  # Update labels again after a short delay to ensure they reflect the latest status
     
-    def m0_upload_sketches(self):
+    async def m0_upload_sketches(self):
         self.session.chamber.m0_upload_sketches()
-        time.sleep(0.5)  # Wait a moment for the sketches to upload before updating labels
+        await asyncio.sleep(0.5)  # Wait a moment for the sketches to upload before updating labels
         self.update_m0_status_labels()
+        await asyncio.sleep(0.5)  # Update labels again after a short delay to ensure they reflect the latest status
 
     def init_ui(self):
-        ui.label(f"Chamber {self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
-        with ui.row().style('justify-content: left; margin-top: 20px;'):
-            with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
-                with ui.row():
+        ui.label(f"{self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
+        with ui.row():
+            with ui.column():
+                with ui.card():
+                    ui.label('Session Configuration').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+
                     ui.label('Chamber Name:').style('width: 200px;')
                     self.chamber_name_input = ui.input(self.session.config["chamber_name"],
-                                                       on_change = lambda e:self.session.set_chamber_name(e.value)).style('width: 200px;')
+                                                    on_change = lambda e:self.session.set_chamber_name(e.value)).style('width: 200px;')
 
-                with ui.row():
                     ui.label('Rodent Name:').style('width: 200px;')
                     self.rodent_name_input = ui.input(self.session.config["rodent_name"],
-                                                      on_change = lambda e: self.session.set_rodent_name(e.value)).style('width: 200px;')
-                
-                with ui.row():
+                                                    on_change = lambda e: self.session.set_rodent_name(e.value)).style('width: 200px;')
+                    
                     ui.label('ITI Duration (s):').style('width: 200px;')
                     self.iti_duration_input = ui.input(str(self.session.config["iti_duration"]),
-                                                       on_change = lambda e: self.session.set_iti_duration(int(e.value))).style('width: 200px;')
+                                                    on_change = lambda e: self.session.set_iti_duration(int(e.value))).style('width: 200px;')
 
-                with ui.row():
                     ui.label('Trainer Sequence Directory:').style('width: 200px;')
                     self.trainer_seq_dir_input = ui.input(self.session.config["trainer_seq_dir"],
-                                                          on_change=lambda e: self.session.set_trainer_seq_dir(e.value)).style('width: 200px;')
+                                                        on_change=lambda e: self.session.set_trainer_seq_dir(e.value)).style('width: 200px;')
 
-                with ui.row():
                     ui.label('Trainer Sequence File:').style('width: 200px;')
                     self.trainer_seq_file_button = ui.button("Select File").on_click(self.pick_trainer_seq_file).style('width: 200px;')
                     
                     self.trainer_seq_file_input = ui.input(self.session.config["trainer_seq_file"],
-                                                          on_change=lambda e: self.session.set_trainer_seq_file(e.value)).style('width: 200px;')
+                                                        on_change=lambda e: self.session.set_trainer_seq_file(e.value)).style('width: 200px;')
 
-                with ui.row():
-                    self.trainer_seq_file_uploader = ui.upload(auto_upload=True, multiple=False, label="Trainer sequence file",
-                                                               on_upload=lambda e: self.session.set_trainer_seq_file(e.name)).classes('max-w-full')
-
-            
-            with ui.column().style('width: 400px; margin: auto; padding: 20px;'):
-                with ui.row():
                     ui.label('Data Directory:').style('width: 200px;')
                     self.data_dir_input = ui.input(self.session.config["data_dir"],
-                                                   on_change=lambda e: self.session.set_data_dir(e.value)).style('width: 200px;')
-                
-                with ui.row():
+                                                on_change=lambda e: self.session.set_data_dir(e.value)).style('width: 200px;')
+                    
                     ui.label('Video Directory:').style('width: 200px;')
                     self.video_dir_input = ui.input(self.session.config["video_dir"],
                                                     on_change=lambda e: self.session.set_video_dir(e.value)).style('width: 200px;')
-                
-                with ui.row():
+                    
                     ui.label('Trainer:').style('width: 200px;')
                     self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change=lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
 
 
-            with ui.column().style('width: 800px; margin: auto; padding: 20px;'):
-                with ui.row():
-                    log = ui.log(max_lines=10).classes('w-full')
+            with ui.column():
+                with ui.card():
+                    ui.label('Log').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+
+                    log = ui.log(max_lines=10).classes('w-full').style('width: 800px; height: 200px;')
                     self.log_handler = LogElementHandler(log)
                     formatter = logging.Formatter('[%(asctime)s:%(name)s] %(message)s')
                     self.log_handler.setFormatter(formatter)
                     session_logger.addHandler(self.log_handler)
                     ui.context.client.on_disconnect(lambda: logger.removeHandler(self.log_handler))
+
                     ui.label('Log Level:').style('width: 200px;')
                     self.log_level_input = ui.select(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], value='DEBUG').style('width: 200px;')
                     self.log_level_input.on('change', lambda e: self.log_handler.setLevel(getattr(logging, e.value)))
 
-                with ui.row():
+                with ui.card():
+                    ui.label('Camera Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+
                     # Show video stream from the camera
                     ui.label('Camera Stream:').style('width: 800px;')
                     ui.image(source=f"http://{self.ip}:{self.video_port}/stream").style('width: 640px; height: 480px;')
                 
-                with ui.row():
-                    # Reinitialize the camera
-                    self.reinitialize_camera_button = ui.button("Reinitialize").on_click(self.session.chamber.camera.reinitialize)
-                    self.reinitialize_camera_button.style('width: 200px; margin-top: 20px;')
-                    self.start_video_recording_button = ui.button("Start Video Recording").on_click(self.session.start_video_recording)
-                    self.stop_video_recording_button = ui.button("Stop Video Recording").on_click(self.session.stop_video_recording)
-                
-                with ui.row():
-                    # Slider to control house LED brightness
-                    ui.label('House LED Brightness:').style('width: 200px;')
-                    self.house_led_brightness_slider = ui.slider(min=0, max=100, value=0,
-                                                                on_change=lambda e: self.adjust_house_led_brightness(e.value)).style('width: 400px;')
-
-        with ui.row().style('justify-content: center; margin-top: 20px;'):
-            with ui.card():
-                ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                with ui.column():
+                    with ui.row():
+                        # Reinitialize the camera
+                        self.reinitialize_camera_button = ui.button("Reinitialize").on_click(self.session.chamber.camera.reinitialize)
+                        self.reinitialize_camera_button.style('width: 200px; margin-top: 20px;')
+                        self.start_video_recording_button = ui.button("Start Video Recording").on_click(self.session.start_video_recording)
+                        self.stop_video_recording_button = ui.button("Stop Video Recording").on_click(self.session.stop_video_recording)
+                    
+                    with ui.row():
+                        # Slider to control house LED brightness
+                        ui.label('House LED Brightness:').style('width: 200px;')
+                        self.house_led_brightness_slider = ui.slider(min=0, max=100, value=0,
+                                                                    on_change=lambda e: self.adjust_house_led_brightness(e.value)).style('width: 400px;')
+            
+            with ui.column():
+                with ui.card():
+                    ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                     # Buttons to control M0 boards
-                    self.discover_button = ui.button("Re-Discover").on_click(self.m0_discover)
+                    self.discover_button = ui.button("Discover").on_click(self.m0_discover)
                     self.open_serial_button = ui.button("Open Serial Comm").on_click(self.m0_reopen_serial)
                     self.close_serial_button = ui.button("Close Serial Comm").on_click(self.m0_close_serial)
                     self.sync_images_button = ui.button("Sync Images").on_click(self.m0_sync_images)
                     self.upload_code_button = ui.button("Upload Code").on_click(self.m0_upload_sketches)
-                
-                with ui.row():
-                    # Show state of M0 boards
-                    with ui.card():
+                    
+                with ui.card():
                         ui.label('Left M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                         # Show M0 port
                         self.left_m0_port_label = ui.label(f"Port: {self.session.chamber.left_m0.port}")
                         self.left_m0_mode_label = ui.label(f"Mode: {self.session.chamber.left_m0.mode.name}")
 
-                with ui.row():
-                    with ui.card():
                         ui.label('Middle M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                         # Show M0 port
                         self.middle_m0_port_label = ui.label(f"Port: {self.session.chamber.middle_m0.port}")
                         self.middle_m0_mode_label = ui.label(f"Mode: {self.session.chamber.middle_m0.mode.name}")
 
-                with ui.row():
-                    with ui.card():
                         ui.label('Right M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                         # Show M0 port
                         self.right_m0_port_label = ui.label(f"Port: {self.session.chamber.right_m0.port}")
                         self.right_m0_mode_label = ui.label(f"Mode: {self.session.chamber.right_m0.mode.name}")
 
-
-        with ui.row().style('justify-content: center; margin-top: 20px;'):
-            self.start_training_button = ui.button("Start Training").on_click(self.session.start_training)
-            self.stop_training_button = ui.button("Stop Training").on_click(self.session.stop_training)
-            self.start_priming_button = ui.button("Start Priming").on_click(self.session.start_priming)
-            self.stop_priming_button = ui.button("Stop Priming").on_click(self.session.stop_priming)
+                with ui.card():
+                    ui.label('Training Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    # Buttons to control training session
+                    self.start_training_button = ui.button("Start Training").on_click(self.session.start_training)
+                    self.stop_training_button = ui.button("Stop Training").on_click(self.session.stop_training)
+                    self.start_priming_button = ui.button("Start Priming").on_click(self.session.start_priming)
+                    self.stop_priming_button = ui.button("Stop Priming").on_click(self.session.stop_priming)
     
     async def pick_trainer_seq_file(self) -> None:
         result = await file_picker(directory = self.session.config["trainer_seq_dir"], multiple = False)

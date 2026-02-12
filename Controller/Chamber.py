@@ -21,7 +21,7 @@ from LED import LED
 from Reward import Reward
 from BeamBreak import BeamBreak
 from Buzzer import Buzzer
-from M0Device import M0Device
+from M0Device import M0Device, M0Mode
 from Camera import Camera
 from Config import Config
 
@@ -66,6 +66,17 @@ class Chamber:
     self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"])
     self.reward = Reward(pi=self.pi, pin=self.config["reward_pump_pin"])
     self.camera = Camera(device=self.config["camera_device"])
+  
+  def m0_remap(self):
+    # Remap M0s based on their IDs to ensure left, middle, right mapping is correct
+    id_to_m0 = {m0.id: m0 for m0 in self.m0s}
+    try:
+        self.left_m0 = id_to_m0["M0_0"]
+        self.middle_m0 = id_to_m0["M0_1"]
+        self.right_m0 = id_to_m0["M0_2"]
+        logger.info("Remapped M0 devices based on IDs.")
+    except KeyError as e:
+        logger.error(f"Error remapping M0 devices: {e}. Check if all M0 boards are properly connected and identified.")
 
   def __del__(self):
     """Clean up the chamber by stopping pigpio and M0s."""
@@ -94,8 +105,7 @@ class Chamber:
 
       except Exception as e:
           logger.error(f"Error compiling sketch: {e}")
-
-    
+  
   def arduino_cli_discover(self):
     """
     Uses arduino-cli to discover connected boards.
