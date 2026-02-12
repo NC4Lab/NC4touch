@@ -221,14 +221,14 @@ class Chamber:
   
   def m0_clear(self):
     # Send the blank command to all M0s
-    [m0.send_command("BLACK") for m0 in self.m0s]
+    [m0.send_command("OFF") for m0 in self.m0s]
   
   def m0_show_image(self):
     # Send the show image command to all M0s
     [m0.send_command("SHOW") for m0 in self.m0s]
 
   def default_state(self):
-    self.m0_send_command("BLACK")
+    self.m0_send_command("OFF")
     self.reward_led.deactivate()
     self.punishment_led.deactivate()
     self.buzzer.deactivate()

@@ -205,12 +205,13 @@ class M0Device:
                         if line.startswith("TOUCH"):
                             self.is_touched = True
                             logger.debug(f"[{self.id}] Touch detected.")
+                        else:
+                            self.is_touched = False
+
                         if line.startswith("ID:"):
                             self.id = line.split("ID:")[1]
                             logger.info(f"[{self.id}] Updated device ID from serial message.")                        
-
-                        else:
-                            self.is_touched = False
+                            
             except Exception as e:
                 logger.error(f"[{self.id}] Error reading from serial port: {e}")
                 # re-open self.ser here
@@ -323,6 +324,7 @@ class M0Device:
         logger.info(f"[{self.id}] Syncing image folder to UD drive.")
         if image_folder is None:
             image_folder = os.path.join(self.code_dir, "../data/images")
+            image_folder = os.path.abspath(image_folder)
 
         # Mount the UD drive
         self.mount_ud()
@@ -344,8 +346,11 @@ class M0Device:
 
         # Sync the image folder
         try:
-            subprocess.run(["cp", "-r", image_folder + "/*", self.ud_mount_loc], check=True)
+            subprocess.run(f"cp -r {image_folder}/* {self.ud_mount_loc}", shell=True, stderr=subprocess.STDOUT)
             logger.info(f"[{self.id}] Synced image folder to {self.ud_mount_loc}.")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"[{self.id}] Error syncing image folder: {e.output.decode('utf-8')}")
+            return
         except Exception as e:
             logger.error(f"[{self.id}] Error syncing image folder: {e}")
             return
