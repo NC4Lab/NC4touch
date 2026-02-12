@@ -67,33 +67,37 @@ class Trainer(ABC):
 
     def open_data_file(self):
         # Create a new JSON file for trial data
-        if self.data_file is None:
-            date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            chamber_name = self.chamber.config["chamber_name"]
-            rodent_name = self.config["rodent_name"]
-            trainer_name = self.config["trainer_name"]
-            data_dir = self.config["data_dir"] or "/mnt/shared/data"
-            os.makedirs(data_dir, exist_ok=True)
-            self.data_filename = f"{date_str}_{chamber_name}_{trainer_name}_{rodent_name}_data.json"
-            self.data_filepath = os.path.join(data_dir, self.data_filename)
-            
-            logger.info(f"Creating data file: {self.data_filepath}")
-            self.data_file = open(self.data_filepath, "w")
-            self.data_file.write("# NC4Touch training data\n")
+        try:
+            if self.data_file is None:
+                date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                chamber_name = self.chamber.config["chamber_name"]
+                rodent_name = self.config["rodent_name"]
+                trainer_name = self.config["trainer_name"]
+                data_dir = self.config["data_dir"] or "/mnt/shared/data"
+                os.makedirs(data_dir, exist_ok=True)
+                self.data_filename = f"{date_str}_{chamber_name}_{trainer_name}_{rodent_name}_data.json"
+                self.data_filepath = os.path.join(data_dir, self.data_filename)
+                
+                logger.info(f"Creating data file: {self.data_filepath}")
+                self.data_file = open(self.data_filepath, "w")
+                self.data_file.write("# NC4Touch training data\n")
 
-            # Create a header with metadata
-            header = {
-                "header": {
-                    "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
-                    "rodent": self.config["rodent_name"],
-                    "chamber": self.chamber.config["chamber_name"],
-                    "trainer": self.config["trainer_name"],
+                # Create a header with metadata
+                header = {
+                    "header": {
+                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
+                        "rodent": self.config["rodent_name"],
+                        "chamber": self.chamber.config["chamber_name"],
+                        "trainer": self.config["trainer_name"],
+                    }
                 }
-            }
-            # Write the header to the json file
-            json.dump(header, self.data_file)
-        else:
-            logger.warning("Data file already open. Skipping creation.")
+                # Write the header to the json file
+                json.dump(header, self.data_file)
+                logger.info(f"Data file created successfully: {self.data_filepath}")
+            else:
+                logger.warning("Data file already open. Skipping creation.")
+        except Exception as e:
+            logger.error(f"Error creating data file: {e}")
     
     def close_data_file(self):
         # Close the data file when done

@@ -95,7 +95,6 @@ class Session:
         
         self.set_trainer_name(self.config["trainer_name"])
         self.session_timer = threading.Timer(0.1, self.trainer.run_training)
-
         self.priming_timer = threading.Timer(0.1, self.run_priming)
         self.priming_start_time = time.time()
 

@@ -4,6 +4,7 @@
 #include "DFRobot_Touch.h"
 #include "drawBMP.h"
 
+
 #define TFT_DC   7
 #define TFT_CS   5
 #define TFT_RST  6
@@ -76,15 +77,28 @@ void loop() {
 
 
 void setupPinsAndID() {
-  pinMode(pin0, INPUT_PULLUP);
-  pinMode(pin1, INPUT_PULLUP);
-  pinMode(pin2, INPUT_PULLUP);
+  pinMode(pin0, INPUT);
+  pinMode(pin1, INPUT);
+  pinMode(pin2, INPUT);
 
-  if (digitalRead(pin0) == LOW) boardID |= (1 << 0);
-  if (digitalRead(pin1) == LOW) boardID |= (1 << 1);
-  if (digitalRead(pin2) == LOW) boardID |= (1 << 2);
+  if (digitalRead(pin0) == HIGH) boardID |= (1 << 0);
+  if (digitalRead(pin1) == HIGH) boardID |= (1 << 1);
+  if (digitalRead(pin2) == HIGH) boardID |= (1 << 2);
 }
 
+void printSDFileList(File dir) {
+  while (true) {
+    File entry = dir.openNextFile();
+    if (!entry) {
+      // no more files
+      break;
+    }
+    Serial.print(entry.isDirectory() ? "DIR : " : "FILE: ");
+    Serial.println(entry.name());
+
+    entry.close();
+  }
+}
 
 void setupDisplayAndSD() {
   // Init GT911
@@ -100,6 +114,11 @@ void setupDisplayAndSD() {
   }
   Serial.println("SD init success!");
 
+  // List SD contents for debugging
+  Serial.println("SD contents:");
+  File root = SD.open("/");
+  printSDFileList(root);
+  root.close();
 }
 
 void processSerialCommand() {
@@ -117,7 +136,8 @@ void processSerialCommand() {
   }// BLACK => screen black, backlight off, no touch
   else if (cmd.equalsIgnoreCase("BLACK")) {
     setBlackScreen(false);
-    showActive = false;   // ignore touches
+    showActive = true;   // ignore touches
+    Serial.println("ACK:BLACK");
     return;
   } // SHOW => backlight on, allow 1 touch
   else if (cmd.equalsIgnoreCase("SHOW")) {
@@ -139,7 +159,6 @@ void processSerialCommand() {
     Serial.println(cmd);
     return;
   }
-
 }
 
 
@@ -147,15 +166,15 @@ void pickPicture(const char* imageID) {
   // Turn backlight off
   analogWrite(TFT_BLK, 0);
 
-  char filePath[16];
-  snprintf(filePath, sizeof(filePath), "/%s.BMP", imageID);
-  if (SD.exists(filePath)) {
-    drawBMP(&screen, filePath, 0, 0, 1);
+  char fileName[32];
+  snprintf(fileName, sizeof(fileName), "%s.BMP", imageID);
+  if (SD.exists(fileName)) {
+    drawBMP(&screen, fileName, 0, 0, 1);
     Serial.print("Preloaded image: ");
-    Serial.println(filePath);
+    Serial.println(fileName);
   } else {
     Serial.print("Failed to open: ");
-    Serial.println(filePath);
+    Serial.println(fileName);
   }
 }
 

@@ -7,6 +7,8 @@ from Trainer import get_trainers
 from helpers import get_ip_address
 from Session import Session
 from file_picker import file_picker
+from M0Device import M0Mode, M0Device
+import time
 
 import logging
 session_logger = logging.getLogger('session_logger')
@@ -62,6 +64,48 @@ class WebUI:
 
         return f"Chamber{chamber_number}"
 
+    def update_m0_status_labels(self):
+        # Update M0 port and mode labels
+        self.left_m0_port_label.set_text(f"Port: {self.session.chamber.m0s[0].port}")
+        self.left_m0_mode_label.set_text(f"Mode: {self.session.chamber.m0s[0].mode.name}")
+        self.left_m0_port_label.update()
+        self.left_m0_mode_label.update()
+
+        self.middle_m0_port_label.set_text(f"Port: {self.session.chamber.m0s[1].port}")
+        self.middle_m0_mode_label.set_text(f"Mode: {self.session.chamber.m0s[1].mode.name}")
+        self.middle_m0_port_label.update()
+        self.middle_m0_mode_label.update()
+
+        self.right_m0_port_label.set_text(f"Port: {self.session.chamber.m0s[2].port}")
+        self.right_m0_mode_label.set_text(f"Mode: {self.session.chamber.m0s[2].mode.name}")
+        self.right_m0_port_label.update()
+        self.right_m0_mode_label.update()
+
+    def m0_discover(self):
+        self.session.chamber.arduino_cli_discover()
+        time.sleep(0.5)  # Wait a moment for discovery to complete before updating labels
+        self.update_m0_status_labels()
+    
+    def m0_reopen_serial(self):
+        self.session.chamber.m0_reopen_serial()
+        time.sleep(0.5)  # Wait a moment for the serial port to reopen before updating labels
+        self.update_m0_status_labels()
+    
+    def m0_close_serial(self):
+        self.session.chamber.m0_close_serial()
+        time.sleep(0.5)  # Wait a moment for the serial port to close before updating labels
+        self.update_m0_status_labels()
+    
+    def m0_sync_images(self):
+        self.session.chamber.m0_sync_images()
+        time.sleep(0.5)  # Wait a moment for the images to sync before updating labels
+        self.update_m0_status_labels()
+    
+    def m0_upload_sketches(self):
+        self.session.chamber.m0_upload_sketches()
+        time.sleep(0.5)  # Wait a moment for the sketches to upload before updating labels
+        self.update_m0_status_labels()
+
     def init_ui(self):
         ui.label(f"Chamber {self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
         with ui.row().style('justify-content: left; margin-top: 20px;'):
@@ -113,21 +157,6 @@ class WebUI:
                     ui.label('Trainer:').style('width: 200px;')
                     self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change=lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
 
-                with ui.card():
-                    ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                    with ui.column():
-                        # Buttons to control M0 boards
-                        self.discover_button = ui.button("Discover").on_click(self.session.chamber.m0_discover)
-                        self.reset_button = ui.button("Reset").on_click(self.session.chamber.m0_reset)
-                        self.reinitialize_button = ui.button("Re-Initialize").on_click(self.session.chamber.m0_initialize)
-                        self.sync_images_button = ui.button("Sync Images").on_click(self.session.chamber.m0_sync_images)
-                        self.upload_code_button = ui.button("Upload Code").on_click(self.session.chamber.m0_upload_sketches)
-                    with ui.column():
-                        # Status labels for M0 boards
-                        self.m0_status_labels = []
-                        for m0 in self.session.chamber.m0s:
-                            label = ui.label(f"{m0.id}: {m0.port}").style('width: 200px;')
-                            self.m0_status_labels.append(label)
 
             with ui.column().style('width: 800px; margin: auto; padding: 20px;'):
                 with ui.row():
@@ -158,6 +187,40 @@ class WebUI:
                     ui.label('House LED Brightness:').style('width: 200px;')
                     self.house_led_brightness_slider = ui.slider(min=0, max=100, value=0,
                                                                 on_change=lambda e: self.adjust_house_led_brightness(e.value)).style('width: 400px;')
+
+        with ui.row().style('justify-content: center; margin-top: 20px;'):
+            with ui.card():
+                ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                with ui.column():
+                    # Buttons to control M0 boards
+                    self.discover_button = ui.button("Re-Discover").on_click(self.m0_discover)
+                    self.open_serial_button = ui.button("Open Serial Comm").on_click(self.m0_reopen_serial)
+                    self.close_serial_button = ui.button("Close Serial Comm").on_click(self.m0_close_serial)
+                    self.sync_images_button = ui.button("Sync Images").on_click(self.m0_sync_images)
+                    self.upload_code_button = ui.button("Upload Code").on_click(self.m0_upload_sketches)
+                
+                with ui.row():
+                    # Show state of M0 boards
+                    with ui.card():
+                        ui.label('Left M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        # Show M0 port
+                        self.left_m0_port_label = ui.label(f"Port: {self.session.chamber.left_m0.port}")
+                        self.left_m0_mode_label = ui.label(f"Mode: {self.session.chamber.left_m0.mode.name}")
+
+                with ui.row():
+                    with ui.card():
+                        ui.label('Middle M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        # Show M0 port
+                        self.middle_m0_port_label = ui.label(f"Port: {self.session.chamber.middle_m0.port}")
+                        self.middle_m0_mode_label = ui.label(f"Mode: {self.session.chamber.middle_m0.mode.name}")
+
+                with ui.row():
+                    with ui.card():
+                        ui.label('Right M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        # Show M0 port
+                        self.right_m0_port_label = ui.label(f"Port: {self.session.chamber.right_m0.port}")
+                        self.right_m0_mode_label = ui.label(f"Mode: {self.session.chamber.right_m0.mode.name}")
+
 
         with ui.row().style('justify-content: center; margin-top: 20px;'):
             self.start_training_button = ui.button("Start Training").on_click(self.session.start_training)

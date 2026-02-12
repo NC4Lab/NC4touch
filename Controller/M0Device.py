@@ -54,10 +54,12 @@ class M0Device:
 
         self.stop_flag = threading.Event()
         self.message_queue = queue.Queue()  # to store lines: (id, text)
-        self.write_lock = threading.Lock()
-        self.read_loop_interval = 0.1  # seconds
+        self.cmd_queue = queue.Queue()  # to store commands to send to the M0
+        self.serial_comm_loop_interval = 0.1  # seconds
 
         self.is_touched = False
+
+        self.cmd = ""
 
         self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -66,45 +68,15 @@ class M0Device:
     def __del__(self):
         """Clean up the M0Device by stopping the read thread and closing the serial port."""
         logger.info(f"Cleaning up M0Device {self.id}...")
-        self.stop()
-    
-    def stop(self):
-        """
-        Stops the read thread and closes the serial port.
-        """
-        self.stop_flag.set()
-        if self.ser and self.ser.is_open:
-            self.ser.close()
-            logger.info(f"[{self.id}] Closed port {self.port}.")
-        logger.info(f"[{self.id}] Stopped.")
+
+        if self.mode == M0Mode.SERIAL_COMM:
+            self.stop_serial_comm()
+        
+        if self.mode == M0Mode.PORT_OPEN:
+            self.close_port()
+        
         self.mode = M0Mode.UNINITIALIZED
 
-    def initialize(self):
-        """
-        Initializes the M0 board by finding the device, opening the serial port,
-        starting the read thread, and sending the WHOAREYOU? command.
-        """
-        logger.info(f"[{self.id}] Initializing M0Device...")
-        self.find_device()
-        time.sleep(1)
-        self.open_serial()
-        time.sleep(1)
-        self.start_read_thread()
-        time.sleep(1)
-        self.send_command("WHOAREYOU?")
-    
-    def arduino_cli_find_device(self):
-        """
-        Lists the connected Arduino boards using arduino-cli.
-        """
-        try:
-            output = subprocess.check_output("arduino-cli board list", shell=True).decode("utf-8")
-            logger.info(f"Arduino CLI Boards:\n{output}")
-            return output
-        except Exception as e:
-            logger.error(f"Error listing Arduino boards: {e}")
-            return ""
-    
     def find_device(self):
         """
         Finds the port and device ID of the M0 board connected to the given reset pin.
@@ -128,98 +100,138 @@ class M0Device:
         except Exception as e:
             logger.error(f"[{self.id}] Error finding device: {e}")
     
-    def open_serial(self):
+    def open_port(self):
         """
         Opens the serial port.
+        Switches mode from PORT_CLOSED to PORT_OPEN.
         """
-        if self.port is None:
-            logger.error(f"[{self.id}] Port not found. Finding device...")
-            self.find_device()
-        
-        if not self.mode == M0Mode.PORT_CLOSED:
-            logger.error(f"[{self.id}] Port not closed; cannot open serial port.")
-            return
+        logger.info(f"[{self.id}] Opening serial port {self.port}")
 
-        try:
-            self.ser = serial.Serial(self.port, self.baudrate, timeout=5)
-            logger.info(f"[{self.id}] Opened port {self.port} at {self.baudrate}.")
-            self.mode = M0Mode.PORT_OPEN
-        except Exception as e:
-            logger.error(f"[{self.id}] Failed to open {self.port}: {e}")
-    
-    def start_read_thread(self):
-        """
-        Starts the read thread.
-        """
-        if not self.mode == M0Mode.PORT_OPEN:
-            logger.error(f"[{self.id}] Port not open; cannot start read thread.")
-            return
-        if self.ser is None:
-            logger.error(f"[{self.id}] Serial port not initialized; cannot start read thread.")
-            return
-        
-        self.thread = threading.Thread(target=self.read_loop, daemon=True)
-        self.thread.start()
-        self.mode = M0Mode.SERIAL_COMM
-    
-    def read_loop(self):
-        logger.info(f"[{self.id}] Starting read loop.")
-        while not self.stop_flag.is_set():
+        if self.mode == M0Mode.PORT_CLOSED:
             try:
+                self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
+                logger.info(f"[{self.id}] Opened port {self.port} at {self.baudrate}.")
+                self.mode = M0Mode.PORT_OPEN
+            except Exception as e:
+                logger.error(f"[{self.id}] Failed to open {self.port}: {e}")
+        else:
+            logger.error(f"[{self.id}] Cannot open port in mode {self.mode}.")
+    
+    def close_port(self):
+        """
+        Closes the serial port.
+        Switches mode from PORT_OPEN to PORT_CLOSED.
+        """
+        logger.info(f"[{self.id}] Closing serial port {self.port}")
+
+        if self.mode == M0Mode.PORT_OPEN:
+            if self.ser and self.ser.is_open:
+                self.ser.close()
+                logger.info(f"[{self.id}] Closed port {self.port}.")
+            self.mode = M0Mode.PORT_CLOSED
+        else:
+            logger.error(f"[{self.id}] Cannot close port in mode {self.mode}.")
+
+    def start_serial_comm(self):
+        """
+        Starts the serial communication.
+        Switches mode from PORT_OPEN to SERIAL_COMM.
+        """
+        logger.info(f"[{self.id}] Starting serial comm.")
+        if self.mode == M0Mode.PORT_OPEN:
+            if self.ser is None:
+                logger.error(f"[{self.id}] Serial port not initialized; cannot start serial comm.")
+                return
+            time.sleep(1)  # give some time for the serial port to be ready
+            
+            self.stop_flag.clear()
+            self.thread = threading.Thread(target=self.serial_comm_loop, daemon=True)
+            self.thread.start()
+
+            self.mode = M0Mode.SERIAL_COMM
+            logger.info(f"[{self.id}] Started serial comm.")
+        else:
+            logger.error(f"[{self.id}] Cannot start serial comm in mode {self.mode}.")
+    
+    def stop_serial_comm(self):
+        """
+        Stops the serial communication.
+        Switches mode from SERIAL_COMM to PORT_OPEN.
+        """
+        logger.info(f"[{self.id}] Stopping serial comm.")
+
+        if self.mode == M0Mode.SERIAL_COMM:
+            self.stop_flag.set()
+            self.mode = M0Mode.PORT_OPEN
+            logger.info(f"[{self.id}] Stopped serial comm.")
+        else:
+            logger.error(f"[{self.id}] Cannot stop serial comm in mode {self.mode}.")
+    
+    def was_touched(self):
+        touched = self.is_touched
+        self.is_touched = False  # reset touch state after checking
+        return touched
+
+    def serial_comm_loop(self):
+        """
+        Continuously reads lines from the serial port and puts them in the message queue.
+        """
+        logger.info(f"[{self.id}] Starting serial comm loop.")
+        while not self.stop_flag.is_set():
+            if not self.cmd_queue.empty():
+                # logger.debug(f"[{self.id}] Writing to serial port: {self.cmd}")
+                try:
+                    self.cmd = self.cmd_queue.get()
+                    msg = (self.cmd + "\n").encode("utf-8")
+                    # self.ser.reset_input_buffer()
+                    # self.ser.reset_output_buffer()
+                    self.ser.write(msg)
+                    logger.info(f"[{self.id}] -> {self.cmd}")
+                except Exception as e:
+                    logger.error(f"[{self.id}] Error writing to serial port: {e}")
+            
+            time.sleep(0.01)  # small delay to allow command to be sent before reading response
+
+            try:
+                # logger.debug(f"[{self.id}] Reading from serial port...")
                 if self.ser and self.ser.is_open:
                     # Read a line from the serial port
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
                     if line:
-                        logger.info(f"[{self.id}] {line}")
+                        logger.info(f"[{self.id}] <- {line}")
                         self.message_queue.put((self.id, line))
                         if line.startswith("TOUCH"):
                             self.is_touched = True
                             logger.debug(f"[{self.id}] Touch detected.")
                         else:
                             self.is_touched = False
-                else:
-                    time.sleep(self.read_loop_interval)
             except Exception as e:
-                logger.error(f"[{self.id}] read_loop error: {e}")
+                logger.error(f"[{self.id}] Error reading from serial port: {e}")
                 # re-open self.ser here
-                self._attempt_reopen()
-        logger.info(f"[{self.id}] Stopping read loop.")
-    
-    def stop_read_thread(self):
-        """
-        Stops the read thread.
-        """
-        if not self.mode == M0Mode.SERIAL_COMM:
-            logger.error(f"[{self.id}] Port not in serial communication mode; cannot stop read thread.")
-            return
-        
-        logger.info(f"[{self.id}] Stopping read thread.")
-        self.stop_flag.set()
-        self.mode = M0Mode.PORT_OPEN
+                # self._attempt_reopen()
+
+            # Sleep till the next loop iteration
+            time.sleep(self.serial_comm_loop_interval)
+
+        logger.info(f"[{self.id}] Stopping serial comm loop.")
     
     def send_command(self, cmd):
         """
-        Sends 'cmd' + newline to the M0 board. Thread-safe via self.write_lock.
+        Sends a command to the M0 board by setting the cmd and variables.
+        The actual sending is handled in the serial_comm_loop to ensure thread safety.
         """
-        if not self.mode == M0Mode.SERIAL_COMM:
-            logger.error(f"[{self.id}] Port not in serial communication mode; cannot send command.")
-            return
-
-        with self.write_lock:
-            try:
-                msg = (cmd + "\n").encode("utf-8")
-                self.ser.reset_input_buffer()
-                self.ser.reset_output_buffer()
-                self.ser.write(msg)
-                logger.info(f"[{self.id}] -> {cmd}")
-            except Exception as e:
-                logger.error(f"[{self.id}] Error writing to serial port: {e}")
+        logger.info(f"[{self.id}] Sending command: {cmd}")
+        if self.mode == M0Mode.SERIAL_COMM:
+            self.cmd_queue.put(cmd)
+            time.sleep(0.2)  # small delay to allow command to be processed
+        else:
+            logger.error(f"[{self.id}] Cannot send command in mode {self.mode}.")
     
     def reset(self):
         logger.info(f"[{self.id}] Resetting M0 board on pin {self.reset_pin}.")
 
         if self.mode == M0Mode.SERIAL_COMM:
-            self.stop_read_thread()
+            self.stop_serial_comm()
 
         try:
             # Need to only use GPIO reset pin as ouput during hardware reset
@@ -277,7 +289,7 @@ class M0Device:
             sketch_path = os.path.join(self.code_dir, "../M0Touch/M0Touch.ino")
 
         if self.mode == M0Mode.SERIAL_COMM:
-            self.stop_read_thread()
+            self.stop_serial_comm()
         
         if self.mode == M0Mode.UD or self.port is None:
             self.find_device()
@@ -326,7 +338,7 @@ class M0Device:
 
         # Sync the image folder
         try:
-            subprocess.run(["rsync", "-av", image_folder, self.ud_mount_loc])
+            subprocess.run(["cp", "-r", image_folder + "/*", self.ud_mount_loc], check=True)
             logger.info(f"[{self.id}] Synced image folder to {self.ud_mount_loc}.")
         except Exception as e:
             logger.error(f"[{self.id}] Error syncing image folder: {e}")
@@ -364,19 +376,7 @@ class M0Device:
             logger.info(f"[{self.id}] Reinitialized port {self.port} successfully.")
         except Exception as e:
             logger.error(f"[{self.id}] Failed to reinitialize port: {e}")
-            self.stop_read_thread()
-            time.sleep(1)
-    
-    def stop(self):
-        """
-        Stops the read thread and closes the serial port.
-        """
-        self.stop_flag.set()
-        if self.ser and self.ser.is_open:
-            self.ser.close()
-            logger.info(f"[{self.id}] Closed port {self.port}.")
-        logger.info(f"[{self.id}] Stopped.")
-        self.mode = M0Mode.PORT_OPEN
+            self.stop_serial_comm()
 
 # Test the M0Device class
 if __name__ == "__main__":
@@ -385,9 +385,11 @@ if __name__ == "__main__":
     # m0.mount_ud()
     # m0.sync_image_folder()
     # m0.upload_sketch()
-    m0.open_serial()
-    m0.start_read_thread()
+    m0.open_port()
+    m0.start_serial_comm()
     time.sleep(2)
     m0.send_command("WHOAREYOU?")
     time.sleep(5)
     logger.info("M0 device test complete.")
+    m0.stop_serial_comm()
+    m0.close_port()

@@ -59,13 +59,6 @@ class Chamber:
     self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
     self.arduino_cli_discover()
 
-    if len(self.discovered_boards) >= len(self.m0s):
-        for i, m0 in enumerate(self.m0s):
-            m0.port = self.discovered_boards[i]
-            logger.info(f"Set {m0.id} serial port to {m0.port}")
-    else:
-        logger.error("Not enough M0 boards discovered. Please check the connections.")
-
     self.reward_led = LED(pi=self.pi, pin=self.config["reward_LED_pin"], brightness = 140)
     self.punishment_led = LED(pi=self.pi, pin=self.config["punishment_LED_pin"], brightness = 255)
     self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness = 100) 
@@ -128,6 +121,16 @@ class Chamber:
     except Exception as e:
         logger.error(f"Error discovering boards with arduino-cli: {e}")
 
+    if len(self.discovered_boards) >= len(self.m0s):
+        for i, m0 in enumerate(self.m0s):
+            m0.port = self.discovered_boards[i]
+            logger.info(f"Set {m0.id} serial port to {m0.port}")
+            # m0.open_port()
+            # m0.start_read_thread()
+    else:
+        logger.error("Not enough M0 boards discovered. Please check the connections.")
+
+
   
   def m0_discover(self):
     """
@@ -180,6 +183,22 @@ class Chamber:
   def m0_initialize(self):
     # Initialize all the devices
     [m0.initialize() for m0 in self.m0s]
+  
+  def m0_reopen_serial(self):
+    # Close and re-open serial connections to all M0 boards
+    self.m0_close_serial()
+    time.sleep(1)  # Wait a moment to ensure ports are released
+    self.m0_open_serial()
+  
+  def m0_close_serial(self):
+    # Close serial connections to all M0 boards
+    [m0.stop_serial_comm() for m0 in self.m0s]
+    [m0.close_port() for m0 in self.m0s]
+  
+  def m0_open_serial(self):
+    # Open serial connections to all M0 boards
+    [m0.open_port() for m0 in self.m0s]
+    [m0.start_serial_comm() for m0 in self.m0s]
   
   def m0_sync_images(self):
     # Sync the image folders for all M0s
