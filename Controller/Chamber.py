@@ -38,10 +38,10 @@ class Chamber:
     logger.info("Initializing Chamber...")
     self.config = Config(config = chamber_config, config_file = chamber_config_file)
     self.config.ensure_param("chamber_name", "Chamber0")
-    self.config.ensure_param("reward_LED_pin", 21)
+    self.config.ensure_param("reward_LED_pins", [13, 21, 26]) # RGB LED pins for reward
     self.config.ensure_param("reward_pump_pin", 27)
     self.config.ensure_param("beambreak_pin", 4)
-    self.config.ensure_param("punishment_LED_pin", 17)
+    self.config.ensure_param("punishment_LED_pins", [18, 19, 17]) # RGB LED pins for punishment
     self.config.ensure_param("house_LED_pin", 20)
     self.config.ensure_param("buzzer_pin", 16)
     self.config.ensure_param("reset_pins", [25, 5, 6])
@@ -59,8 +59,8 @@ class Chamber:
     self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
     self.arduino_cli_discover()
 
-    self.reward_led = LED(pi=self.pi, pin=self.config["reward_LED_pin"], brightness = 140)
-    self.punishment_led = LED(pi=self.pi, pin=self.config["punishment_LED_pin"], brightness = 255)
+    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 140)
+    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness = 255)
     self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness = 100) 
     self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"])
     self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"])

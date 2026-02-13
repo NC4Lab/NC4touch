@@ -52,6 +52,12 @@ class InitialTouch(Trainer):
         self.right_image = ""
         self.state = InitialTouchState.IDLE
         self.prev_state = InitialTouchState.IDLE
+
+        # Set colors for reward and punishment LEDs
+        self.reward_led_color = (0, 255, 0)  # Green for reward
+        self.punishment_led_color = (255, 0, 0)  # Red for punishment
+        self.chamber.reward_led.set_color(self.reward_led_color)
+        self.chamber.punishment_led.set_color(self.punishment_led_color)
     
     def start_training(self):
         # Starting state
@@ -133,7 +139,7 @@ class InitialTouch(Trainer):
             # START_TRAINING state, initializing the training session
             logger.info("Starting training session...")
             self.write_event("StartTraining", 1)
-
+            self.chamber.house_led.activate()
             self.current_trial = 1
             # Start by delivering a large reward
             self.state = InitialTouchState.LARGE_REWARD_START
@@ -148,7 +154,6 @@ class InitialTouch(Trainer):
             self.write_event("DeliverRewardStart", self.current_trial)
             self.chamber.reward.dispense()
             self.chamber.reward_led.activate()
-            
             self.state = InitialTouchState.DELIVERING_LARGE_REWARD
 
         elif self.state == InitialTouchState.DELIVERING_LARGE_REWARD:
@@ -159,13 +164,15 @@ class InitialTouch(Trainer):
                     self.reward_collected = True
                     logger.info("Beam broken during reward dispense")
                     self.write_event("BeamBreakDuringLargeReward", self.current_trial)
-                    self.chamber.beambreak.deactivate()
-                    self.chamber.reward_led.deactivate()
+                    self.chamber.beambreak.deactivate()  # Deactivate the beam break to prevent multiple detections
+                    self.chamber.reward_led.deactivate()  # Turn off the reward LED immediately when the reward is collected
             else:
                 # Reward finished dispensing
                 logger.info(f"Large reward dispense completed")
                 self.write_event("LargeRewardComplete", self.current_trial)
                 self.chamber.reward.stop()
+                self.chamber.beambreak.deactivate()  # Deactivate the beam break at the end of the reward dispense
+                self.chamber.reward_led.deactivate()  # Ensure the reward LED is turned off at the end of the reward dispense
                 self.state = InitialTouchState.ITI_START
         
         elif self.state == InitialTouchState.SMALL_REWARD_START:
@@ -178,7 +185,6 @@ class InitialTouch(Trainer):
             self.write_event("SmallRewardStart", self.current_trial)
             self.chamber.reward.dispense()
             self.chamber.reward_led.activate()
-            
             self.state = InitialTouchState.DELIVERING_SMALL_REWARD
         
         elif self.state == InitialTouchState.DELIVERING_SMALL_REWARD:
@@ -189,13 +195,15 @@ class InitialTouch(Trainer):
                     self.reward_collected = True
                     logger.info("Beam broken during small reward dispense")
                     self.write_event("BeamBreakDuringSmallReward", self.current_trial)
-                    self.chamber.beambreak.deactivate()
-                    self.chamber.reward_led.deactivate()
+                    self.chamber.beambreak.deactivate()  # Deactivate the beam break to prevent multiple detections
+                    self.chamber.reward_led.deactivate()  # Turn off the reward LED immediately when the reward is collected
             else:
                 # Small reward finished dispensing
                 logger.info(f"Small reward dispense completed")
                 self.write_event("SmallRewardComplete", self.current_trial)
                 self.chamber.reward.stop()
+                self.chamber.beambreak.deactivate()  # Deactivate the beam break at the end of the reward dispense  
+                self.chamber.reward_led.deactivate()  # Ensure the reward LED is turned off at the end of the reward dispense
                 self.state = InitialTouchState.ITI_START
 
         elif self.state == InitialTouchState.START_TRIAL:
@@ -203,7 +211,7 @@ class InitialTouch(Trainer):
             if self.current_trial < self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
                 self.write_event("StartTrial", self.current_trial)
-
+                self.chamber.house_led.set_brightness(200)
                 self.load_images(self.current_trial)
 
                 # Show images for the next trial
@@ -262,6 +270,7 @@ class InitialTouch(Trainer):
             self.iti_start_time = current_time
             logger.info("Starting inter-trial interval...")
             self.write_event("ITIStart", self.current_trial)
+            self.chamber.house_led.set_brightness(50)
             self.state = InitialTouchState.ITI
         
         elif self.state == InitialTouchState.ITI:

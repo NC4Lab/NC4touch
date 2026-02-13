@@ -146,7 +146,8 @@ class WebUI:
                                                     on_change=lambda e: self.session.set_video_dir(e.value)).style('width: 200px;')
                     
                     ui.label('Trainer:').style('width: 200px;')
-                    self.trainer_select = ui.select(get_trainers(), value='DoNothingTrainer', on_change=lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
+                    self.trainer_select = ui.select(get_trainers(), value=self.session.config["trainer_name"], 
+                                                    on_change=lambda e: self.session.set_trainer_name(e.value)).style('width: 200px;')
 
 
             with ui.column():
