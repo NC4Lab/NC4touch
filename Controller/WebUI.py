@@ -5,7 +5,7 @@ import logging
 import asyncio
 
 from Trainer import get_trainers
-from helpers import get_ip_address
+from helpers import get_ip_address, get_best_ip_address
 from Session import Session
 from file_picker import file_picker
 from M0Device import M0Mode, M0Device
@@ -36,10 +36,10 @@ class LogElementHandler(logging.Handler):
 class WebUI:
     def __init__(self, video_port=8080, ui_port=8081):
         # Initialize session and chamber
-        self.ip = get_ip_address()
+        self.ip = get_best_ip_address()
         self.ui_port = ui_port
         self.chamber_name = self.derive_chamber_name(self.ip)
-        ui.run(host=self.ip, port=self.ui_port, title=f"{self.chamber_name} Control Panel", show=False)
+        ui.run(host=self.ip if self.ip else '0.0.0.0', port=self.ui_port, title=f"{self.chamber_name} Control Panel", show=False)
         logger.info("Initializing WebUI...")
         self.video_port = video_port
         session_config = {"chamber_name": self.chamber_name} if self.chamber_name else {}
@@ -167,7 +167,6 @@ class WebUI:
 
                 with ui.card():
                     ui.label('Camera Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-
                     # Show video stream from the camera
                     ui.label('Camera Stream:').style('width: 800px;')
                     ui.image(source=f"http://{self.ip}:{self.video_port}/stream").style('width: 640px; height: 480px;')
