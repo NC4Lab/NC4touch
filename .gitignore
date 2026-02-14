@@ -16,3 +16,4 @@
 *.log
 log/
 .claude/
+CLAUDE.md
