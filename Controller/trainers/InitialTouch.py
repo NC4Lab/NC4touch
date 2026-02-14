@@ -2,7 +2,7 @@ import time
 from enum import Enum, auto
 import os
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -208,7 +208,7 @@ class InitialTouch(Trainer):
             if self.current_trial < self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
                 self.write_event("StartTrial", self.current_trial)
-                self.chamber.house_led.set_brightness(200)
+                self.default_start_trial()
                 self.load_images(self.current_trial)
 
                 # Show images for the next trial
@@ -264,10 +264,9 @@ class InitialTouch(Trainer):
         
         elif self.state == InitialTouchState.ITI_START:
             # ITI_START state, preparing for the inter-trial interval
-            self.iti_start_time = current_time
             logger.info("Starting inter-trial interval...")
             self.write_event("ITIStart", self.current_trial)
-            self.chamber.house_led.set_brightness(50)
+            self.iti_start_time = self.default_iti_start()
             self.state = InitialTouchState.ITI
         
         elif self.state == InitialTouchState.ITI:
@@ -289,9 +288,5 @@ class InitialTouch(Trainer):
     def stop_training(self):
         # Stop the training session
         logger.info("Stopping training session...")
-        self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
-        self.chamber.beambreak.deactivate()
-        self.close_data_file()
+        self.default_stop_training()
         self.state = InitialTouchState.IDLE

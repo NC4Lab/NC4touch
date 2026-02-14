@@ -2,7 +2,7 @@ import time
 from enum import Enum, auto
 import os
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -326,9 +326,5 @@ class Punish_Incorrect(Trainer):
     def stop_training(self):
         # Stop the training session and reset hardware
         logger.info("Stopping Punish Incorrect training session...")
-        self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
-        self.chamber.buzzer.deactivate()
-        self.close_data_file()
+        self.default_stop_training()
         self.state = PunishIncorrectState.IDLE

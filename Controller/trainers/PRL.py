@@ -1,7 +1,7 @@
 import time
 from enum import Enum, auto
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 import random
@@ -69,13 +69,15 @@ class PRL(Trainer):
         # Local variables used by the trainer during the training session and not set in the config file.
         self.config.ensure_param("touch_timeout", 30) # Timeout for waiting for touch
         self.config.ensure_param("trial_to_reverse", 30) # Trial at which to reverse reward probabilities
+        self.config.ensure_param("left_image", "A01")
+        self.config.ensure_param("right_image", "B01")
         self.reward_start_time = time.time()
         self.reward_collected = False
         self.last_beam_break_time = time.time()
         self.iti_start_time = time.time()
 
-        self.left_image = "A01.bmp"
-        self.right_image = "B01.bmp"
+        self.left_image = self.config["left_image"]
+        self.right_image = self.config["right_image"]
         self.left_reward_probability = 0
         self.right_reward_probability = 0
         self.current_trial = 0
@@ -128,7 +130,7 @@ class PRL(Trainer):
             # START_TRAINING state, initializing the training session
             logger.debug("Current state: START_TRAINING")
             logger.info("Starting training session...")
-            self.write_event("StartTraining ", 1)
+            self.write_event("StartTraining", 1)
             ##randomly assign the reward probability to the touch screens
             if random.random() < 0.5:
                 self.left_reward_probability=(self.config["high_reward_probability"])
@@ -145,7 +147,7 @@ class PRL(Trainer):
             self.current_trial += 1
             if self.current_trial < self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
-                self.write_event("StartTrial ", self.current_trial)
+                self.write_event("StartTrial", self.current_trial)
                 if self.current_trial == self.config["trial_to_reverse"]:
                     # Reverse the reward probabilities
                     logger.info("Reversing reward probabilities...")
@@ -179,7 +181,7 @@ class PRL(Trainer):
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
                 if self.chamber.left_m0.is_touched():
                     logger.info("Left screen touched")
-                    self.write_event("LeftScreenTouched ", self.current_trial)
+                    self.write_event("LeftScreenTouched", self.current_trial)
 
                     if self.left_reward_probability == self.config["high_reward_probability"]:
                         self.state = PRLState.CORRECT
@@ -196,40 +198,40 @@ class PRL(Trainer):
             else:
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
-                self.write_event("TouchTimeout ", self.current_trial)
+                self.write_event("TouchTimeout", self.current_trial)
                 self.state = PRLState.ITI_START
         
         elif self.state == PRLState.CORRECT:
             # CORRECT state, handling correct touch
             logger.debug("Current state: CORRECT")
             logger.info("Correct touch detected.")
-            self.write_event("CorrectTouch ", self.current_trial)
+            self.write_event("CorrectTouch", self.current_trial)
 
             self.clear_images()
             if random.random() <= self.config["high_reward_probability"]:
                 self.state = PRLState.DELIVER_REWARD_START
                 logger.info("Delivering reward...")
-                self.write_event("DeliverRewardStart ", self.current_trial)
+                self.write_event("DeliverRewardStart", self.current_trial)
             else:
                 self.state = PRLState.ITI_START
                 logger.info("No reward delivered, moving to ITI...")
-                self.write_event("NoReward ", self.current_trial)
+                self.write_event("NoReward", self.current_trial)
         
         elif self.state == PRLState.ERROR:
             # ERROR state, handling incorrect touch
             logger.debug("Current state: ERROR")
             logger.info("Incorrect touch detected.")
-            self.write_event("IncorrectTouch ", self.current_trial)
+            self.write_event("IncorrectTouch", self.current_trial)
 
             self.clear_images()
             if random.random() <= self.config["low_reward_probability"]:
                 self.state = PRLState.DELIVER_REWARD_START
                 logger.info("Delivering reward...")
-                self.write_event("DeliverRewardStart ", self.current_trial)
+                self.write_event("DeliverRewardStart", self.current_trial)
             else:
                 self.state = PRLState.ITI_START
                 logger.info("No reward delivered, moving to ITI...")
-                self.write_event("NoReward ", self.current_trial)
+                self.write_event("NoReward", self.current_trial)
 
         elif self.state == PRLState.DELIVER_REWARD_START:
             # DELIVER_REWARD_START state, preparing to deliver the reward
@@ -281,12 +283,8 @@ class PRL(Trainer):
             # ITI_START state, preparing for the ITI period
             logger.debug("Current state: ITI_START")
             self.write_event("ITIStart", self.current_trial)
-            #self.chamber.beambreak.activate()
-            self.chamber.reward_led.deactivate()
-            # Turn off house lights during ITI
-            # self.chamber.house_lights.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
-            self.iti_start_time = current_time
+            self.iti_start_time = self.default_iti_start()
             self.state = PRLState.ITI
         
         elif self.state == PRLState.ITI:
@@ -322,9 +320,5 @@ class PRL(Trainer):
     def stop_training(self):
         # Stop the training session
         logger.info("Stopping training session...")
-        self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
-        self.chamber.beambreak.deactivate()
-        self.close_data_file()
+        self.default_stop_training()
         self.state = PRLState.IDLE

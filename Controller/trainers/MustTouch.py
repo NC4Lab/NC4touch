@@ -2,7 +2,7 @@ import time
 import os
 from enum import Enum, auto
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -142,6 +142,7 @@ class MustTouch(Trainer):
             if self.current_trial < self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
                 self.write_event("StartTrial", self.current_trial)
+                self.default_start_trial()
 
                 self.state = MustTouchState.WAIT_FOR_TOUCH
             else:
@@ -265,10 +266,8 @@ class MustTouch(Trainer):
             # ITI_START state, preparing for the ITI period
             logger.debug("Current state: ITI_START")
             self.write_event("ITIStart", self.current_trial)
-            self.chamber.beambreak.activate()
-            self.chamber.reward_led.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
-            self.iti_start_time = current_time
+            self.iti_start_time = self.default_iti_start()
             self.state = MustTouchState.ITI
         
         elif self.state == MustTouchState.ITI:
@@ -303,9 +302,5 @@ class MustTouch(Trainer):
     def stop_training(self):
         # Stop the training session
         logger.info("Stopping training session...")
-        self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
-        self.chamber.beambreak.deactivate()
-        self.close_data_file()
+        self.default_stop_training()
         self.state = MustTouchState.IDLE

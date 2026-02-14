@@ -2,7 +2,7 @@ from enum import Enum, auto
 from random import random
 import time
 import logging
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 logger = logging.getLogger(f"session_logger.{__name__}")
 
@@ -22,9 +22,6 @@ class SDState(Enum):
 
 class Simple_Discrimination(Trainer):
 
-    CORRECT_IMAGE = "A01"
-    INCORRECT_IMAGE = "C01"
-
     def __init__(self, chamber, trainer_config={}, trainer_config_file="~/trainer_SD_config.yaml"):
         super().__init__(chamber, trainer_config, trainer_config_file)
 
@@ -35,6 +32,8 @@ class Simple_Discrimination(Trainer):
         self.config.ensure_param("iti_duration", 10)
         self.config.ensure_param("max_corrections", 3)
         self.config.ensure_param("touch_timeout", 300)
+        self.config.ensure_param("correct_image", "A01")
+        self.config.ensure_param("incorrect_image", "C01")
 
         self.state = SDState.IDLE
         self.current_trial = 0
@@ -48,11 +47,11 @@ class Simple_Discrimination(Trainer):
     def randomize_images(self):
         """Randomly assign correct/incorrect images to left/right."""
         if random() < 0.5:
-            self.left_image = self.CORRECT_IMAGE
-            self.right_image = self.INCORRECT_IMAGE
+            self.left_image = self.config["correct_image"]
+            self.right_image = self.config["incorrect_image"]
         else:
-            self.left_image = self.INCORRECT_IMAGE
-            self.right_image = self.CORRECT_IMAGE
+            self.left_image = self.config["incorrect_image"]
+            self.right_image = self.config["correct_image"]
 
     def load_images(self):
         self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
@@ -124,7 +123,7 @@ class Simple_Discrimination(Trainer):
             else:
                 return
 
-            if touched_image == self.CORRECT_IMAGE:
+            if touched_image == self.config["correct_image"]:
                 self.state = SDState.CORRECT
             else:
                 self.state = SDState.ERROR
@@ -172,3 +171,8 @@ class Simple_Discrimination(Trainer):
 
         elif self.state == SDState.END_TRAINING:
             self.stop_training()
+
+    def stop_training(self):
+        logger.info("Stopping Simple Discrimination training...")
+        self.default_stop_training()
+        self.state = SDState.IDLE

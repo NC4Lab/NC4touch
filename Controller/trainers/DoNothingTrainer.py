@@ -1,5 +1,4 @@
-from Trainer import Trainer
-from Chamber import Chamber
+from trainers.Trainer import Trainer
 
 from enum import Enum
 import time
@@ -21,8 +20,9 @@ class DoNothingTrainer(Trainer):
     def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_DoNothingTrainer_config.yaml'):
         super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
+        self.config.ensure_param("switch_interval", 5)
         self.state = DoNothingState.IDLE
-        self.switch_interval = 5 # Time in seconds to switch between states
+        self.switch_interval = self.config["switch_interval"]
         self.state_start_time = time.time()
 
     def start_training(self):

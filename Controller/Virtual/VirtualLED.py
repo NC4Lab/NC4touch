@@ -55,12 +55,13 @@ class VirtualLED:
             self._current_brightness = brightness
         logger.debug(f"Virtual LED brightness set to {brightness}")
 
-    def set_color(self, r, g, b):
-        # Set LED color
+    def set_color(self, color):
+        # Set LED color - accepts list/tuple [r, g, b]
         if not self.show_color:
             logger.warning("Virtual LED does not support RGB")
             return
-        
+
+        r, g, b = color[0], color[1], color[2]
         self.color = (r, g, b)
         if self._is_on:
             self._current_color = (r, g, b)

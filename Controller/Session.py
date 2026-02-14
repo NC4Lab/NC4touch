@@ -7,7 +7,7 @@ import threading
 
 # Local modules
 from Chamber import Chamber
-from Trainer import Trainer
+from trainers import Trainer
 from Config import Config
 from Virtual.VirtualChamber import VirtualChamber
 
@@ -231,7 +231,7 @@ class Session:
     
     def set_trainer_name(self, trainer_name):
         try:
-            module = importlib.import_module(f"{trainer_name}")
+            module = importlib.import_module(f"trainers.{trainer_name}")
             trainer_class = getattr(module, trainer_name)
             self.trainer = trainer_class(self.chamber, {})
             logger.debug(f"Trainer class loaded: {self.trainer}")

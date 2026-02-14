@@ -24,11 +24,11 @@ The WebUI runs on NiceGUI (port 8081) and derives the chamber name from the Pi's
 
 ### Two-tier control flow
 
-**Session** (`Controller/Session.py`) is the top-level orchestrator. It owns a **Chamber** and a **Trainer**. The Session runs a repeating `threading.Timer` that calls `trainer.run_training()` at a configurable interval (default 0.1s). Trainers are loaded dynamically via `importlib.import_module(trainer_name)`.
+**Session** (`Controller/Session.py`) is the top-level orchestrator. It owns a **Chamber** and a **Trainer**. The Session runs a repeating `threading.Timer` that calls `trainer.run_training()` at a configurable interval (default 0.1s). Trainers are loaded dynamically via `importlib.import_module(f"trainers.{trainer_name}")`.
 
 **Chamber** (`Controller/Chamber.py`) owns all hardware: 3 M0Devices (left/middle/right), reward pump, reward LED, punishment LED, house LED, beam break, buzzer, and camera. It uses `arduino-cli` for board discovery and sketch upload, and `pigpio` for GPIO control.
 
-**Trainer** (`Controller/Trainer.py`) is an abstract base class. Each training phase is a concrete subclass implementing a state machine via `run_training()`. The training phases in progression order are:
+**Trainer** (`Controller/trainers/Trainer.py`) is an abstract base class. All trainers live in the `Controller/trainers/` package. Each training phase is a concrete subclass implementing a state machine via `run_training()`. The training phases in progression order are:
 1. **Habituation** - reward exposure only, no stimuli
 2. **InitialTouch** - any touch gets a reward
 3. **MustTouch** - must touch the correct stimulus (A01)
@@ -98,14 +98,15 @@ Config uses `ensure_param()` to set defaults without overwriting existing values
 
 ## Writing new trainers
 
-1. Create `Controller/<TrainerName>.py`
-2. Subclass `Trainer` (from `Controller/Trainer.py`)
+1. Create `Controller/trainers/<TrainerName>.py`
+2. Subclass `Trainer` (from `trainers.Trainer import Trainer`)
 3. Define a `<TrainerName>State` Enum with at minimum: IDLE, START_TRAINING, START_TRIAL, END_TRIAL, END_TRAINING
 4. Implement `start_training()`, `run_training()` (state machine, called repeatedly), and `stop_training()`
 5. Use `self.config.ensure_param()` for all tunable parameters
-6. Use `self.write_event(event_name, data)` for data logging
-7. Add the trainer name to `get_trainers()` in `Controller/Trainer.py`
-8. Access hardware via `self.chamber` (e.g., `self.chamber.left_m0.send_command("SHOW")`, `self.chamber.reward.dispense()`)
+6. Use default behavior methods: `default_start_trial()`, `default_iti_start()`, `default_stop_training()`, etc.
+7. Use `self.write_event(event_name, data)` for data logging
+8. Add the trainer name to `get_trainers()` in `Controller/trainers/__init__.py`
+9. Access hardware via `self.chamber` (e.g., `self.chamber.left_m0.send_command("SHOW")`, `self.chamber.reward.dispense()`)
 
 ## Qwen3 local coding helper
 

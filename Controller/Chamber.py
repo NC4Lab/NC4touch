@@ -46,6 +46,12 @@ class Chamber:
     self.config.ensure_param("buzzer_pin", 16)
     self.config.ensure_param("reset_pins", [25, 5, 6])
     self.config.ensure_param("camera_device", "/dev/video0")
+    self.config.ensure_param("reward_led_brightness", 140)
+    self.config.ensure_param("punishment_led_brightness", 255)
+    self.config.ensure_param("house_led_brightness", 100)
+    self.config.ensure_param("buzzer_volume", 60)
+    self.config.ensure_param("buzzer_frequency", 6000)
+    self.config.ensure_param("beambreak_memory", 0.2)
 
     self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -59,11 +65,11 @@ class Chamber:
     self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
     self.arduino_cli_discover()
 
-    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 140)
-    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness = 255)
-    self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness = 100) 
-    self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"])
-    self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"])
+    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness=self.config["reward_led_brightness"])
+    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness=self.config["punishment_led_brightness"])
+    self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness=self.config["house_led_brightness"])
+    self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"], beam_break_memory=self.config["beambreak_memory"])
+    self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"], volume=self.config["buzzer_volume"], frequency=self.config["buzzer_frequency"])
     self.reward = Reward(pi=self.pi, pin=self.config["reward_pump_pin"])
     self.camera = Camera(device=self.config["camera_device"])
   
@@ -81,8 +87,10 @@ class Chamber:
   def __del__(self):
     """Clean up the chamber by stopping pigpio and M0s."""
     logger.info("Cleaning up chamber...")
-    self.pi.stop()
-    [m0.stop() for m0 in self.m0s]
+    if hasattr(self, 'pi') and self.pi:
+        self.pi.stop()
+    if hasattr(self, 'm0s'):
+        [m0.stop() for m0 in self.m0s]
 
   def compile_sketch(self, sketch_path=None):
       """
@@ -135,8 +143,6 @@ class Chamber:
         for i, m0 in enumerate(self.m0s):
             m0.port = self.discovered_boards[i]
             logger.info(f"Set {m0.id} serial port to {m0.port}")
-            # m0.open_port()
-            # m0.start_read_thread()
     else:
         logger.error("Not enough M0 boards discovered. Please check the connections.")
 
@@ -167,17 +173,6 @@ class Chamber:
                         logger.debug(f"Discovered {board_id} on {p.device}")
             except Exception as e:
                 logger.error(f"Could not open {p.device}: {e}")
-      
-    # if len(board_map) == 0:
-    #     logger.error("No M0 boards found. Please check the connections.")
-    # else:
-    #     logger.info(f"Discovered M0 boards: {board_map}")
-    #     for m0 in self.m0s:
-    #         if m0.id in board_map:
-    #             m0.port = board_map[m0.id]
-    #             logger.info(f"Set {m0.id} serial port to {board_map[m0.id]}")
-    #         else:
-    #             logger.error(f"{m0.id} not found in discovered boards. Please check the connections.")
 
   def m0_send_command(self, command):
     """
@@ -235,9 +230,4 @@ class Chamber:
     self.reward.stop()
 
 if __name__ == "__main__":
-  # chamber = Chamber()
-  # [m0.initialize() for m0 in chamber.m0s]
-
-  # [m0.sync_image_folder() for m0 in chamber.m0s]
-
   logger.info("Chamber initialized.")

@@ -10,21 +10,6 @@ from Config import Config
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-def get_trainers():
-    # List of available trainers
-    return [
-        "DoNothingTrainer",
-        "Habituation",
-        "InitialTouch",
-        "MustTouch",
-        "Punish_Incorrect",
-        "Simple_Discrimination",
-        "Complex_Discrimination",
-        "PRL",
-        "SoundTest",
-        # Add more trainers as needed
-    ]
-
 class Trainer(ABC):
     # Base trainer class for running training sessions
 
@@ -195,6 +180,17 @@ class Trainer(ABC):
         """Set reward/punishment LED colors from config."""
         self.chamber.reward_led.set_color(self.config["reward_led_color"])
         self.chamber.punishment_led.set_color(self.config["punishment_led_color"])
+
+    def default_end_trial(self):
+        """Clear images on all M0s and write EndTrial event."""
+        self.chamber.left_m0.send_command("BLACK")
+        self.chamber.right_m0.send_command("BLACK")
+
+    def default_start_training(self):
+        """Reset chamber to default state, set LED colors, and open data file."""
+        self.chamber.default_state()
+        self.default_setup_led_colors()
+        self.open_data_file()
 
     def default_stop_training(self):
         """Stop all hardware and close data file."""
