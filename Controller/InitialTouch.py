@@ -53,11 +53,8 @@ class InitialTouch(Trainer):
         self.state = InitialTouchState.IDLE
         self.prev_state = InitialTouchState.IDLE
 
-        # Set colors for reward and punishment LEDs
-        self.reward_led_color = (0, 255, 0)  # Green for reward
-        self.punishment_led_color = (255, 0, 0)  # Red for punishment
-        self.chamber.reward_led.set_color(self.reward_led_color)
-        self.chamber.punishment_led.set_color(self.punishment_led_color)
+        # Set colors for reward and punishment LEDs from config
+        self.default_setup_led_colors()
     
     def start_training(self):
         # Starting state

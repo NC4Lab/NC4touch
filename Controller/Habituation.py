@@ -99,7 +99,7 @@ class Habituation(Trainer):
         elif self.state == HabituationState.START_TRIAL:
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
-            self.chamber.house_led.set_brightness(200)
+            self.default_start_trial()
             self.current_trial += 1
             if self.current_trial < self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
@@ -160,12 +160,9 @@ class Habituation(Trainer):
         elif self.state == HabituationState.ITI_START:
             # ITI_START state, preparing for the ITI period
             logger.debug("Current state: ITI_START")
-            self.chamber.house_led.set_brightness(50)
             self.write_event("ITIStart", self.current_trial)
-            self.chamber.beambreak.activate()
-            self.chamber.reward_led.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
-            self.iti_start_time = current_time
+            self.iti_start_time = self.default_iti_start()
             self.state = HabituationState.ITI
         
         elif self.state == HabituationState.ITI:
@@ -200,10 +197,5 @@ class Habituation(Trainer):
     def stop_training(self):
         # Stop the training session
         logger.info("Stopping training session...")
-        self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
-        self.chamber.house_led.deactivate()
-        self.chamber.beambreak.deactivate()
-        self.close_data_file()
+        self.default_stop_training()
         self.state = HabituationState.IDLE

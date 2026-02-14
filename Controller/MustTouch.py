@@ -174,7 +174,7 @@ class MustTouch(Trainer):
                         self.write_event("RightScreenTouched", self.current_trial)
 
                         if self.right_image == "A01":
-                            self.state = MustTouchTouchState.CORRECT
+                            self.state = MustTouchState.CORRECT
                         else:
                             self.state = MustTouchState.ERROR
                         self.state = MustTouchState.DELIVER_REWARD_START

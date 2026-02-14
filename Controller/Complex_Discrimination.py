@@ -20,7 +20,7 @@ class SDState(Enum):
     END_TRIAL = auto()
     END_TRAINING = auto()
 
-class SimpleDiscrimination(Trainer):
+class Complex_Discrimination(Trainer):
 
     CORRECT_IMAGE = "E01"
     INCORRECT_IMAGE = "D01"

@@ -38,7 +38,7 @@ class PunishIncorrectState(Enum):
     END_TRAINING = auto()            # End training session
 
 
-class PunishIncorrect(Trainer):
+class Punish_Incorrect(Trainer):
     def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_PunishIncorrect_config.yaml'):
         super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
 
@@ -55,6 +55,7 @@ class PunishIncorrect(Trainer):
         self.config.ensure_param("trainer_seq_dir", "")        # Directory containing sequence file
         self.config.ensure_param("trainer_seq_file", "")       # Sequence file name
         self.config.ensure_param("correct_image", "A01")       # Image identifier for correct choice
+        self.config.ensure_param("initiation_timeout", 30)     # Timeout for trial initiation (seconds)
 
         # Local variables used during training
         self.current_trial = 0
