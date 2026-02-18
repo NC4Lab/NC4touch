@@ -59,14 +59,16 @@ class Camera:
     
     def start_video_stream(self):
         local_ip = get_ip_address()
-        cmd = f"ustreamer --device={self.device} --host={local_ip} --port={self.stream_port} --sink=demo::ustreamer::sink --sink-mode=660 --sink-rm"
+        from helpers import get_best_ip_address
+        best_ip = get_best_ip_address()
+        cmd = f"ustreamer --device={self.device} --host={best_ip if best_ip else '0.0.0.0'} --port={self.stream_port} --sink=demo::ustreamer::sink --sink-mode=660 --sink-rm"
         logger.debug(f"Starting ustreamer with command: {cmd}")
         
         # Start the ustreamer process in the background
         self.network_stream = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
         
         if self.network_stream:
-            logger.info(f"Network stream started on {local_ip}:{self.stream_port}")
+            logger.info(f"Network stream started on 0.0.0.0:{self.stream_port}")
         else:
             logger.error("Failed to start network stream.")
     

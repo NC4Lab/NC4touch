@@ -26,6 +26,34 @@ def get_ip_address(interface="eth0"):
         logger.error(f"Error getting IP address for {interface}: {e}")
         return None
 
+def get_best_ip_address():
+    """
+    Returns the best IP address for external access: Tailscale IP if available, else local IP.
+    """
+    if netifaces is None:
+        logger.warning("netifaces module not available, cannot get IP address")
+        return None
+    try:
+        # Check all interfaces for a Tailscale IP (starts with '100.')
+        for iface in netifaces.interfaces():
+            addrs = netifaces.ifaddresses(iface)
+            inet_addrs = addrs.get(netifaces.AF_INET, [])
+            for addr in inet_addrs:
+                ip = addr.get('addr')
+                if ip and ip.startswith('100.'):
+                    return ip
+        # Fallback to eth0 or first available
+        for iface in ['eth0', 'wlan0'] + netifaces.interfaces():
+            addrs = netifaces.ifaddresses(iface)
+            inet_addrs = addrs.get(netifaces.AF_INET, [])
+            for addr in inet_addrs:
+                ip = addr.get('addr')
+                if ip:
+                    return ip
+    except Exception as e:
+        logger.error(f"Error getting best IP address: {e}")
+        return None
+
 def wait_for_dmesg(msg="", timeout=30):
     msg_line = None
     start_time = time.mktime(time.localtime())
@@ -60,4 +88,3 @@ def wait_for_dmesg(msg="", timeout=30):
 
 if __name__ == "__main__":
     wait_for_dmesg("ttyACM")
-    
