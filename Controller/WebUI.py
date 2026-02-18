@@ -84,7 +84,7 @@ class WebUI:
     
     async def m0_reopen_serial(self):
         self.session.chamber.m0_reopen_serial()
-        await asyncio.sleep(0.5)  # Wait a moment for the serial port to reopen before updating labels
+        await asyncio.sleep(2.0)  # Wait a moment for the serial port to reopen before updating labels
         self.session.chamber.m0_remap()  # Remap M0s after reopening serial to ensure correct mapping
         await asyncio.sleep(0.5)  # Wait a moment for remapping to complete before updating labels
         self.update_m0_status_labels()
