@@ -17,6 +17,7 @@ class Reward:
 
         self.pi = pi
         self.pin = pin
+        self.state = False
 
         """PWM set up"""
         self.pi.set_mode(self.pin, pigpio.OUTPUT)
@@ -33,7 +34,9 @@ class Reward:
         # Turn on the pump
         logger.debug("Dispensing reward")
         self.pi.set_PWM_dutycycle(self.pin, 255)
+        self.state = True
 
     def stop(self):
         logger.debug("Stopping reward")
         self.pi.set_PWM_dutycycle(self.pin, 0)
+        self.state = False

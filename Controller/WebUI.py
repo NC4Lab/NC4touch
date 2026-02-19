@@ -217,7 +217,47 @@ class WebUI:
                     self.stop_training_button = ui.button("Stop Training").on_click(self.session.stop_training)
                     self.start_priming_button = ui.button("Start Priming").on_click(self.session.start_priming)
                     self.stop_priming_button = ui.button("Stop Priming").on_click(self.session.stop_priming)
+            
+            with ui.column():
+                with ui.card():
+                    ui.label('Chamber Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    # Button to test pumps
+                    self.pump_test_button = ui.toggle({0: "Pump off", 1: "Pump on"}, value = self.session.chamber.reward.state, 
+                                                      on_change=lambda e: self.session.chamber.reward.dispense() if e.value else self.session.chamber.reward.stop())
+                    self.reward_color_label = ui.label("Reward LED Color:")
+                    self.reward_color_input = ui.color_input(value=self.rgb_to_hex(self.session.chamber.reward_led.color),
+                                                            on_change=lambda e: self.session.chamber.reward_led.set_color(self.hex_to_rgb(e.value)))
+                    self.reward_led_test_button = ui.toggle({0: "Reward LED off", 1: "Reward LED on"}, 
+                                                                value = self.session.chamber.reward_led.active,
+                                                                on_change=lambda e: self.session.chamber.reward_led.activate() if e.value else self.session.chamber.reward_led.deactivate())
+                    
+                    self.punishment_color_label = ui.label("Punishment LED Color:")
+                    self.punishment_color_input = ui.color_input(value=self.rgb_to_hex(self.session.chamber.punishment_led.color),
+                                                                on_change=lambda e: self.session.chamber.punishment_led.set_color(self.hex_to_rgb(e.value)))
+                    self.punishment_led_test_button = ui.toggle({0: "Punishment LED off", 1: "Punishment LED on"}, 
+                                                                value = self.session.chamber.punishment_led.active,
+                                                                on_change=lambda e: self.session.chamber.punishment_led.activate() if e.value else self.session.chamber.punishment_led.deactivate())
+                    
+                    self.left_m0_cmd_label = ui.label("Left M0 Command:")
+                    self.left_m0_cmd_input = ui.input(value = "")
+                    self.left_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.left_m0.send_command(self.left_m0_cmd_input.value))
+
+                    self.middle_m0_cmd_label = ui.label("Middle M0 Command:")
+                    self.middle_m0_cmd_input = ui.input(value = "")
+                    self.middle_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.middle_m0.send_command(self.middle_m0_cmd_input.value))
+
+                    self.right_m0_cmd_label = ui.label("Right M0 Command:")
+                    self.right_m0_cmd_input = ui.input(value = "")
+                    self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.right_m0.send_command(self.right_m0_cmd_input.value))
+
     
+    def rgb_to_hex(self, rgb):
+        return '#%02x%02x%02x' % rgb
+
+    def hex_to_rgb(self, hex_color):
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
     async def pick_trainer_seq_file(self) -> None:
         result = await file_picker(directory = self.session.config["trainer_seq_dir"], multiple = False)
         if result is None:
