@@ -28,13 +28,9 @@ from Config import Config
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-#TODO: Add pigpiod to startup script
-
 class Chamber:
+  """Chamber class for NC4Touch"""
   def __init__(self, chamber_config = {}, chamber_config_file = '~/chamber_config.yaml'):
-    """
-    Chamber class for the Touchscreen chamber.
-    """
     logger.info("Initializing Chamber...")
     self.config = Config(config = chamber_config, config_file = chamber_config_file)
     self.config.ensure_param("chamber_name", "Chamber0")
@@ -66,18 +62,21 @@ class Chamber:
     self.camera = Camera(device=self.config["camera_device"])
   
   def get_left_m0(self):
+    """Returns the left M0 device (M0_0)"""
     idx = [m0.id for m0 in self.m0s].index("M0_0")
     if idx == -1:
         logger.error("Left M0 (M0_0) not found in m0s list.")
     return self.m0s[idx]
 
   def get_middle_m0(self):
+    """Returns the middle M0 device (M0_1)"""
     idx = [m0.id for m0 in self.m0s].index("M0_1")
     if idx == -1:
         logger.error("Middle M0 (M0_1) not found in m0s list.")
     return self.m0s[idx]
 
   def get_right_m0(self):
+    """Returns the right M0 device (M0_2)"""
     idx = [m0.id for m0 in self.m0s].index("M0_2")
     if idx == -1:
         logger.error("Right M0 (M0_2) not found in m0s list.")
@@ -91,7 +90,8 @@ class Chamber:
 
   def compile_sketch(self, sketch_path=None):
       """
-      Compiles the M0Touch sketch using arduino-cli.
+      Compiles the M0Touch sketch using arduino-cli. 
+      If sketch_path is None, it defaults to ../M0Touch/M0Touch.ino relative to this file.
       """
       if sketch_path is None:
           sketch_path = os.path.join(self.code_dir, "../M0Touch/M0Touch.ino")
@@ -184,55 +184,54 @@ class Chamber:
     #         else:
     #             logger.error(f"{m0.id} not found in discovered boards. Please check the connections.")
 
-  def m0_send_command(self, command):
-    """
-    Sends a command to all M0 boards
-    """
+  def m0_send_command(self, command: str):
+    """Sends a command to all M0 boards"""
     [m0.send_command(command) for m0 in self.m0s]
 
   def m0_reset(self):
-    # Reset all the M0 boards
+    """Reset all M0 boards by toggling their reset pins."""
     logger.info("Resetting M0 boards...")
     [m0.reset() for m0 in self.m0s]
   
   def m0_initialize(self):
-    # Initialize all the devices
+    """Initialize all M0 boards"""
     [m0.initialize() for m0 in self.m0s]
   
   def m0_reopen_serial(self):
-    # Close and re-open serial connections to all M0 boards
+    """Close and re-open serial connections to all M0 boards"""
     self.m0_close_serial()
     time.sleep(1)  # Wait a moment to ensure ports are released
     self.m0_open_serial()
   
   def m0_close_serial(self):
-    # Close serial connections to all M0 boards
+    """Close serial connections to all M0 boards"""
     [m0.stop_serial_comm() for m0 in self.m0s]
     [m0.close_port() for m0 in self.m0s]
   
   def m0_open_serial(self):
-    # Open serial connections to all M0 boards
+    """Open serial connections to all M0 boards"""
     [m0.open_port() for m0 in self.m0s]
     [m0.start_serial_comm() for m0 in self.m0s]
   
   def m0_sync_images(self):
-    # Sync the image folders for all M0s
+    """Sync the image folders for all M0s"""
     [m0.sync_image_folder() for m0 in self.m0s]
 
   def m0_upload_sketches(self):
-    # Upload sketches to all M0s
+    """Upload sketches to all M0s"""
     self.compile_sketch()
     [m0.upload_sketch() for m0 in self.m0s]
   
   def m0_clear(self):
-    # Send the blank command to all M0s
+    """Send the blank command to all M0s"""
     [m0.send_command("OFF") for m0 in self.m0s]
   
   def m0_show_image(self):
-    # Send the show image command to all M0s
+    """Send the show image command to all M0s"""
     [m0.send_command("SHOW") for m0 in self.m0s]
 
   def default_state(self):
+    """Set the default state for the chamber"""
     self.m0_send_command("OFF")
     self.reward_led.deactivate()
     self.punishment_led.deactivate()

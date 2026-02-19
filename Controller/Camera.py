@@ -9,7 +9,9 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 #TODO: Test ustreamer with options given in https://github.com/pikvm/ustreamer
 
 class Camera:
-    def __init__(self, device="/dev/video0", stream_port=8080):
+    """Class to manage camera streaming and recording using ustreamer and ffmpeg."""
+    def __init__(self, device: str = "/dev/video0", stream_port: int = 8080):
+        """Initialize the Camera."""
         self.device = device
 
         self.network_stream = None
@@ -24,12 +26,12 @@ class Camera:
         self.start_video_stream()
     
     def __del__(self):
-        # Release resources
+        """Clean up resources when the Camera object is deleted."""
         self.stop_video_stream()
         logger.info("Camera object deleted.")
     
     def reinitialize(self):
-        # Reinitialize the camera
+        """Reinitialize the camera by stopping any existing streams and recorders, killing any lingering processes, and starting a new stream."""
         if self.video_recorder:
             self.stop_recording()
         if self.network_stream:
@@ -42,7 +44,7 @@ class Camera:
         logger.info("Camera reinitialized.")
     
     def kill_ustreamer(self):
-        # Kill all ustreamer processes
+        """Kill all ustreamer processes."""
         try:
             subprocess.call(['pkill', '-f', 'ustreamer'])
             logger.debug("Killed all ustreamer processes.")
@@ -50,7 +52,7 @@ class Camera:
             logger.error(f"Error killing ustreamer processes: {e}")
     
     def kill_ffmpeg(self):
-        # Kill all ffmpeg processes
+        """Kill all ffmpeg processes."""
         try:
             subprocess.call(['pkill', '-f', 'ffmpeg'])
             logger.debug("Killed all ffmpeg processes.")
@@ -58,7 +60,7 @@ class Camera:
             logger.error(f"Error killing ffmpeg processes: {e}")
     
     def start_video_stream(self):
-        local_ip = get_ip_address()
+        """Start the video stream using ustreamer."""
         from helpers import get_best_ip_address
         best_ip = get_best_ip_address()
         cmd = f"ustreamer --device={self.device} --host={best_ip if best_ip else '0.0.0.0'} --port={self.stream_port} --sink=demo::ustreamer::sink --sink-mode=660 --sink-rm"
@@ -73,6 +75,7 @@ class Camera:
             logger.error("Failed to start network stream.")
     
     def stop_video_stream(self):
+        """Stop the video stream and kill the ustreamer process."""
         self.stop_recording()
         if self.network_stream:
             # self.network_stream.kill()
@@ -82,7 +85,8 @@ class Camera:
         else:
             logger.warning("No network stream to terminate.")
     
-    def start_recording(self, output_file="/mnt/shared/output.ts"):
+    def start_recording(self, output_file: str = "/mnt/shared/output.ts"):
+        """Start recording the video stream."""
         if not self.video_recorder:
             cmd = f"ustreamer-dump --sink=demo::ustreamer::sink --output - | ffmpeg -use_wallclock_as_timestamps 1 -i pipe: -c:v libx264 {output_file}"
             logger.debug(f"Starting recording with command: {cmd}")
@@ -93,6 +97,7 @@ class Camera:
             logger.warning("Recording is already in progress.")
     
     def stop_recording(self):
+        """Stop recording the video stream."""
         if self.video_recorder:
             # Stop the video recorder
             os.killpg(os.getpgid(self.video_recorder.pid), subprocess.signal.SIGTERM)

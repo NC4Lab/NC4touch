@@ -9,7 +9,7 @@ class Config:
     """
     This class manages the configuration of the session, chamber and trainer
     """
-    def __init__(self, config = {}, config_file = '~/config.yaml'):
+    def __init__(self, config: dict = {}, config_file: str = '~/config.yaml'):
         config_file = expanduser(config_file)
         
         if not isinstance(config, dict):
@@ -22,7 +22,7 @@ class Config:
         self.update_with_file(config_file)
         self.config.update(config)
     
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         return self.config.get(key, None)
     
     def __setitem__(self, key, value):
@@ -30,7 +30,7 @@ class Config:
         logger.debug(f"Config updated: {key} = {value}")
         self.save_config_file()
 
-    def update_with_dict(self, config):
+    def update_with_dict(self, config: dict):
         if not isinstance(config, dict):
             logger.error("config must be a dictionary")
             return
@@ -53,7 +53,7 @@ class Config:
         else:
             logger.warning(f"Config file {config_file} does not exist.")
     
-    def ensure_param(self, param, default_value):
+    def ensure_param(self, param: str, default_value):
         if param not in self.config:
             self.config[param] = default_value
             logger.debug(f"Config parameter {param} not found. Setting to default value: {default_value}")

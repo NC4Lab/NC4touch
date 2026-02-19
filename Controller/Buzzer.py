@@ -6,7 +6,9 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 class Buzzer:
-    def __init__(self, pi=None, pin=16, volume=60, frequency=6000):
+    """Class to control a buzzer connected to a Raspberry Pi using pigpio."""
+    def __init__(self, pi: pigpio.pi = None, pin: int = 16, volume: int = 60, frequency: int = 6000):
+        """Initialize the Buzzer."""
         if pi is None and pigpio is not None:
             pi = pigpio.pi()
         if pigpio is not None and not isinstance(pi, pigpio.pi):
@@ -24,9 +26,11 @@ class Buzzer:
         self.pi.set_PWM_frequency(self.pin, self.frequency)
 
     def activate(self):
+        """Activate the buzzer."""
         self.pi.set_PWM_dutycycle(self.pin, self.volume)
         logger.debug(f"Buzzer activated")
 
     def deactivate(self):
+        """Deactivate the buzzer."""
         self.pi.set_PWM_dutycycle(self.pin, 0)
         logger.debug(f"Buzzer deactivated")

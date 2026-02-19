@@ -19,6 +19,7 @@ import queue
 from helpers import wait_for_dmesg
 from enum import Enum
 import os
+from pathlib import Path
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -35,14 +36,13 @@ class M0Device:
     Represents one M0 board with a persistent serial connection.
     """
 
-    def __init__(self, pi, id=None, reset_pin=None,
-                 port=None, baudrate=115200, location=None):
+    def __init__(self, pi: pigpio.pi = None, id: str = None, reset_pin: int = None,
+                 port: str = None, baudrate: int = 115200, location: str = None):
         if pigpio is not None and not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
         
         self.pi = pi
-
         self.id = id
         self.reset_pin = reset_pin
         self.port= port
@@ -292,7 +292,7 @@ class M0Device:
         except Exception as e:
             logger.error(f"[{self.id}] Error mounting UD drive: {e}")
 
-    def upload_sketch(self, sketch_path=None):
+    def upload_sketch(self, sketch_path: str | Path = None):
         """
         Uploads the given sketch to the M0 board.
         """
@@ -321,7 +321,7 @@ class M0Device:
         except Exception as e:
             logger.error(f"[{self.id}] Error uploading sketch: {e}")
     
-    def sync_image_folder(self, image_folder=None):
+    def sync_image_folder(self, image_folder: str = None):
         """
         Syncs the image folder to the UD drive connected to the M0 board.
         """

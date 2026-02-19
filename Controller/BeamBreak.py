@@ -9,7 +9,9 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 class BeamBreak:
-    def __init__(self, pi=None, pin=4, beam_break_memory=0.2):
+    """Class to manage a beam break sensor using pigpio."""
+    def __init__(self, pi: pigpio.pi = None, pin: int = 4, beam_break_memory: float = 0.2):
+        """Initialize the BeamBreak sensor."""
         if pi is None and pigpio is not None:
             pi = pigpio.pi()
         if pigpio is not None and not isinstance(pi, pigpio.pi):
@@ -44,11 +46,13 @@ class BeamBreak:
         self.read_timer.start()
 
     def activate(self):
+        """Start the beam break sensor reading loop."""
         self.read_timer.cancel()
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
         self.read_timer.start()
         logger.debug("BeamBreak activated.")
 
     def deactivate(self):
+        """Stop the beam break sensor reading loop."""
         self.read_timer.cancel()
         logger.debug("BeamBreak deactivated.")
