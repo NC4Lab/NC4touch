@@ -10,6 +10,8 @@
 #define TFT_RST  6
 #define TFT_BLK  9  
 
+const char* VERSION = "0.2.0_20260219";
+
 
 const int pin0 = 10;
 const int pin1 = 11;
@@ -64,7 +66,7 @@ void setup() {
   analogWrite(TFT_BLK, 0);
   screen.fillScreen(0x0000); 
 
-  Serial.print("M0 board #");
+  Serial.print("ID:M0_");
   Serial.print(boardID);
   Serial.println(" is ready.");
 }
@@ -134,6 +136,11 @@ void processSerialCommand() {
   if (cmd.equalsIgnoreCase("WHOAREYOU?")) { // identify myself using the 3 pins
     Serial.print("ID:M0_");
     Serial.println(boardID);
+    return;
+  }
+  else if (cmd.equalsIgnoreCase("VERSION?")) { // report version
+    Serial.print("VERSION:");
+    Serial.println(VERSION);
     return;
   }
   else if (cmd.equalsIgnoreCase("BLACK")) { // backlight off, show black screen, detect 1 touch

@@ -56,6 +56,7 @@ class M0Device:
         self.message_queue = queue.Queue()  # to store lines: (id, text)
         self.cmd_queue = queue.Queue()  # to store commands to send to the M0
         self.serial_comm_loop_interval = 0.1  # seconds
+        self.firmware_version = "0.0.0"
 
         self.is_touched = False
 
@@ -211,7 +212,11 @@ class M0Device:
                         if line.startswith("ID:"):
                             self.id = line.split("ID:")[1]
                             logger.info(f"[{self.id}] Updated device ID from serial message.")                        
-                            
+                        
+                        if line.startswith("VERSION:"):
+                            self.firmware_version = line.split("VERSION:")[1]
+                            logger.info(f"[{self.id}] Updated firmware version from serial message: {self.firmware_version}")
+
             except Exception as e:
                 logger.error(f"[{self.id}] Error reading from serial port: {e}")
                 # re-open self.ser here
@@ -312,7 +317,7 @@ class M0Device:
             else:
                 logger.info(f"[{self.id}] Sketch uploaded successfully.")
 
-            self.mode = M0Mode.PORT_CLOSED
+            self.mode = M0Mode.UNINITIALIZED  # force reinitialization after upload
         except Exception as e:
             logger.error(f"[{self.id}] Error uploading sketch: {e}")
     
