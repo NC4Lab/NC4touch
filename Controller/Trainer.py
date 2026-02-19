@@ -48,16 +48,14 @@ class Trainer(ABC):
 
         self.data_file = None
     
-    def read_trainer_seq_file(self, csv_file_path, num_columns):
+    def read_trainer_seq_file(self, csv_file_path, min_num_columns = 2):
         # Read trial sequence from CSV file
         trials = []
         try:
             with open(csv_file_path, 'r') as f:
                 reader = csv.reader(f)
-                # Skip the header row
-                next(reader, None)
-                # Read the rest of the rows into a list of trials
-                trials = [row for row in reader if len(row) >= num_columns]
+                # Read rows into a list of trials
+                trials = [row for row in reader if len(row) >= min_num_columns and not row[0].startswith("#")]
         except FileNotFoundError:
             logger.error(f"File not found: {csv_file_path}")
         except Exception as e:

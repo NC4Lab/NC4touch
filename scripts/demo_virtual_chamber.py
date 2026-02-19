@@ -49,12 +49,12 @@ def simple_demo():
 
     print("\n3. Testing Touchscreens...")
     print("   - Displaying images on left and right screens")
-    chamber.left_m0.send_command("DISPLAY:/data/images/stimulus_left.bmp")
-    chamber.right_m0.send_command("DISPLAY:/data/images/stimulus_right.bmp")
+    chamber.get_left_m0().send_command("DISPLAY:/data/images/stimulus_left.bmp")
+    chamber.get_right_m0().send_command("DISPLAY:/data/images/stimulus_right.bmp")
     time.sleep(1)
 
     print("   - Simulating touch on LEFT screen")
-    chamber.left_m0.simulate_touch(160, 240, duration=0.3)
+    chamber.get_left_m0().simulate_touch(160, 240, duration=0.3)
     time.sleep(0.5)
 
     print("\n4. Testing Reward System...")
@@ -94,8 +94,8 @@ def interactive_demo():
     chamber.beambreak.activate()
 
     # Display some initial content
-    chamber.left_m0.send_command("DISPLAY:left_stimulus.bmp")
-    chamber.right_m0.send_command("DISPLAY:right_stimulus.bmp")
+    chamber.get_left_m0().send_command("DISPLAY:left_stimulus.bmp")
+    chamber.get_right_m0().send_command("DISPLAY:right_stimulus.bmp")
 
     print("GUI Controls:")
     print("  • Click on touchscreens to simulate touches")
@@ -130,14 +130,14 @@ def automated_trial_demo():
 
     # Present stimuli
     print("[TRIAL START] Presenting stimuli")
-    chamber.left_m0.send_command("DISPLAY:plus.bmp")
-    chamber.right_m0.send_command("DISPLAY:minus.bmp")
+    chamber.get_left_m0().send_command("DISPLAY:plus.bmp")
+    chamber.get_right_m0().send_command("DISPLAY:minus.bmp")
     chamber.reward_led.on(brightness=100)  # House light
     time.sleep(1)
 
     # Animal makes choice (left = correct)
     print("[RESPONSE] Animal touches LEFT screen (correct!)")
-    chamber.left_m0.simulate_touch(160, 240, duration=0.2)
+    chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
     time.sleep(0.5)
 
     # Deliver reward
@@ -157,8 +157,8 @@ def automated_trial_demo():
 
     # Clear screens
     print("[CLEANUP] Clearing screens")
-    chamber.left_m0.send_command("CLEAR")
-    chamber.right_m0.send_command("CLEAR")
+    chamber.get_left_m0().send_command("CLEAR")
+    chamber.get_right_m0().send_command("CLEAR")
     chamber.reward_led.off()
 
     # Show results

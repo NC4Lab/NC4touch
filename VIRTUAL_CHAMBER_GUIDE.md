@@ -65,12 +65,12 @@ chamber = VirtualChamber()
 chamber.initialize_m0s()
 
 # Display stimuli
-chamber.left_m0.send_command("DISPLAY:plus.bmp")
-chamber.right_m0.send_command("DISPLAY:minus.bmp")
+chamber.get_left_m0().send_command("DISPLAY:plus.bmp")
+chamber.get_right_m0().send_command("DISPLAY:minus.bmp")
 
 # Simulate correct response
 time.sleep(1)
-chamber.left_m0.simulate_touch(160, 240)
+chamber.get_left_m0().simulate_touch(160, 240)
 
 # Deliver reward
 chamber.reward.dispense()

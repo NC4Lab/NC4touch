@@ -87,20 +87,20 @@ class PRL(Trainer):
         """Load images for the current trial."""
         # Load images from the sequence file
         # Send commands to M0 devices to load images
-        self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
-        self.chamber.right_m0.send_command(f"IMG:{self.right_image}")
+        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
     
     def show_images(self):
         """Display images on the M0 devices."""
         # Send commands to M0 devices to show images
-        self.chamber.left_m0.send_command("SHOW")
-        self.chamber.right_m0.send_command("SHOW")
+        self.chamber.get_left_m0().send_command("SHOW")
+        self.chamber.get_right_m0().send_command("SHOW")
     
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.left_m0.send_command("BLACK")
-        self.chamber.right_m0.send_command("BLACK")
+        self.chamber.get_left_m0().send_command("BLACK")
+        self.chamber.get_right_m0().send_command("BLACK")
 
 
     def start_training(self):
@@ -177,7 +177,7 @@ class PRL(Trainer):
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.left_m0.is_touched():
+                if self.chamber.get_left_m0().is_touched():
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched ", self.current_trial)
 
@@ -185,7 +185,7 @@ class PRL(Trainer):
                         self.state = PRLState.CORRECT
                     else:
                         self.state = PRLState.ERROR
-                elif self.chamber.right_m0.is_touched():
+                elif self.chamber.get_right_m0().is_touched():
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
 

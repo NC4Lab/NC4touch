@@ -52,11 +52,9 @@ class Chamber:
     self.pi = pigpio.pi() if pigpio is not None else None
 
     # Initialize M0s
-    self.left_m0 = M0Device(pi = self.pi, id = "M0_0", reset_pin = self.config["reset_pins"][0])
-    self.middle_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.config["reset_pins"][1])
-    self.right_m0 = M0Device(pi = self.pi, id = "M0_2", reset_pin = self.config["reset_pins"][2])
+    self.m0s = [M0Device(pi = self.pi, id = f"M0_{i}", 
+                         reset_pin = self.config["reset_pins"][i]) for i in range(3)]
 
-    self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
     self.arduino_cli_discover()
 
     self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 140)
@@ -67,16 +65,23 @@ class Chamber:
     self.reward = Reward(pi=self.pi, pin=self.config["reward_pump_pin"])
     self.camera = Camera(device=self.config["camera_device"])
   
-  def m0_remap(self):
-    # Remap M0s based on their IDs to ensure left, middle, right mapping is correct
-    id_to_m0 = {m0.id: m0 for m0 in self.m0s}
-    try:
-        self.left_m0 = id_to_m0["M0_0"]
-        self.middle_m0 = id_to_m0["M0_1"]
-        self.right_m0 = id_to_m0["M0_2"]
-        logger.info("Remapped M0 devices based on IDs.")
-    except KeyError as e:
-        logger.error(f"Error remapping M0 devices: {e}. Check if all M0 boards are properly connected and identified.")
+  def get_left_m0(self):
+    idx = [m0.id for m0 in self.m0s].index("M0_0")
+    if idx == -1:
+        logger.error("Left M0 (M0_0) not found in m0s list.")
+    return self.m0s[idx]
+
+  def get_middle_m0(self):
+    idx = [m0.id for m0 in self.m0s].index("M0_1")
+    if idx == -1:
+        logger.error("Middle M0 (M0_1) not found in m0s list.")
+    return self.m0s[idx]
+
+  def get_right_m0(self):
+    idx = [m0.id for m0 in self.m0s].index("M0_2")
+    if idx == -1:
+        logger.error("Right M0 (M0_2) not found in m0s list.")
+    return self.m0s[idx]
 
   def __del__(self):
     """Clean up the chamber by stopping pigpio and M0s."""

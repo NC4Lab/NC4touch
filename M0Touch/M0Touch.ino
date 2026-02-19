@@ -195,18 +195,16 @@ void pickPicture(const char* imageID) {
 
 void showPreloadedImage() {
   analogWrite(TFT_BLK, 255);
-  Serial.println("Backlight on; image visible now.");
-  
-  Serial.print("Free RAM (after showing image): ");
-  Serial.println(freeRam());
+  // Serial.println("Backlight on; image visible now.");
+  // Serial.print("Free RAM (after showing image): ");
+  // Serial.println(freeRam());
 }
 
 
 void setBlackScreen(bool backlightOn) {
   analogWrite(TFT_BLK, 0);
-
-  Serial.print("Free RAM (after backlight off): ");
-  Serial.println(freeRam());
+  // Serial.print("Free RAM (after backlight off): ");
+  // Serial.println(freeRam());
 }
 
 

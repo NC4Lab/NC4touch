@@ -40,7 +40,7 @@ All virtual components implement the exact same interface as physical hardware:
 ```python
 # Works with both physical and virtual chambers
 chamber.reward_led.on()
-chamber.left_m0.send_command("DISPLAY:image.bmp")
+chamber.get_left_m0().send_command("DISPLAY:image.bmp")
 chamber.reward.dispense()
 ```
 
@@ -54,7 +54,7 @@ chamber.reward.dispense()
 ### 3. **Programmatic Control**
 ```python
 # Simulate hardware events programmatically
-chamber.left_m0.simulate_touch(160, 240, duration=0.2)
+chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
 chamber.beambreak.simulate_break()
 chamber.reward.dispense()
 ```
@@ -113,9 +113,9 @@ chamber = VirtualChamber()
 chamber.initialize_m0s()
 
 # Run your test sequence
-chamber.left_m0.send_command("DISPLAY:stim.bmp")
+chamber.get_left_m0().send_command("DISPLAY:stim.bmp")
 time.sleep(1)
-chamber.left_m0.simulate_touch(160, 240)
+chamber.get_left_m0().simulate_touch(160, 240)
 chamber.reward.dispense()
 time.sleep(0.5)
 chamber.reward.stop()

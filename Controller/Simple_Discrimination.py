@@ -55,16 +55,16 @@ class SimpleDiscrimination(Trainer):
             self.right_image = self.CORRECT_IMAGE
 
     def load_images(self):
-        self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
-        self.chamber.right_m0.send_command(f"IMG:{self.right_image}")
+        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
 
     def show_images(self):
-        self.chamber.left_m0.send_command("SHOW")
-        self.chamber.right_m0.send_command("SHOW")
+        self.chamber.get_left_m0().send_command("SHOW")
+        self.chamber.get_right_m0().send_command("SHOW")
 
     def clear_images(self):
-        self.chamber.left_m0.send_command("BLACK")
-        self.chamber.right_m0.send_command("BLACK")
+        self.chamber.get_left_m0().send_command("BLACK")
+        self.chamber.get_right_m0().send_command("BLACK")
 
     # ---------- session control ----------
 

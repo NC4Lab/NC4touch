@@ -197,18 +197,18 @@ class WebUI:
                 with ui.card():
                         ui.label('Left M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                         # Show M0 port
-                        self.left_m0_port_label = ui.label(f"Port: {self.session.chamber.left_m0.port}")
-                        self.left_m0_mode_label = ui.label(f"Mode: {self.session.chamber.left_m0.mode.name}")
+                        self.left_m0_port_label = ui.label(f"Port: {self.session.chamber.get_left_m0().port}")
+                        self.left_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_left_m0().mode.name}")
 
                         ui.label('Middle M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                         # Show M0 port
-                        self.middle_m0_port_label = ui.label(f"Port: {self.session.chamber.middle_m0.port}")
-                        self.middle_m0_mode_label = ui.label(f"Mode: {self.session.chamber.middle_m0.mode.name}")
+                        self.middle_m0_port_label = ui.label(f"Port: {self.session.chamber.get_middle_m0().port}")
+                        self.middle_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_middle_m0().mode.name}")
 
                         ui.label('Right M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                         # Show M0 port
-                        self.right_m0_port_label = ui.label(f"Port: {self.session.chamber.right_m0.port}")
-                        self.right_m0_mode_label = ui.label(f"Mode: {self.session.chamber.right_m0.mode.name}")
+                        self.right_m0_port_label = ui.label(f"Port: {self.session.chamber.get_right_m0().port}")
+                        self.right_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_right_m0().mode.name}")
 
                 with ui.card():
                     ui.label('Training Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
@@ -240,15 +240,15 @@ class WebUI:
                     
                     self.left_m0_cmd_label = ui.label("Left M0 Command:")
                     self.left_m0_cmd_input = ui.input(value = "")
-                    self.left_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.left_m0.send_command(self.left_m0_cmd_input.value))
+                    self.left_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_left_m0().send_command(self.left_m0_cmd_input.value))
 
                     self.middle_m0_cmd_label = ui.label("Middle M0 Command:")
                     self.middle_m0_cmd_input = ui.input(value = "")
-                    self.middle_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.middle_m0.send_command(self.middle_m0_cmd_input.value))
+                    self.middle_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_middle_m0().send_command(self.middle_m0_cmd_input.value))
 
                     self.right_m0_cmd_label = ui.label("Right M0 Command:")
                     self.right_m0_cmd_input = ui.input(value = "")
-                    self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.right_m0.send_command(self.right_m0_cmd_input.value))
+                    self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_right_m0().send_command(self.right_m0_cmd_input.value))
 
     
     def rgb_to_hex(self, rgb):

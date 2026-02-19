@@ -102,20 +102,20 @@ class MustTouch(Trainer):
         """Load images for the current trial."""
         # Load images from the sequence file
         # Send commands to M0 devices to load images
-        self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
-        self.chamber.right_m0.send_command(f"IMG:{self.right_image}")
+        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
     
     def show_images(self):
         """Display images on the M0 devices."""
         # Send commands to M0 devices to show images
-        self.chamber.left_m0.send_command("SHOW")
-        self.chamber.right_m0.send_command("SHOW")
+        self.chamber.get_left_m0().send_command("SHOW")
+        self.chamber.get_right_m0().send_command("SHOW")
     
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.left_m0.send_command("BLACK")
-        self.chamber.right_m0.send_command("BLACK")
+        self.chamber.get_left_m0().send_command("BLACK")
+        self.chamber.get_right_m0().send_command("BLACK")
 
     def run_training(self):
         """Main loop for running the training session."""
@@ -160,7 +160,7 @@ class MustTouch(Trainer):
             if self.current_trial == 1: 
                 if current_time - self.reward_start_time < 300:
                     # left screen is touched
-                    if self.chamber.left_m0.is_touched():
+                    if self.chamber.get_left_m0().is_touched():
                         logger.info("Left screen touched")
                         self.write_event("LeftScreenTouched", self.current_trial)
 
@@ -169,7 +169,7 @@ class MustTouch(Trainer):
                         else:
                             self.state = MustTouchState.ERROR
                     #right screen is touched
-                    elif self.chamber.right_m0.is_touched():
+                    elif self.chamber.get_right_m0().is_touched():
                         logger.info("Right screen touched")
                         self.write_event("RightScreenTouched", self.current_trial)
 
@@ -194,7 +194,7 @@ class MustTouch(Trainer):
                     self.state = MustTouchState.END_TRIAL
             else:
                 # left screen is touched
-                if self.chamber.left_m0.is_touched():
+                if self.chamber.get_left_m0().is_touched():
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial)
                     if self.left_image == "A01":
@@ -205,7 +205,7 @@ class MustTouch(Trainer):
                     self.state = MustTouchState.DELIVER_REWARD_START
 
                 # right screen is touched
-                elif self.chamber.right_m0.is_touched():
+                elif self.chamber.get_right_m0().is_touched():
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
 
