@@ -98,24 +98,40 @@ class MustTouch(Trainer):
         # Initialize the training session
         self.state = MustTouchState.START_TRAINING
     
-    def load_images(self):
+    def load_images(self, trial_num):
         """Load images for the current trial."""
         # Load images from the sequence file
-        # Send commands to M0 devices to load images
-        self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
-        self.chamber.right_m0.send_command(f"IMG:{self.right_image}")
+        self.left_image = self.trials[trial_num][0]
+        self.right_image = self.trials[trial_num][1]
+
+        if not self.left_image == "BLACK":
+            logger.info(f"Loading left image: {self.left_image}")
+            self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
+        else:
+            logger.info("Left image is BLACK, sending BLACK command")
+            self.chamber.left_m0.send_command("BLACK")
+
+        if not self.right_image == "BLACK":
+            logger.info(f"Loading right image: {self.right_image}")
+            self.chamber.right_m0.send_command(f"IMG:{self.right_image}")
+        else:
+            logger.info("Right image is BLACK, sending BLACK command")
+            self.chamber.right_m0.send_command("BLACK")
     
     def show_images(self):
         """Display images on the M0 devices."""
         # Send commands to M0 devices to show images
-        self.chamber.left_m0.send_command("SHOW")
-        self.chamber.right_m0.send_command("SHOW")
+        if not self.left_image == "BLACK":
+            self.chamber.left_m0.send_command("SHOW")
+
+        if not self.right_image == "BLACK":
+            self.chamber.right_m0.send_command("SHOW")
     
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.left_m0.send_command("BLACK")
-        self.chamber.right_m0.send_command("BLACK")
+        self.chamber.left_m0.send_command("OFF")
+        self.chamber.right_m0.send_command("OFF")
 
     def run_training(self):
         """Main loop for running the training session."""
@@ -153,7 +169,7 @@ class MustTouch(Trainer):
         elif self.state == MustTouchState.WAIT_FOR_TOUCH:
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             logger.debug("Current state: WAIT_FOR_TOUCH")
-            self.load_images()
+            self.load_images(self.current_trial)
             self.show_images()
 
             #First trial (has 300s timeout)
