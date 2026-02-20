@@ -63,24 +63,30 @@ class Chamber:
   
   def get_left_m0(self):
     """Returns the left M0 device (M0_0)"""
-    idx = [m0.id for m0 in self.m0s].index("M0_0")
-    if idx == -1:
+    try:
+        idx = [m0.id for m0 in self.m0s].index("M0_0")
+        return self.m0s[idx]
+    except ValueError:
         logger.error("Left M0 (M0_0) not found in m0s list.")
-    return self.m0s[idx]
+        return None
 
   def get_middle_m0(self):
     """Returns the middle M0 device (M0_1)"""
-    idx = [m0.id for m0 in self.m0s].index("M0_1")
-    if idx == -1:
+    try:
+        idx = [m0.id for m0 in self.m0s].index("M0_1")
+        return self.m0s[idx]
+    except ValueError:
         logger.error("Middle M0 (M0_1) not found in m0s list.")
-    return self.m0s[idx]
+        return None
 
   def get_right_m0(self):
     """Returns the right M0 device (M0_2)"""
-    idx = [m0.id for m0 in self.m0s].index("M0_2")
-    if idx == -1:
+    try:
+        idx = [m0.id for m0 in self.m0s].index("M0_2")
+        return self.m0s[idx]
+    except ValueError:
         logger.error("Right M0 (M0_2) not found in m0s list.")
-    return self.m0s[idx]
+        return None
 
   def __del__(self):
     """Clean up the chamber by stopping pigpio and M0s."""

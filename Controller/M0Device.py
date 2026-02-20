@@ -53,7 +53,6 @@ class M0Device:
         self.ud_mount_loc = None
 
         self.stop_flag = threading.Event()
-        self.message_queue = queue.Queue()  # to store lines: (id, text)
         self.cmd_queue = queue.Queue()  # to store commands to send to the M0
         self.serial_comm_loop_interval = 0.1  # seconds
         self.firmware_version = "0.0.0"
@@ -152,6 +151,7 @@ class M0Device:
             self.mode = M0Mode.SERIAL_COMM
             logger.info(f"[{self.id}] Started serial comm.")
             self.send_command("WHOAREYOU?")  # prompt the device to send its ID
+            self.send_command("VERSION?")  # prompt the device to send its firmware version
         else:
             logger.error(f"[{self.id}] Cannot start serial comm in mode {self.mode}.")
     
@@ -201,7 +201,6 @@ class M0Device:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
                     if line:
                         logger.info(f"[{self.id}] <- {line}")
-                        self.message_queue.put((self.id, line))
                         
                         if line.startswith("TOUCH"):
                             self.is_touched = True
@@ -363,16 +362,6 @@ class M0Device:
         # Unmount the UD drive
         time.sleep(0.1)
         self.reset()
-    
-    def flush_message_queue(self):
-        """
-        Flushes the message queue.
-        """
-        while not self.message_queue.empty():
-            try:
-                self.message_queue.get_nowait()
-            except queue.Empty:
-                break
     
     def _attempt_reopen(self):
         """

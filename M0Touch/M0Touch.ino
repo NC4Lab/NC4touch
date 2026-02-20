@@ -10,7 +10,7 @@
 #define TFT_RST  6
 #define TFT_BLK  9  
 
-const char* VERSION = "0.2.0_20260219";
+const char* VERSION = "0.2.1_20260219";
 
 
 const int pin0 = 10;
@@ -49,7 +49,7 @@ void setupDisplayAndSD();
 void processSerialCommand();
 void pickPicture(const char* imageID);
 void showPreloadedImage();
-void setBlackScreen(bool backlightOn = true);
+void setBlackScreen();
 void scanTouch();
 uint16_t numberTillComma(String &s);
 
@@ -63,8 +63,9 @@ void setup() {
 
   setupDisplayAndSD();
 
-  analogWrite(TFT_BLK, 0);
   screen.fillScreen(0x0000); 
+  setBlackScreen();
+  showActive = false;
 
   Serial.print("ID:M0_");
   Serial.print(boardID);
@@ -144,13 +145,13 @@ void processSerialCommand() {
     return;
   }
   else if (cmd.equalsIgnoreCase("BLACK")) { // backlight off, show black screen, detect 1 touch
-    setBlackScreen(false);
+    setBlackScreen();
     showActive = true;   // detect 1 touch
     Serial.println("ACK:BLACK");
     return;
   } // SHOW => backlight on, allow 1 touch
   else if (cmd.equalsIgnoreCase("OFF")) { // backlight off, show black screen, ignore touches
-    setBlackScreen(false);
+    setBlackScreen();
     showActive = false;   // ignore touches
     Serial.println("ACK:OFF");
     return;
@@ -201,7 +202,7 @@ void showPreloadedImage() {
 }
 
 
-void setBlackScreen(bool backlightOn) {
+void setBlackScreen() {
   analogWrite(TFT_BLK, 0);
   // Serial.print("Free RAM (after backlight off): ");
   // Serial.println(freeRam());
