@@ -99,22 +99,22 @@ class Habituation(Trainer):
         elif self.state == HabituationState.START_TRIAL:
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
-            self.default_start_trial()
-            self.current_trial += 1
-            if self.current_trial < self.config["num_trials"]:
-                logger.info(f"Starting trial {self.current_trial}...")
-                self.write_event("StartTrial", self.current_trial)
-
-                self.state = HabituationState.DELIVER_REWARD_START
-            else:
+            if self.current_trial >= self.config["num_trials"]:
                 # All trials completed, move to end training state
                 logger.info("All trials completed.")
                 self.state = HabituationState.END_TRAINING
+            else:
+                self.current_trial += 1
+                self.default_start_trial()
+                logger.info(f"Starting trial {self.current_trial}...")
+                self.write_event("StartTrial", self.current_trial)
+                self.state = HabituationState.DELIVER_REWARD_START
 
         elif self.state == HabituationState.DELIVER_REWARD_START:
             # DELIVER_REWARD_START state, preparing to deliver the reward
             logger.debug("Current state: DELIVER_REWARD_START")
             self.reward_start_time = current_time
+            self.reward_collected = False
             logger.info(f"Preparing to deliver reward for trial {self.current_trial}...")
             self.write_event("DeliverRewardStart", self.current_trial)
             self.chamber.reward.dispense()

@@ -153,8 +153,8 @@ class InitialTouch(Trainer):
 
             # DELIVER_REWARD_START state, preparing to deliver the reward
             self.reward_start_time = current_time
-            logger.info(f"Preparing to deliver large reward for trial {self.current_trial}...")
-            self.write_event("DeliverRewardStart", self.current_trial)
+            logger.info(f"Preparing to deliver large reward for trial {self.current_trial + 1}...")
+            self.write_event("DeliverRewardStart", self.current_trial + 1)
             self.chamber.reward.dispense()
             self.chamber.reward_led.activate()
             self.state = InitialTouchState.DELIVERING_LARGE_REWARD
@@ -166,13 +166,13 @@ class InitialTouch(Trainer):
                     # Beam break detected during reward dispense
                     self.reward_collected = True
                     logger.info("Beam broken during reward dispense")
-                    self.write_event("BeamBreakDuringLargeReward", self.current_trial)
+                    self.write_event("BeamBreakDuringLargeReward", self.current_trial + 1)
                     self.chamber.beambreak.deactivate()  # Deactivate the beam break to prevent multiple detections
                     self.chamber.reward_led.deactivate()  # Turn off the reward LED immediately when the reward is collected
             else:
                 # Reward finished dispensing
                 logger.info(f"Large reward dispense completed")
-                self.write_event("LargeRewardComplete", self.current_trial)
+                self.write_event("LargeRewardComplete", self.current_trial + 1)
                 self.chamber.reward.stop()
                 self.chamber.beambreak.deactivate()  # Deactivate the beam break at the end of the reward dispense
                 self.chamber.reward_led.deactivate()  # Ensure the reward LED is turned off at the end of the reward dispense
@@ -184,8 +184,8 @@ class InitialTouch(Trainer):
 
             # SMALL_REWARD_START state, preparing to deliver a small reward
             self.reward_start_time = current_time
-            logger.info(f"Preparing to deliver small reward for trial {self.current_trial}...")
-            self.write_event("SmallRewardStart", self.current_trial)
+            logger.info(f"Preparing to deliver small reward for trial {self.current_trial + 1}...")
+            self.write_event("SmallRewardStart", self.current_trial + 1)
             self.chamber.reward.dispense()
             self.chamber.reward_led.activate()
             self.state = InitialTouchState.DELIVERING_SMALL_REWARD
@@ -197,13 +197,13 @@ class InitialTouch(Trainer):
                     # Beam break detected during small reward dispense
                     self.reward_collected = True
                     logger.info("Beam broken during small reward dispense")
-                    self.write_event("BeamBreakDuringSmallReward", self.current_trial)
+                    self.write_event("BeamBreakDuringSmallReward", self.current_trial + 1)
                     self.chamber.beambreak.deactivate()  # Deactivate the beam break to prevent multiple detections
                     self.chamber.reward_led.deactivate()  # Turn off the reward LED immediately when the reward is collected
             else:
                 # Small reward finished dispensing
                 logger.info(f"Small reward dispense completed")
-                self.write_event("SmallRewardComplete", self.current_trial)
+                self.write_event("SmallRewardComplete", self.current_trial + 1)
                 self.chamber.reward.stop()
                 self.chamber.beambreak.deactivate()  # Deactivate the beam break at the end of the reward dispense  
                 self.chamber.reward_led.deactivate()  # Ensure the reward LED is turned off at the end of the reward dispense
@@ -230,7 +230,7 @@ class InitialTouch(Trainer):
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
                 if self.chamber.left_m0.was_touched():
                     logger.info("Left screen touched")
-                    self.write_event("LeftScreenTouched", self.current_trial)
+                    self.write_event("LeftScreenTouched", self.current_trial + 1)
 
                     if self.left_image == "BLACK":
                         self.state = InitialTouchState.ERROR
@@ -238,7 +238,7 @@ class InitialTouch(Trainer):
                         self.state = InitialTouchState.CORRECT
                 elif self.chamber.right_m0.was_touched():
                     logger.info("Right screen touched")
-                    self.write_event("RightScreenTouched", self.current_trial)
+                    self.write_event("RightScreenTouched", self.current_trial + 1)
 
                     if self.right_image == "BLACK":
                         self.state = InitialTouchState.ERROR
@@ -247,13 +247,13 @@ class InitialTouch(Trainer):
             else:
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
-                self.write_event("TouchTimeout", self.current_trial)
+                self.write_event("TouchTimeout", self.current_trial + 1)
                 self.state = InitialTouchState.ITI_START
         
         elif self.state == InitialTouchState.CORRECT:
             # CORRECT state, handling correct touch
             logger.info("Correct touch detected.")
-            self.write_event("CorrectTouch", self.current_trial)
+            self.write_event("CorrectTouch", self.current_trial + 1)
 
             self.clear_images()
             self.state = InitialTouchState.LARGE_REWARD_START
@@ -261,7 +261,7 @@ class InitialTouch(Trainer):
         elif self.state == InitialTouchState.ERROR:
             # ERROR state, handling incorrect touch
             logger.info("Incorrect touch detected.")
-            self.write_event("IncorrectTouch", self.current_trial)
+            self.write_event("IncorrectTouch", self.current_trial + 1)
 
             self.clear_images()
             self.state = InitialTouchState.SMALL_REWARD_START
@@ -269,7 +269,7 @@ class InitialTouch(Trainer):
         elif self.state == InitialTouchState.ITI_START:
             # ITI_START state, preparing for the inter-trial interval
             logger.info("Starting inter-trial interval...")
-            self.write_event("ITIStart", self.current_trial)
+            self.write_event("ITIStart", self.current_trial + 1)
             self.iti_start_time = self.default_iti_start()
             self.state = InitialTouchState.ITI
         
@@ -278,7 +278,7 @@ class InitialTouch(Trainer):
             if current_time - self.iti_start_time >= self.config["iti_duration"]:
                 # ITI completed, move to start trial state
                 logger.info("Inter-trial interval completed.")
-                self.write_event("ITIComplete", self.current_trial)
+                self.write_event("ITIComplete", self.current_trial + 1)
                 self.current_trial += 1
                 self.state = InitialTouchState.START_TRIAL
 

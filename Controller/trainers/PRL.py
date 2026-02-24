@@ -145,7 +145,7 @@ class PRL(Trainer):
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
             self.current_trial += 1
-            if self.current_trial < self.config["num_trials"]:
+            if self.current_trial <= self.config["num_trials"]:
                 logger.info(f"Starting trial {self.current_trial}...")
                 self.write_event("StartTrial", self.current_trial)
                 if self.current_trial == self.config["trial_to_reverse"]:
@@ -168,7 +168,6 @@ class PRL(Trainer):
                 logger.info(f"Reward probabilities set for trial {self.current_trial}: {self.left_reward_probability} (left), {self.right_reward_probability} (right)")
                 self.write_event("ImagesLoaded", self.current_trial)
                 self.write_event("RewardProbabilitiesSet", self.current_trial)
-                self.show_images()
                 self.state = PRLState.WAIT_FOR_TOUCH
             else:
                 # All trials completed, move to end training state
@@ -179,7 +178,8 @@ class PRL(Trainer):
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.left_m0.is_touched():
+                side = self.check_touch()
+                if side == "LEFT":
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial)
 
@@ -187,7 +187,7 @@ class PRL(Trainer):
                         self.state = PRLState.CORRECT
                     else:
                         self.state = PRLState.ERROR
-                elif self.chamber.right_m0.is_touched():
+                elif side == "RIGHT":
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
 
@@ -237,6 +237,7 @@ class PRL(Trainer):
             # DELIVER_REWARD_START state, preparing to deliver the reward
             logger.debug("Current state: DELIVER_REWARD_START")
             self.reward_start_time = current_time
+            self.reward_collected = False
             logger.info(f"Preparing to deliver reward for trial {self.current_trial}...")
             self.write_event("DeliverRewardStart", self.current_trial)
             self.chamber.reward.dispense()

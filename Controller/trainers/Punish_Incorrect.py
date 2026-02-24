@@ -226,7 +226,8 @@ class Punish_Incorrect(Trainer):
             # Waiting for screen touch
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.left_m0.is_touched():
+                side = self.check_touch()
+                if side == "LEFT":
                     self.write_event("LeftScreenTouched", self.current_trial)
                     self.state = (
                         PunishIncorrectState.CORRECT
@@ -234,7 +235,7 @@ class Punish_Incorrect(Trainer):
                         else PunishIncorrectState.INCORRECT
                     )
 
-                elif self.chamber.right_m0.is_touched():
+                elif side == "RIGHT":
                     self.write_event("RightScreenTouched", self.current_trial)
                     self.state = (
                         PunishIncorrectState.CORRECT
