@@ -45,6 +45,13 @@ class InitialTouch(Trainer):
         self.config.ensure_param("touch_timeout", 120)  # Directory for saving data files
 
         # Local variables used by the trainer during the training session and not set in the config file.
+        self.config.ensure_param("num_trials", 30)  # Number of trials to run
+        self.config.ensure_param("large_reward_duration", 3.5)  # Duration for large reward
+        self.config.ensure_param("small_reward_duration", 1.5)  # Duration for small reward
+        self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
+        self.config.ensure_param("touch_timeout", 10) # Timeout for touch response
+        self.config.ensure_param("trainer_seq_dir", "./scripts") # Default sequence directory
+        self.config.ensure_param("trainer_seq_file", "seq_file.csv") # Default sequence file
         self.current_trial = 0
         self.reward_start_time = 0.0
         self.reward_collected = False
@@ -137,7 +144,6 @@ class InitialTouch(Trainer):
             logger.info("Starting training session...")
             self.write_event("StartTraining", 1)
             self.chamber.house_led.activate()
-            self.current_trial = 1
             # Start by delivering a large reward
             self.state = InitialTouchState.LARGE_REWARD_START
 
@@ -206,15 +212,13 @@ class InitialTouch(Trainer):
         elif self.state == InitialTouchState.START_TRIAL:
             # START_TRIAL state, preparing for the next trial
             if self.current_trial < self.config["num_trials"]:
-                logger.info(f"Starting trial {self.current_trial}...")
-                self.write_event("StartTrial", self.current_trial)
+                logger.info(f"Starting trial {self.current_trial + 1}...")
+                self.write_event("StartTrial", self.current_trial + 1)
                 self.default_start_trial()
                 self.load_images(self.current_trial)
-
                 # Show images for the next trial
                 self.show_images()
                 self.trial_start_time = current_time
-
                 self.state = InitialTouchState.WAIT_FOR_TOUCH
             else:
                 # All trials completed, move to end training state

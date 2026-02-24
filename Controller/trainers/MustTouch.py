@@ -58,6 +58,9 @@ class MustTouch(Trainer):
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
+        self.config.ensure_param("touch_timeout", 10) # Timeout for touch response
+        self.config.ensure_param("trainer_seq_dir", "./scripts") # Default sequence directory
+        self.config.ensure_param("trainer_seq_file", "seq_file.csv") # Default sequence file
 
         # Local variables used by the trainer during the training session and not set in the config file.
         self.reward_start_time = time.time()
@@ -147,19 +150,15 @@ class MustTouch(Trainer):
             logger.debug("Current state: START_TRAINING")
             logger.info("Starting training session...")
             self.write_event("StartTraining", 1)
-
-            self.current_trial = 1
             self.state = MustTouchState.START_TRIAL
 
         elif self.state == MustTouchState.START_TRIAL:
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
-            self.current_trial += 1
             if self.current_trial < self.config["num_trials"]:
-                logger.info(f"Starting trial {self.current_trial}...")
-                self.write_event("StartTrial", self.current_trial)
+                logger.info(f"Starting trial {self.current_trial + 1}...")
+                self.write_event("StartTrial", self.current_trial + 1)
                 self.default_start_trial()
-
                 self.state = MustTouchState.WAIT_FOR_TOUCH
             else:
                 # All trials completed, move to end training state
@@ -171,11 +170,8 @@ class MustTouch(Trainer):
             logger.debug("Current state: WAIT_FOR_TOUCH")
             self.load_images(self.current_trial)
             self.show_images()
-
-            #First trial (has 300s timeout)
             self.trial_start_time = current_time
-            if self.current_trial == 1: 
-                if current_time - self.reward_start_time < 300:
+            # ...existing code...
                     # left screen is touched
                     if self.chamber.left_m0.is_touched():
                         logger.info("Left screen touched")

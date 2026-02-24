@@ -128,26 +128,26 @@ def main():
     # )
     
     # Example 3: Test MustTouch
-    # from MustTouch import MustTouch
-    # test_trainer_with_gui(MustTouch, 
-    #     trainer_config={
-    #         "trainer_name": "MustTouch",
-    #         "rodent_name": "VirtualRat",
-    #         "num_trials": 20,
-    #     },
-    #     chamber_config=chamber_config
-    # )
-
-    # Example 4: Test PRL
-    from PRL import PRL
-    test_trainer_with_gui(PRL, 
+    from trainers.MustTouch import MustTouch
+    test_trainer_with_gui(MustTouch, 
         trainer_config={
-            "trainer_name": "ProbabilisticReversalLearning",
+            "trainer_name": "MustTouch",
             "rodent_name": "VirtualRat",
-            "num_trials": 10,
+            "num_trials": 20,
         },
         chamber_config=chamber_config
     )
+
+    # # Example 4: Test PRL
+    # from PRL import PRL
+    # test_trainer_with_gui(PRL, 
+    #     trainer_config={
+    #         "trainer_name": "ProbabilisticReversalLearning",
+    #         "rodent_name": "VirtualRat",
+    #         "num_trials": 10,
+    #     },
+    #     chamber_config=chamber_config
+    # )
     
     # Example 5: Test punish incorrect
     # from Punish_Incorrect import PunishIncorrect
