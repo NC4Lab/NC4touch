@@ -47,8 +47,8 @@ class Punish_Incorrect(Trainer):
         self.config.ensure_param("trainer_name", "PunishIncorrect")
         self.config.ensure_param("num_trials", 30)             # Total number of trials
         self.config.ensure_param("iti_duration", 10)           # Inter-trial interval duration (seconds)
-        self.config.ensure_param("free_reward_duration", 4.0)  # Duration of free reward on first trial
-        self.config.ensure_param("reward_duration", 3.0)       # Reward duration for correct response
+        self.config.ensure_param("free_reward_duration", 1.0)  # Duration of free reward on first trial
+        self.config.ensure_param("reward_duration", 1.0)       # Reward duration for correct response
         self.config.ensure_param("punish_duration", 5.0)       # Punishment duration for incorrect response
         self.config.ensure_param("buzzer_duration", 0.5)       # Duration of buzzer during punishment
         self.config.ensure_param("touch_timeout", 300)         # Time allowed for touch response

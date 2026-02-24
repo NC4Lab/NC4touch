@@ -60,7 +60,7 @@ class PRL(Trainer):
         self.config.ensure_param("num_trials", 60)  # Number of trials to run
         self.config.ensure_param("high_reward_probability", 0.9)  # Probability of high reward
         self.config.ensure_param("low_reward_probability", 0.1)
-        self.config.ensure_param("reward_pump_secs", 1.5)  # Duration for which the reward pump is activated
+        self.config.ensure_param("reward_pump_secs", 1)  # Duration for which the reward pump is activated
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration

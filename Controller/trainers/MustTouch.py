@@ -38,7 +38,7 @@ class MustTouch(Trainer):
 
         self.config.ensure_param("trainer_name", "MustTouch")
         self.config.ensure_param("num_trials", 30)
-        self.config.ensure_param("reward_pump_secs", 3.5)
+        self.config.ensure_param("reward_pump_secs", 1)
         self.config.ensure_param("beam_break_wait_time", 10)
         self.config.ensure_param("iti_duration", 10)
         self.config.ensure_param("max_iti_duration", 30)

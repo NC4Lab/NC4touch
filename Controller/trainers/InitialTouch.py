@@ -46,8 +46,8 @@ class InitialTouch(Trainer):
 
         # Local variables used by the trainer during the training session and not set in the config file.
         self.config.ensure_param("num_trials", 30)  # Number of trials to run
-        self.config.ensure_param("large_reward_duration", 3.5)  # Duration for large reward
-        self.config.ensure_param("small_reward_duration", 1.5)  # Duration for small reward
+        self.config.ensure_param("large_reward_duration", 1)  # Duration for large reward
+        self.config.ensure_param("small_reward_duration", 0.5)  # Duration for small reward
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("touch_timeout", 10) # Timeout for touch response
         self.config.ensure_param("trainer_seq_dir", "./scripts") # Default sequence directory

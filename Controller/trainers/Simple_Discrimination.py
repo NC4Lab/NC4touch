@@ -27,7 +27,7 @@ class Simple_Discrimination(Trainer):
 
         self.config.ensure_param("trainer_name", "Simple Discrimination")
         self.config.ensure_param("num_trials", 60)
-        self.config.ensure_param("reward_pump_secs", 3.5)
+        self.config.ensure_param("reward_pump_secs", 1)
         self.config.ensure_param("beam_break_wait_time", 10)
         self.config.ensure_param("iti_duration", 10)
         self.config.ensure_param("max_corrections", 3)
