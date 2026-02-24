@@ -53,8 +53,8 @@ class Chamber:
 
     self.arduino_cli_discover()
 
-    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 140)
-    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness = 255)
+    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 140, color=self.config["reward_led_color"])
+    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness = 255, color=self.config["punishment_led_color"])
     self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness = 100) 
     self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"])
     self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"])
@@ -145,9 +145,8 @@ class Chamber:
     if len(self.discovered_boards) >= len(self.m0s):
         for i, m0 in enumerate(self.m0s):
             m0.port = self.discovered_boards[i]
+            m0.id = f"M0_{i}"
             logger.info(f"Set {m0.id} serial port to {m0.port}")
-            # m0.open_port()
-            # m0.start_read_thread()
     else:
         logger.error("Not enough M0 boards discovered. Please check the connections.")
 
