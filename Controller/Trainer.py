@@ -5,6 +5,7 @@ from Chamber import Chamber
 from datetime import datetime
 from abc import ABC, abstractmethod
 from Config import Config
+import time
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -45,6 +46,29 @@ class Trainer(ABC):
         # Ensure required parameters are set in the config
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
         self.config.ensure_param("rodent_name", "TestRodent")
+
+        # House LED
+        self.config.ensure_param("house_led_brightness_active", 200)
+        self.config.ensure_param("house_led_brightness_iti", 50)
+
+        # Common training
+        self.config.ensure_param("num_trials", 30)
+        self.config.ensure_param("iti_duration", 10)
+        self.config.ensure_param("max_iti_duration", 20)
+        self.config.ensure_param("iti_increment", 1)
+        self.config.ensure_param("touch_timeout", 120)
+        self.config.ensure_param("beam_break_wait_time", 10)
+        self.config.ensure_param("reward_pump_secs", 3.0)
+
+        # LED colors
+        self.config.ensure_param("reward_led_color", (0, 255, 0))
+        self.config.ensure_param("punishment_led_color", (255, 0, 0))
+
+        # Punishment
+        self.config.ensure_param("punish_duration", 5.0)
+        self.config.ensure_param("buzzer_duration", 0.5)
+
+        self.config.ensure_param("data_dir", "/mnt/shared/data")
 
         self.data_file = None
     
@@ -118,6 +142,105 @@ class Trainer(ABC):
             json.dump(event_data, self.data_file)
         else:
             logger.warning("Data file is not open. Cannot write event.")
+
+    # ---- Default behavior methods (opt-in, called from subclass state machines) ----
+
+    def default_start_trial(self):
+        """Set house LED to active brightness and activate it."""
+        self.chamber.house_led.set_brightness(self.config["house_led_brightness_active"])
+        self.chamber.house_led.activate()
+
+    def default_iti_start(self):
+        """Dim house LED, deactivate reward LED, activate beambreak. Returns current time."""
+        self.chamber.house_led.set_brightness(self.config["house_led_brightness_iti"])
+        self.chamber.reward_led.deactivate()
+        self.chamber.beambreak.activate()
+        return time.time()
+
+    def default_iti_check_beam_break(self, current_iti_duration):
+        """Check for beam break during ITI and extend duration if needed."""
+        if self.chamber.beambreak.state == False:
+            logger.info("Beam broken during ITI. Adding iti_increment to ITI duration.")
+            if current_iti_duration < self.config["max_iti_duration"]:
+                current_iti_duration += self.config["iti_increment"]
+        return current_iti_duration
+
+    def default_deliver_reward(self, duration=None):
+        """Dispense reward, activate reward LED and beambreak. Returns start time."""
+        self.chamber.reward.dispense()
+        self.chamber.reward_led.activate()
+        self.chamber.beambreak.activate()
+        return time.time()
+
+    def default_stop_reward(self):
+        """Stop pump, deactivate reward LED and beambreak."""
+        self.chamber.reward.stop()
+        self.chamber.reward_led.deactivate()
+        self.chamber.beambreak.deactivate()
+
+    def default_punishment(self):
+        """Activate punishment LED and buzzer. Returns start time."""
+        self.chamber.punishment_led.activate()
+        self.chamber.buzzer.activate()
+        return time.time()
+
+    def default_stop_punishment(self):
+        """Deactivate punishment LED and buzzer."""
+        self.chamber.punishment_led.deactivate()
+        self.chamber.buzzer.deactivate()
+
+    def default_setup_led_colors(self):
+        """Set reward/punishment LED colors from config."""
+        self.chamber.reward_led.set_color(self.config["reward_led_color"])
+        self.chamber.punishment_led.set_color(self.config["punishment_led_color"])
+
+    def default_end_trial(self):
+        """Clear images on all M0s and write EndTrial event."""
+        self.chamber.get_left_m0().send_command("BLACK")
+        self.chamber.get_right_m0().send_command("BLACK")
+
+    def default_start_training(self):
+        """Reset chamber to default state, set LED colors, and open data file."""
+        self.chamber.default_state()
+        self.default_setup_led_colors()
+        self.open_data_file()
+
+    def default_stop_training(self):
+        """Stop all hardware and close data file."""
+        self.chamber.reward.stop()
+        self.chamber.reward_led.deactivate()
+        self.chamber.punishment_led.deactivate()
+        self.chamber.house_led.deactivate()
+        self.chamber.buzzer.deactivate()
+        self.chamber.beambreak.deactivate()
+        self.close_data_file()
+
+    # ---- Helper methods ----
+
+    def check_touch(self):
+        """Returns 'LEFT', 'RIGHT', or None based on which screen was touched."""
+        if self.chamber.get_left_m0().was_touched():
+            return "LEFT"
+        elif self.chamber.get_right_m0().was_touched():
+            return "RIGHT"
+        return None
+
+    def write_trial_data(self, data):
+        """Wrapper around write_event for trial data."""
+        self.write_event("TrialData", data)
+
+    def free_reward(self, duration=None):
+        """Dispense reward and turn on reward LED. Caller manages timing via state machine."""
+        self.chamber.reward.dispense()
+        self.chamber.reward_led.activate()
+
+    def wait_for_trial_initiation(self):
+        """Check if beambreak was triggered for trial initiation."""
+        return self.chamber.beambreak.state == False
+
+    def deliver_reward(self, duration=None):
+        """Alias for default_deliver_reward for backwards compatibility."""
+        return self.default_deliver_reward(duration)
     
     @abstractmethod
     def start_training(self):

@@ -1,5 +1,5 @@
-import time
 import os
+import time
 from enum import Enum, auto
 
 from Trainer import Trainer
@@ -7,305 +7,231 @@ from Trainer import Trainer
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+
 class MustTouchState(Enum):
-    """Enum for different states in the must touch trainer."""
+    """Enum for different states in the MustTouch trainer."""
     IDLE = auto()
     START_TRAINING = auto()
     START_TRIAL = auto()
     WAIT_FOR_TOUCH = auto()
+    CORRECT = auto()
+    ERROR = auto()
     DELIVER_REWARD_START = auto()
     DELIVERING_REWARD = auto()
     POST_REWARD = auto()
-    CORRECT = auto()
-    ERROR = auto()
     ITI_START = auto()
     ITI = auto()
     END_TRIAL = auto()
     END_TRAINING = auto()
 
+
 class MustTouch(Trainer):
     """
-    MustTouch trainer for the rodent training session.
+    MustTouch trainer.
 
-    In MustTouch, the animal is required to touch the correct screen
-    before a reward is dispensed. The goal is to teach the animal to
-    associate touching the correct target with receiving a reward.
-
-    If the animal touches the correct target (the one with an image), a reward will be dispensed for a set duration. 
-    The trainer will also monitor the beam break sensor to detect if the animal is interacting with the reward
-    system. If the beam is broken, the trainer will turn off the reward LED. Once the reward is 
-    dispensed, the trainer will wait for a set duration for the beam to be broken before moving on.
-
-    The trainer will next wait for a set ITI duration before starting the next trial. If the animal breaks the beam during the
-    ITI, one second will be added to the ITI duration.
-
-    The trainer will repeat this process for a set number of trials.
-
-    State machine:
-    IDLE -> START_TRAINING -> START_TRIAL -> CORRECT -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
+    Two images are shown (correct vs incorrect). Reward is delivered only when
+    the rodent touches the screen showing the configured correct image.
     """
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_MustTouch_config.yaml'):
+
+    def __init__(self, chamber, trainer_config={}, trainer_config_file='~/trainer_MustTouch_config.yaml'):
         super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
 
-        # Initialize the trainer configuration.
-        # All variables used by the trainer are recommended to be set in the config file.
-        # This allows for easy modification of the trainer parameters without changing the code.
-        # The trainer will also reinitialize with these parameters.
-        # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
         self.config.ensure_param("trainer_name", "MustTouch")
-        self.config.ensure_param("num_trials", 30)  # Number of trials to run
-        self.config.ensure_param("reward_pump_secs", 3.5)  # Duration for which the reward pump is activated
-        self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
-        self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
-        self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
-
-        # Local variables used by the trainer during the training session and not set in the config file.
-        self.reward_start_time = time.time()
-        self.reward_collected = False
-        self.last_beam_break_time = time.time()
-        self.iti_start_time = time.time()
+        self.config.ensure_param("num_trials", 30)
+        self.config.ensure_param("reward_pump_secs", 1)
+        self.config.ensure_param("beam_break_wait_time", 10)
+        self.config.ensure_param("iti_duration", 10)
+        self.config.ensure_param("max_iti_duration", 30)
+        self.config.ensure_param("iti_increment", 1)
+        self.config.ensure_param("touch_timeout", 120)
+        self.config.ensure_param("trainer_seq_dir", "./scripts")
+        self.config.ensure_param("trainer_seq_file", "seq_file.csv")
+        self.config.ensure_param("correct_image", "A01")
 
         self.current_trial = 0
         self.current_trial_iti = self.config["iti_duration"]
+
+        self.left_image = ""
+        self.right_image = ""
+
+        self.reward_start_time = 0.0
+        self.reward_collected = False
+        self.iti_start_time = 0.0
+        self.trial_start_time = 0.0
+
         self.state = MustTouchState.IDLE
+        self.prev_state = MustTouchState.IDLE
+
+        self.default_setup_led_colors()
 
     def start_training(self):
-        # Starting state
-        logger.info("Starting training session...")
+        logger.info("Starting MustTouch training session...")
 
         self.chamber.default_state()
-        
-        # Open sequence file
+
         trainer_seq_file = os.path.join(self.config["trainer_seq_dir"], self.config["trainer_seq_file"])
         self.trials = self.read_trainer_seq_file(trainer_seq_file, 2)
         if not self.trials:
             logger.error(f"Failed to read trainer sequence file: {trainer_seq_file}")
+            self.state = MustTouchState.IDLE
             return
-        
-        # Check if the number of trials is valid
+
         if len(self.trials) > self.config["num_trials"]:
-            logger.warning(f"Number of trials in the sequence file exceeds the expected number of trials: {self.config['num_trials']}")
-            # Truncate the trials list to the expected number
+            logger.warning(
+                "Number of trials in sequence file exceeds expected num_trials (%s). Truncating.",
+                self.config["num_trials"],
+            )
             self.trials = self.trials[:self.config["num_trials"]]
-        
         elif len(self.trials) < self.config["num_trials"]:
-            logger.error(f"Number of trials in the sequence file does not match the expected number of trials: {self.config['num_trials']}")
-            return
+            logger.warning(
+                "Sequence file has fewer trials (%s) than configured num_trials (%s). Using file length.",
+                len(self.trials),
+                self.config["num_trials"],
+            )
 
-        # Start recording data
+        self.config["num_trials"] = len(self.trials)
         self.open_data_file()
-
-        # Initialize the training session
+        self.current_trial = 0
         self.state = MustTouchState.START_TRAINING
-    
-    def load_images(self):
-        """Load images for the current trial."""
-        # Load images from the sequence file
-        # Send commands to M0 devices to load images
-        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
-        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
-    
+
+    def load_images(self, trial_num):
+        """Load images for the current trial from sequence file columns [left, right]."""
+        self.left_image = self.trials[trial_num][0]
+        self.right_image = self.trials[trial_num][1]
+
+        if self.left_image == "BLACK":
+            self.chamber.get_left_m0().send_command("BLACK")
+        else:
+            self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+
+        if self.right_image == "BLACK":
+            self.chamber.get_right_m0().send_command("BLACK")
+        else:
+            self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+
     def show_images(self):
-        """Display images on the M0 devices."""
-        # Send commands to M0 devices to show images
-        self.chamber.get_left_m0().send_command("SHOW")
-        self.chamber.get_right_m0().send_command("SHOW")
-    
+        """Display loaded images."""
+        if self.left_image != "BLACK":
+            self.chamber.get_left_m0().send_command("SHOW")
+        if self.right_image != "BLACK":
+            self.chamber.get_right_m0().send_command("SHOW")
+
     def clear_images(self):
-        """Clear the images on the M0 devices."""
-        # Send commands to M0 devices to blank images
+        """Blank both screens."""
         self.chamber.get_left_m0().send_command("BLACK")
         self.chamber.get_right_m0().send_command("BLACK")
 
     def run_training(self):
-        """Main loop for running the training session."""
         current_time = time.time()
 
+        if self.state != self.prev_state:
+            logger.info(f"State changed: {self.prev_state.name} -> {self.state.name}")
+            self.prev_state = self.state
+
         if self.state == MustTouchState.IDLE:
-            # IDLE state, waiting for the start signal
-            logger.debug("Current state: IDLE")
-            pass 
+            return
 
-        elif self.state == MustTouchState.START_TRAINING:
-            # START_TRAINING state, initializing the training session
-            logger.debug("Current state: START_TRAINING")
-            logger.info("Starting training session...")
+        if self.state == MustTouchState.START_TRAINING:
             self.write_event("StartTraining", 1)
-
-            self.current_trial = 1
+            self.chamber.house_led.activate()
             self.state = MustTouchState.START_TRIAL
 
         elif self.state == MustTouchState.START_TRIAL:
-            # START_TRIAL state, preparing for the next trial
-            logger.debug("Current state: START_TRIAL")
-            self.current_trial += 1
-            if self.current_trial < self.config["num_trials"]:
-                logger.info(f"Starting trial {self.current_trial}...")
-                self.write_event("StartTrial", self.current_trial)
-
-                self.state = MustTouchState.WAIT_FOR_TOUCH
-            else:
-                # All trials completed, move to end training state
-                logger.info("All trials completed.")
+            if self.current_trial >= self.config["num_trials"]:
                 self.state = MustTouchState.END_TRAINING
+                return
+
+            trial_number = self.current_trial + 1
+            self.write_event("StartTrial", trial_number)
+            self.default_start_trial()
+            self.load_images(self.current_trial)
+            self.show_images()
+            self.trial_start_time = current_time
+            self.state = MustTouchState.WAIT_FOR_TOUCH
 
         elif self.state == MustTouchState.WAIT_FOR_TOUCH:
-            # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
-            logger.debug("Current state: WAIT_FOR_TOUCH")
-            self.load_images()
-            self.show_images()
+            if current_time - self.trial_start_time > self.config["touch_timeout"]:
+                logger.info("Touch timeout on trial %s", self.current_trial + 1)
+                self.write_event("TouchTimeout", self.current_trial + 1)
+                self.clear_images()
+                self.state = MustTouchState.ITI_START
+                return
 
-            #First trial (has 300s timeout)
-            self.trial_start_time = current_time
-            if self.current_trial == 1: 
-                if current_time - self.reward_start_time < 300:
-                    # left screen is touched
-                    if self.chamber.get_left_m0().is_touched():
-                        logger.info("Left screen touched")
-                        self.write_event("LeftScreenTouched", self.current_trial)
+            side = self.check_touch()
+            if side is None:
+                return
 
-                        if self.left_image == "A01":
-                            self.state = MustTouchState.CORRECT
-                        else:
-                            self.state = MustTouchState.ERROR
-                    #right screen is touched
-                    elif self.chamber.get_right_m0().is_touched():
-                        logger.info("Right screen touched")
-                        self.write_event("RightScreenTouched", self.current_trial)
+            trial_number = self.current_trial + 1
+            self.write_event(f"{side}ScreenTouched", trial_number)
 
-                        if self.right_image == "A01":
-                            self.state = MustTouchTouchState.CORRECT
-                        else:
-                            self.state = MustTouchState.ERROR
-                        self.state = MustTouchState.DELIVER_REWARD_START
-
-                        # DELIVER_REWARD_START state, preparing to deliver the reward
-                        logger.debug("Current state: DELIVER_REWARD_START")
-                        logger.info(f"Preparing to deliver reward for trial {self.current_trial}...")
-                        self.reward_start_time = current_time
-                    else:
-                        self.current_trial += 1
-                        logger.info("Incorrect Response")
-                        self.state = MustTouchState.END_TRIAL
-                else:
-                    #300s timeout
-                    self.current_trial += 1
-                    logger.info("300s Timeout - Moving to next trial")
-                    self.state = MustTouchState.END_TRIAL
+            touched_image = self.left_image if side == "LEFT" else self.right_image
+            if touched_image == self.config["correct_image"]:
+                self.state = MustTouchState.CORRECT
             else:
-                # left screen is touched
-                if self.chamber.get_left_m0().is_touched():
-                    logger.info("Left screen touched")
-                    self.write_event("LeftScreenTouched", self.current_trial)
-                    if self.left_image == "A01":
-                        self.state = MustTouchState.CORRECT
-                        
-                    else:
-                        self.state = MustTouchState.ERROR
-                    self.state = MustTouchState.DELIVER_REWARD_START
+                self.state = MustTouchState.ERROR
 
-                # right screen is touched
-                elif self.chamber.get_right_m0().is_touched():
-                    logger.info("Right screen touched")
-                    self.write_event("RightScreenTouched", self.current_trial)
+        elif self.state == MustTouchState.CORRECT:
+            self.write_event("CorrectTouch", self.current_trial + 1)
+            self.clear_images()
+            self.state = MustTouchState.DELIVER_REWARD_START
 
-                    if self.right_image == "A01":
-                        self.state = MustTouchState.CORRECT
-                    else:
-                        self.state = MustTouchState.ERROR
-                    self.state = MustTouchState.DELIVER_REWARD_START
-                # Incorrect response: no reward, increment trial number, and repeat the trial
-                else:
-                    self.current_trial += 1
-                    logger.info("Incorrect Response")
-                    self.state = MustTouchState.END_TRIAL
+        elif self.state == MustTouchState.ERROR:
+            self.write_event("IncorrectTouch", self.current_trial + 1)
+            self.clear_images()
+            self.state = MustTouchState.ITI_START
+
         elif self.state == MustTouchState.DELIVER_REWARD_START:
-            # DELIVER_REWARD_START state, preparing to deliver the reward
-            logger.debug("Current state: DELIVER_REWARD_START")
-            logger.info(f"Preparing to deliver reward for trial {self.current_trial}...")
-            self.reward_start_time = current_time
+            self.write_event("RewardStart", self.current_trial + 1)
+            self.reward_collected = False
+            self.reward_start_time = self.default_deliver_reward(self.config["reward_pump_secs"])
             self.state = MustTouchState.DELIVERING_REWARD
 
         elif self.state == MustTouchState.DELIVERING_REWARD:
-            # DELIVERING_REWARD state, dispensing the reward
-            logger.debug("Current state: DELIVERING_REWARD")
             if current_time - self.reward_start_time < self.config["reward_pump_secs"]:
-                if self.chamber.beambreak.state==False and not self.reward_collected:
-                    # Beam break detected during reward dispense
+                if self.chamber.beambreak.state is False and not self.reward_collected:
                     self.reward_collected = True
-                    logger.info("Beam broken during reward dispense")
-                    self.write_event("BeamBreakDuringReward", self.current_trial)
-                    self.chamber.beambreak.deactivate()
+                    self.write_event("BeamBreakDuringReward", self.current_trial + 1)
                     self.chamber.reward_led.deactivate()
             else:
-                # Reward finished dispensing
-                logger.info(f"Reward dispense completed")
-                self.write_event("RewardDispenseComplete", self.current_trial)
-                self.chamber.reward.stop()
+                self.default_stop_reward()
+                self.write_event("RewardDispenseComplete", self.current_trial + 1)
                 self.state = MustTouchState.POST_REWARD
 
         elif self.state == MustTouchState.POST_REWARD:
-            # POST_REWARD state, waiting for beam break or timeout
-            logger.debug("Current state: POST_REWARD")
-            if (current_time - self.reward_start_time) < self.config["beam_break_wait_time"]:
-                if not self.reward_collected and self.chamber.beambreak.state==False:
-                    # Beam break detected after reward dispense
+            if current_time - self.reward_start_time < self.config["beam_break_wait_time"]:
+                if self.chamber.beambreak.state is False and not self.reward_collected:
                     self.reward_collected = True
-                    logger.info("Beam broken after reward dispense")
-                    self.write_event("BeamBreakAfterReward", self.current_trial)
-                    self.chamber.reward_led.deactivate()
+                    self.write_event("BeamBreakAfterReward", self.current_trial + 1)
                     self.state = MustTouchState.ITI_START
             else:
-                    logger.info(f"Beam break timeout")
-                    self.write_event("BeamBreakTimeout", self.current_trial)
-                    self.chamber.reward_led.deactivate()
-                    self.state = MustTouchState.ITI_START
+                self.write_event("BeamBreakTimeout", self.current_trial + 1)
+                self.state = MustTouchState.ITI_START
 
         elif self.state == MustTouchState.ITI_START:
-            # ITI_START state, preparing for the ITI period
-            logger.debug("Current state: ITI_START")
-            self.write_event("ITIStart", self.current_trial)
-            self.chamber.beambreak.activate()
-            self.chamber.reward_led.deactivate()
+            self.write_event("ITIStart", self.current_trial + 1)
             self.current_trial_iti = self.config["iti_duration"]
-            self.iti_start_time = current_time
+            self.iti_start_time = self.default_iti_start()
             self.state = MustTouchState.ITI
-        
+
         elif self.state == MustTouchState.ITI:
-            # ITI state, waiting for the ITI duration
-            logger.debug("Current state: ITI")
             if current_time - self.iti_start_time < self.current_trial_iti:
-                # Check if beam break is detected during ITI
-                if self.chamber.beambreak.state==False:
-                    logger.info("Beam broken during ITI. Adding 1 second to ITI duration.")
-                    self.write_event("BeamBreakDuringITI", self.current_trial)
-                    if self.current_trial_iti < self.config["max_iti_duration"]:
-                        self.current_trial_iti += 1
+                old_iti = self.current_trial_iti
+                self.current_trial_iti = self.default_iti_check_beam_break(self.current_trial_iti)
+                if self.current_trial_iti > old_iti:
+                    self.write_event("BeamBreakDuringITI", self.current_trial + 1)
             else:
-                logger.info(f"ITI duration of {self.current_trial_iti} seconds completed")
                 self.state = MustTouchState.END_TRIAL
 
         elif self.state == MustTouchState.END_TRIAL:
-            # END_TRIAL state, finalizing the trial
-            logger.debug("Current state: END_TRIAL")
-            logger.info(f"Ending trial {self.current_trial}...")
-            self.write_event("EndTrial", self.current_trial)
+            self.write_event("EndTrial", self.current_trial + 1)
+            self.current_trial += 1
             self.state = MustTouchState.START_TRIAL
 
         elif self.state == MustTouchState.END_TRAINING:
-            # End the training session
-            logger.debug("Current state: END_TRAINING")
-            logger.info("Ending training session...")
             self.write_event("EndTraining", 1)
-            self.state = MustTouchState.IDLE
             self.stop_training()
 
     def stop_training(self):
-        # Stop the training session
-        logger.info("Stopping training session...")
-        self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
-        self.chamber.beambreak.deactivate()
-        self.close_data_file()
+        logger.info("Stopping MustTouch training session...")
+        self.default_stop_training()
         self.state = MustTouchState.IDLE

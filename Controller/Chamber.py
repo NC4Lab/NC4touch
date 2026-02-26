@@ -42,6 +42,9 @@ class Chamber:
     self.config.ensure_param("buzzer_pin", 16)
     self.config.ensure_param("reset_pins", [25, 5, 6])
     self.config.ensure_param("camera_device", "/dev/video0")
+    # LED colors
+    self.config.ensure_param("reward_led_color", (0, 255, 0))
+    self.config.ensure_param("punishment_led_color", (255, 0, 0))
 
     self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -53,7 +56,7 @@ class Chamber:
 
     self.arduino_cli_discover()
 
-    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 140, color=self.config["reward_led_color"])
+    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 255, color=self.config["reward_led_color"])
     self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness = 255, color=self.config["punishment_led_color"])
     self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness = 100) 
     self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"])

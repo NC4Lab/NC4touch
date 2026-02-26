@@ -83,9 +83,9 @@ class WebUI:
         self.house_led_brightness_slider.set_value(100.0 * self.session.chamber.house_led.brightness / 255.0)
         self.pump_test_button.set_value(self.session.chamber.reward.state)
         self.reward_led_test_button.set_value(self.session.chamber.reward_led.active)
-        self.reward_color_input.set_value(self.rgb_to_hex(self.session.chamber.reward_led.color))
+        # self.reward_color_input.set_value(self.rgb_to_hex(self.session.chamber.reward_led.color))
         self.punishment_led_test_button.set_value(self.session.chamber.punishment_led.active)
-        self.punishment_color_input.set_value(self.rgb_to_hex(self.session.chamber.punishment_led.color))
+        # self.punishment_color_input.set_value(self.rgb_to_hex(self.session.chamber.punishment_led.color))
 
     async def m0_discover(self):
         self.discover_button.props('color=red')
