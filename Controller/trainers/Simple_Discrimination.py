@@ -14,6 +14,7 @@ class SDState(Enum):
     SHOW_STIMULI = auto()
     WAIT_FOR_TOUCH = auto()
     CORRECT = auto()
+    DELIVERING_REWARD = auto()
     ERROR = auto()
     ITI_START = auto()
     ITI = auto()
@@ -131,6 +132,7 @@ class Simple_Discrimination(Trainer):
         elif self.state == SDState.CORRECT:
             self.clear_images()
             self.deliver_reward()
+            self.reward_start_time = now
 
             self.write_trial_data({
                 "trial": self.current_trial,
@@ -139,7 +141,14 @@ class Simple_Discrimination(Trainer):
                 "rt": now - self.trial_start_time
             })
 
-            self.state = SDState.ITI_START
+            self.state = SDState.DELIVERING_REWARD
+        
+        elif self.state == SDState.DELIVERING_REWARD:
+            if now - self.reward_start_time >= self.config["reward_pump_secs"]:
+                self.chamber.reward.stop()
+                self.chamber.reward_led.deactivate()
+                self.chamber.beambreak.deactivate()
+                self.state = SDState.ITI_START
 
         elif self.state == SDState.ERROR:
             self.clear_images()
