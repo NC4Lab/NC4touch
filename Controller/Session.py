@@ -12,6 +12,7 @@ from Config import Config
 from Virtual.VirtualChamber import VirtualChamber
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
 session_logger = logging.getLogger('session_logger')
 session_logger.setLevel(logging.DEBUG)
 
@@ -71,10 +72,10 @@ class Session:
         )
 
         for handler in list(session_logger.handlers):
-            if isinstance(handler, logging.FileHandler):
+            if isinstance(handler, logging.FileHandler) or isinstance(handler, TimedRotatingFileHandler):
                 session_logger.removeHandler(handler)
 
-        file_handler = logging.FileHandler(self.session_log_file)
+        file_handler = TimedRotatingFileHandler(self.session_log_file, when="midnight", interval=1, backupCount=30)
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         session_logger.addHandler(file_handler)

@@ -16,6 +16,10 @@ from Simple_Discrimination import Simple_Discrimination
 from PRL import PRL
 from Punish_Incorrect import Punish_Incorrect
 from InitialTouch import InitialTouch
+from MustTouch import MustTouch
+from Habituation import Habituation
+from SoundTest import SoundTest
+from Complex_Discrimination import Complex_Discrimination
 
 def run_trainer_test(trainer_class, config_overrides, name):
     print(f"\n{'='*50}")
@@ -43,7 +47,7 @@ def run_trainer_test(trainer_class, config_overrides, name):
 
     try:
         # Simulate actions based on the trainer
-        for _ in range(40):  # limit to 40 sequences to avoid hanging
+        for _ in range(100):  # limit to 100 sequences to avoid hanging
             time.sleep(0.5)
             state = trainer.state.name
             logger.info(f"[{name}] Current State: {state}")
@@ -85,11 +89,18 @@ if __name__ == "__main__":
         "buzzer_duration": 0.2,
         "free_reward_duration": 0.5,
         "data_dir": ".",
+        "num_loops": 1,
+        "step_duration": 0.5,
+        "max_iti_duration": 2,
     }
 
-    # run_trainer_test(Simple_Discrimination, base_config, "Simple_Discrimination")
-    # run_trainer_test(PRL, base_config, "PRL")
-    # run_trainer_test(Punish_Incorrect, base_config, "Punish_Incorrect")
+    run_trainer_test(Simple_Discrimination, base_config, "Simple_Discrimination")
+    run_trainer_test(PRL, base_config, "PRL")
+    run_trainer_test(Punish_Incorrect, base_config, "Punish_Incorrect")
     run_trainer_test(InitialTouch, base_config, "InitialTouch")
+    run_trainer_test(MustTouch, base_config, "MustTouch")
+    run_trainer_test(Habituation, base_config, "Habituation")
+    run_trainer_test(SoundTest, base_config, "SoundTest")
+    run_trainer_test(Complex_Discrimination, base_config, "Complex_Discrimination")
 
     print("\nAll automated trainer tests completed!")

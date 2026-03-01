@@ -106,6 +106,25 @@ class Camera:
         else:
             logger.warning("No recording in progress.")
 
+    def lock_focus(self):
+        """Enable autofocus for a few seconds to focus, then disable it to lock focus."""
+        import time
+        import threading
+        
+        def focus_routine():
+            try:
+                # Enable autofocus
+                logger.info("Camera autofocus enabled. Waiting 3 seconds for it to focus...")
+                subprocess.call(f"v4l2-ctl -d {self.device} --set-ctrl=focus_auto=1", shell=True)
+                time.sleep(3)
+                # Disable autofocus (locks current focus)
+                subprocess.call(f"v4l2-ctl -d {self.device} --set-ctrl=focus_auto=0", shell=True)
+                logger.info("Camera autofocus disabled (focus locked).")
+            except Exception as e:
+                logger.error(f"Error locking focus: {e}")
+        
+        threading.Thread(target=focus_routine, daemon=True).start()
+
 if __name__ == "__main__":
     camera = Camera()
 
