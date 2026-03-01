@@ -175,6 +175,11 @@ class VirtualM0Device:
         """
         return self._is_touched
 
+    def was_touched(self):
+        touched = self._is_touched
+        self._is_touched = False  # reset touch state after checking
+        return touched
+
     # ===== Virtual-specific methods for simulation =====
 
     def simulate_touch(self, x=None, y=None, duration=0.1):

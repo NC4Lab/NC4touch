@@ -196,6 +196,15 @@ class VirtualChamber:
         logger.info("Virtual Chamber: reset to default state")
 
     # ===== Virtual-specific methods for simulation and testing =====
+    
+    def get_left_m0(self):
+        return self.left_m0
+
+    def get_middle_m0(self):
+        return self.middle_m0
+
+    def get_right_m0(self):
+        return self.right_m0
 
     def get_state(self):
         """Get complete virtual chamber state."""

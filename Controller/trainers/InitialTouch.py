@@ -70,7 +70,7 @@ class InitialTouch(Trainer):
 
         # Open sequence file
         trainer_seq_file = os.path.join(self.config["trainer_seq_dir"], self.config["trainer_seq_file"])
-        self.trials = self.read_trainer_seq_file(trainer_seq_file)
+        self.trials = self.read_trainer_seq_file(trainer_seq_file, 2)
         if not self.trials:
             logger.error(f"Failed to read trainer sequence file: {trainer_seq_file}")
             self.state = InitialTouchState.IDLE
