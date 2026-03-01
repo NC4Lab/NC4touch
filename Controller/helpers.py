@@ -8,7 +8,7 @@ except ImportError:
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-def get_ip_address(interface="eth0"):
+def get_ip_address(interface: str = "eth0") -> str:
     """
     Get the IP address of the machine.
     Returns:
@@ -26,7 +26,7 @@ def get_ip_address(interface="eth0"):
         logger.error(f"Error getting IP address for {interface}: {e}")
         return None
 
-def get_best_ip_address():
+def get_best_ip_address() -> str:
     """
     Returns the best IP address for external access: Tailscale IP if available, else local IP.
     """
@@ -54,7 +54,7 @@ def get_best_ip_address():
         logger.error(f"Error getting best IP address: {e}")
         return None
 
-def wait_for_dmesg(msg="", timeout=30):
+def wait_for_dmesg(msg: str = "", timeout: int = 30) -> str:
     msg_line = None
     start_time = time.mktime(time.localtime())
     timeout = start_time + timeout

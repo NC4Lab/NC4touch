@@ -202,19 +202,19 @@ class VirtualChamber:
         return {
             'timestamp': time.time(),
             'left_m0': {
-                'is_touched': self.left_m0.is_touched(),
-                'current_image': self.left_m0.get_current_image(),
-                'touch_coords': self.left_m0.get_touch_coordinates()
+                'is_touched': self.get_left_m0().is_touched(),
+                'current_image': self.get_left_m0().get_current_image(),
+                'touch_coords': self.get_left_m0().get_touch_coordinates()
             },
             'middle_m0': {
-                'is_touched': self.middle_m0.is_touched(),
-                'current_image': self.middle_m0.get_current_image(),
-                'touch_coords': self.middle_m0.get_touch_coordinates()
+                'is_touched': self.get_middle_m0().is_touched(),
+                'current_image': self.get_middle_m0().get_current_image(),
+                'touch_coords': self.get_middle_m0().get_touch_coordinates()
             },
             'right_m0': {
-                'is_touched': self.right_m0.is_touched(),
-                'current_image': self.right_m0.get_current_image(),
-                'touch_coords': self.right_m0.get_touch_coordinates()
+                'is_touched': self.get_right_m0().is_touched(),
+                'current_image': self.get_right_m0().get_current_image(),
+                'touch_coords': self.get_right_m0().get_touch_coordinates()
             },
             'reward_led': self.reward_led.get_state(),
             'punishment_led': self.punishment_led.get_state(),

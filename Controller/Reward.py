@@ -11,6 +11,7 @@ class Reward:
     def __init__(self, pi=None, pin=27):
         self.pi = pi
         self.pin = pin
+        self.state = False
 
         if self.pi is not None:
             self.pi.set_mode(self.pin, pigpio.OUTPUT)
@@ -28,8 +29,10 @@ class Reward:
         logger.debug("Dispensing reward")
         if self.pi is not None:
             self.pi.set_PWM_dutycycle(self.pin, 255)
+        self.state = True
 
     def stop(self):
         logger.debug("Stopping reward")
         if self.pi is not None:
             self.pi.set_PWM_dutycycle(self.pin, 0)
+        self.state = False

@@ -28,13 +28,9 @@ from Config import Config
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-#TODO: Add pigpiod to startup script
-
 class Chamber:
+  """Chamber class for NC4Touch"""
   def __init__(self, chamber_config = {}, chamber_config_file = '~/chamber_config.yaml'):
-    """
-    Chamber class for the Touchscreen chamber.
-    """
     logger.info("Initializing Chamber...")
     self.config = Config(config = chamber_config, config_file = chamber_config_file)
     self.config.ensure_param("chamber_name", "Chamber0")
@@ -52,37 +48,54 @@ class Chamber:
     self.config.ensure_param("buzzer_volume", 60)
     self.config.ensure_param("buzzer_frequency", 6000)
     self.config.ensure_param("beambreak_memory", 0.2)
+    # LED colors
+    self.config.ensure_param("reward_led_color", (0, 255, 0))
+    self.config.ensure_param("punishment_led_color", (255, 0, 0))
 
     self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
     self.pi = pigpio.pi() if pigpio is not None else None
 
     # Initialize M0s
-    self.left_m0 = M0Device(pi = self.pi, id = "M0_0", reset_pin = self.config["reset_pins"][0])
-    self.middle_m0 = M0Device(pi = self.pi, id = "M0_1", reset_pin = self.config["reset_pins"][1])
-    self.right_m0 = M0Device(pi = self.pi, id = "M0_2", reset_pin = self.config["reset_pins"][2])
+    self.m0s = [M0Device(pi = self.pi, id = f"M0_{i}", 
+                         reset_pin = self.config["reset_pins"][i]) for i in range(3)]
 
-    self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
     self.arduino_cli_discover()
 
-    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness=self.config["reward_led_brightness"])
-    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness=self.config["punishment_led_brightness"])
+    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness=self.config["reward_led_brightness"], color=self.config["reward_led_color"])
+    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness=self.config["punishment_led_brightness"], color=self.config["punishment_led_color"])
     self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness=self.config["house_led_brightness"])
     self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"], beam_break_memory=self.config["beambreak_memory"])
     self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"], volume=self.config["buzzer_volume"], frequency=self.config["buzzer_frequency"])
     self.reward = Reward(pi=self.pi, pin=self.config["reward_pump_pin"])
     self.camera = Camera(device=self.config["camera_device"])
   
-  def m0_remap(self):
-    # Remap M0s based on their IDs to ensure left, middle, right mapping is correct
-    id_to_m0 = {m0.id: m0 for m0 in self.m0s}
+  def get_left_m0(self):
+    """Returns the left M0 device (M0_0)"""
     try:
-        self.left_m0 = id_to_m0["M0_0"]
-        self.middle_m0 = id_to_m0["M0_1"]
-        self.right_m0 = id_to_m0["M0_2"]
-        logger.info("Remapped M0 devices based on IDs.")
-    except KeyError as e:
-        logger.error(f"Error remapping M0 devices: {e}. Check if all M0 boards are properly connected and identified.")
+        idx = [m0.id for m0 in self.m0s].index("M0_0")
+        return self.m0s[idx]
+    except ValueError:
+        logger.error("Left M0 (M0_0) not found in m0s list.")
+        return None
+
+  def get_middle_m0(self):
+    """Returns the middle M0 device (M0_1)"""
+    try:
+        idx = [m0.id for m0 in self.m0s].index("M0_1")
+        return self.m0s[idx]
+    except ValueError:
+        logger.error("Middle M0 (M0_1) not found in m0s list.")
+        return None
+
+  def get_right_m0(self):
+    """Returns the right M0 device (M0_2)"""
+    try:
+        idx = [m0.id for m0 in self.m0s].index("M0_2")
+        return self.m0s[idx]
+    except ValueError:
+        logger.error("Right M0 (M0_2) not found in m0s list.")
+        return None
 
   def __del__(self):
     """Clean up the chamber by stopping pigpio and M0s."""
@@ -94,7 +107,8 @@ class Chamber:
 
   def compile_sketch(self, sketch_path=None):
       """
-      Compiles the M0Touch sketch using arduino-cli.
+      Compiles the M0Touch sketch using arduino-cli. 
+      If sketch_path is None, it defaults to ../M0Touch/M0Touch.ino relative to this file.
       """
       if sketch_path is None:
           sketch_path = os.path.join(self.code_dir, "../M0Touch/M0Touch.ino")
@@ -142,6 +156,7 @@ class Chamber:
     if len(self.discovered_boards) >= len(self.m0s):
         for i, m0 in enumerate(self.m0s):
             m0.port = self.discovered_boards[i]
+            m0.id = f"M0_{i}"
             logger.info(f"Set {m0.id} serial port to {m0.port}")
     else:
         logger.error("Not enough M0 boards discovered. Please check the connections.")
@@ -174,55 +189,54 @@ class Chamber:
             except Exception as e:
                 logger.error(f"Could not open {p.device}: {e}")
 
-  def m0_send_command(self, command):
-    """
-    Sends a command to all M0 boards
-    """
+  def m0_send_command(self, command: str):
+    """Sends a command to all M0 boards"""
     [m0.send_command(command) for m0 in self.m0s]
 
   def m0_reset(self):
-    # Reset all the M0 boards
+    """Reset all M0 boards by toggling their reset pins."""
     logger.info("Resetting M0 boards...")
     [m0.reset() for m0 in self.m0s]
   
   def m0_initialize(self):
-    # Initialize all the devices
+    """Initialize all M0 boards"""
     [m0.initialize() for m0 in self.m0s]
   
   def m0_reopen_serial(self):
-    # Close and re-open serial connections to all M0 boards
+    """Close and re-open serial connections to all M0 boards"""
     self.m0_close_serial()
     time.sleep(1)  # Wait a moment to ensure ports are released
     self.m0_open_serial()
   
   def m0_close_serial(self):
-    # Close serial connections to all M0 boards
+    """Close serial connections to all M0 boards"""
     [m0.stop_serial_comm() for m0 in self.m0s]
     [m0.close_port() for m0 in self.m0s]
   
   def m0_open_serial(self):
-    # Open serial connections to all M0 boards
+    """Open serial connections to all M0 boards"""
     [m0.open_port() for m0 in self.m0s]
     [m0.start_serial_comm() for m0 in self.m0s]
   
   def m0_sync_images(self):
-    # Sync the image folders for all M0s
+    """Sync the image folders for all M0s"""
     [m0.sync_image_folder() for m0 in self.m0s]
 
   def m0_upload_sketches(self):
-    # Upload sketches to all M0s
+    """Upload sketches to all M0s"""
     self.compile_sketch()
     [m0.upload_sketch() for m0 in self.m0s]
   
   def m0_clear(self):
-    # Send the blank command to all M0s
+    """Send the blank command to all M0s"""
     [m0.send_command("OFF") for m0 in self.m0s]
   
   def m0_show_image(self):
-    # Send the show image command to all M0s
+    """Send the show image command to all M0s"""
     [m0.send_command("SHOW") for m0 in self.m0s]
 
   def default_state(self):
+    """Set the default state for the chamber"""
     self.m0_send_command("OFF")
     self.reward_led.deactivate()
     self.punishment_led.deactivate()

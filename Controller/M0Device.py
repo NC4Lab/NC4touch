@@ -19,6 +19,7 @@ import queue
 from helpers import wait_for_dmesg
 from enum import Enum
 import os
+from pathlib import Path
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -35,14 +36,13 @@ class M0Device:
     Represents one M0 board with a persistent serial connection.
     """
 
-    def __init__(self, pi, id=None, reset_pin=None,
-                 port=None, baudrate=115200, location=None):
+    def __init__(self, pi: pigpio.pi = None, id: str = None, reset_pin: int = None,
+                 port: str = None, baudrate: int = 115200, location: str = None):
         if pigpio is not None and not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
         
         self.pi = pi
-
         self.id = id
         self.reset_pin = reset_pin
         self.port= port
@@ -53,9 +53,9 @@ class M0Device:
         self.ud_mount_loc = None
 
         self.stop_flag = threading.Event()
-        self.message_queue = queue.Queue()  # to store lines: (id, text)
         self.cmd_queue = queue.Queue()  # to store commands to send to the M0
         self.serial_comm_loop_interval = 0.1  # seconds
+        self.firmware_version = "0.0.0"
 
         self.is_touched = False
 
@@ -151,6 +151,7 @@ class M0Device:
             self.mode = M0Mode.SERIAL_COMM
             logger.info(f"[{self.id}] Started serial comm.")
             self.send_command("WHOAREYOU?")  # prompt the device to send its ID
+            self.send_command("VERSION?")  # prompt the device to send its firmware version
         else:
             logger.error(f"[{self.id}] Cannot start serial comm in mode {self.mode}.")
     
@@ -200,7 +201,6 @@ class M0Device:
                     line = self.ser.readline().decode("utf-8", errors="ignore").strip()
                     if line:
                         logger.info(f"[{self.id}] <- {line}")
-                        self.message_queue.put((self.id, line))
                         
                         if line.startswith("TOUCH"):
                             self.is_touched = True
@@ -211,7 +211,11 @@ class M0Device:
                         if line.startswith("ID:"):
                             self.id = line.split("ID:")[1]
                             logger.info(f"[{self.id}] Updated device ID from serial message.")                        
-                            
+                        
+                        if line.startswith("VERSION:"):
+                            self.firmware_version = line.split("VERSION:")[1]
+                            logger.info(f"[{self.id}] Updated firmware version from serial message: {self.firmware_version}")
+
             except Exception as e:
                 logger.error(f"[{self.id}] Error reading from serial port: {e}")
                 # re-open self.ser here
@@ -287,7 +291,7 @@ class M0Device:
         except Exception as e:
             logger.error(f"[{self.id}] Error mounting UD drive: {e}")
 
-    def upload_sketch(self, sketch_path=None):
+    def upload_sketch(self, sketch_path: str | Path = None):
         """
         Uploads the given sketch to the M0 board.
         """
@@ -312,11 +316,11 @@ class M0Device:
             else:
                 logger.info(f"[{self.id}] Sketch uploaded successfully.")
 
-            self.mode = M0Mode.PORT_CLOSED
+            self.mode = M0Mode.UNINITIALIZED  # force reinitialization after upload
         except Exception as e:
             logger.error(f"[{self.id}] Error uploading sketch: {e}")
     
-    def sync_image_folder(self, image_folder=None):
+    def sync_image_folder(self, image_folder: str = None):
         """
         Syncs the image folder to the UD drive connected to the M0 board.
         """
@@ -358,16 +362,6 @@ class M0Device:
         # Unmount the UD drive
         time.sleep(0.1)
         self.reset()
-    
-    def flush_message_queue(self):
-        """
-        Flushes the message queue.
-        """
-        while not self.message_queue.empty():
-            try:
-                self.message_queue.get_nowait()
-            except queue.Empty:
-                break
     
     def _attempt_reopen(self):
         """

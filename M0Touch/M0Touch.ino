@@ -10,6 +10,8 @@
 #define TFT_RST  6
 #define TFT_BLK  9  
 
+const char* VERSION = "0.2.1_20260219";
+
 
 const int pin0 = 10;
 const int pin1 = 11;
@@ -47,7 +49,7 @@ void setupDisplayAndSD();
 void processSerialCommand();
 void pickPicture(const char* imageID);
 void showPreloadedImage();
-void setBlackScreen(bool backlightOn = true);
+void setBlackScreen();
 void scanTouch();
 uint16_t numberTillComma(String &s);
 
@@ -61,10 +63,11 @@ void setup() {
 
   setupDisplayAndSD();
 
-  analogWrite(TFT_BLK, 0);
   screen.fillScreen(0x0000); 
+  setBlackScreen();
+  showActive = false;
 
-  Serial.print("M0 board #");
+  Serial.print("ID:M0_");
   Serial.print(boardID);
   Serial.println(" is ready.");
 }
@@ -136,14 +139,19 @@ void processSerialCommand() {
     Serial.println(boardID);
     return;
   }
+  else if (cmd.equalsIgnoreCase("VERSION?")) { // report version
+    Serial.print("VERSION:");
+    Serial.println(VERSION);
+    return;
+  }
   else if (cmd.equalsIgnoreCase("BLACK")) { // backlight off, show black screen, detect 1 touch
-    setBlackScreen(false);
+    setBlackScreen();
     showActive = true;   // detect 1 touch
     Serial.println("ACK:BLACK");
     return;
   } // SHOW => backlight on, allow 1 touch
   else if (cmd.equalsIgnoreCase("OFF")) { // backlight off, show black screen, ignore touches
-    setBlackScreen(false);
+    setBlackScreen();
     showActive = false;   // ignore touches
     Serial.println("ACK:OFF");
     return;
@@ -188,18 +196,16 @@ void pickPicture(const char* imageID) {
 
 void showPreloadedImage() {
   analogWrite(TFT_BLK, 255);
-  Serial.println("Backlight on; image visible now.");
-  
-  Serial.print("Free RAM (after showing image): ");
-  Serial.println(freeRam());
+  // Serial.println("Backlight on; image visible now.");
+  // Serial.print("Free RAM (after showing image): ");
+  // Serial.println(freeRam());
 }
 
 
-void setBlackScreen(bool backlightOn) {
+void setBlackScreen() {
   analogWrite(TFT_BLK, 0);
-
-  Serial.print("Free RAM (after backlight off): ");
-  Serial.println(freeRam());
+  // Serial.print("Free RAM (after backlight off): ");
+  // Serial.println(freeRam());
 }
 
 

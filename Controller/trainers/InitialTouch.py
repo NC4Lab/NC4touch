@@ -36,7 +36,6 @@ class InitialTouch(Trainer):
         # The trainer will also reinitialize with these parameters.
         # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
         self.config.ensure_param("trainer_name", "InitialTouch")
-        self.config.ensure_param("num_trials", 30)  # Number of trials to run
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("large_reward_duration", 3.0)  # Duration of the large reward
         self.config.ensure_param("small_reward_duration", 1.5)  # Duration of the small reward
@@ -71,21 +70,15 @@ class InitialTouch(Trainer):
 
         # Open sequence file
         trainer_seq_file = os.path.join(self.config["trainer_seq_dir"], self.config["trainer_seq_file"])
-        self.trials = self.read_trainer_seq_file(trainer_seq_file, 2)
+        self.trials = self.read_trainer_seq_file(trainer_seq_file)
         if not self.trials:
             logger.error(f"Failed to read trainer sequence file: {trainer_seq_file}")
             self.state = InitialTouchState.IDLE
             return
 
         # Check if the number of trials is valid
-        if len(self.trials) > self.config["num_trials"]:
-            logger.warning(f"Number of trials in the sequence file exceeds the expected number of trials: {self.config['num_trials']}")
-            # Truncate the trials list to the expected number
-            self.trials = self.trials[:self.config["num_trials"]]
-        elif len(self.trials) < self.config["num_trials"]:
-            logger.warning(f"Number of trials in the sequence file does not match the expected number of trials: {self.config['num_trials']}")
-        
         self.config["num_trials"] = len(self.trials)  # Update the number of trials based on the sequence file
+        logger.info(f"Loaded {len(self.trials)} trials from sequence file: {trainer_seq_file}")
 
         # Start recording data
         self.open_data_file()
@@ -101,32 +94,32 @@ class InitialTouch(Trainer):
 
         if not self.left_image == "BLACK":
             logger.info(f"Loading left image: {self.left_image}")
-            self.chamber.left_m0.send_command(f"IMG:{self.left_image}")
+            self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
         else:
             logger.info("Left image is BLACK, sending BLACK command")
-            self.chamber.left_m0.send_command("BLACK")
+            self.chamber.get_left_m0().send_command("BLACK")
 
         if not self.right_image == "BLACK":
             logger.info(f"Loading right image: {self.right_image}")
-            self.chamber.right_m0.send_command(f"IMG:{self.right_image}")
+            self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
         else:
             logger.info("Right image is BLACK, sending BLACK command")
-            self.chamber.right_m0.send_command("BLACK")
+            self.chamber.get_right_m0().send_command("BLACK")
     
     def show_images(self):
         """Display images on the M0 devices."""
         # Send commands to M0 devices to show images
         if not self.left_image == "BLACK":
-            self.chamber.left_m0.send_command("SHOW")
+            self.chamber.get_left_m0().send_command("SHOW")
 
         if not self.right_image == "BLACK":
-            self.chamber.right_m0.send_command("SHOW")
+            self.chamber.get_right_m0().send_command("SHOW")
     
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.left_m0.send_command("OFF")
-        self.chamber.right_m0.send_command("OFF")
+        self.chamber.get_left_m0().send_command("OFF")
+        self.chamber.get_right_m0().send_command("OFF")
     
     def run_training(self):
         """Main loop for running the training session."""
@@ -144,6 +137,7 @@ class InitialTouch(Trainer):
             logger.info("Starting training session...")
             self.write_event("StartTraining", 1)
             self.chamber.house_led.activate()
+            self.current_trial = 0
             # Start by delivering a large reward
             self.state = InitialTouchState.LARGE_REWARD_START
 
@@ -179,9 +173,6 @@ class InitialTouch(Trainer):
                 self.state = InitialTouchState.ITI_START
         
         elif self.state == InitialTouchState.SMALL_REWARD_START:
-            # Load images for the current trial during reward
-            # self.load_images(self.current_trial - 1)
-
             # SMALL_REWARD_START state, preparing to deliver a small reward
             self.reward_start_time = current_time
             logger.info(f"Preparing to deliver small reward for trial {self.current_trial + 1}...")
@@ -228,7 +219,7 @@ class InitialTouch(Trainer):
         elif self.state == InitialTouchState.WAIT_FOR_TOUCH:
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.left_m0.was_touched():
+                if self.chamber.get_left_m0().was_touched():
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial + 1)
 
@@ -236,7 +227,7 @@ class InitialTouch(Trainer):
                         self.state = InitialTouchState.ERROR
                     else:
                         self.state = InitialTouchState.CORRECT
-                elif self.chamber.right_m0.was_touched():
+                elif self.chamber.get_right_m0().was_touched():
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial + 1)
 

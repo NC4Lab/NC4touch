@@ -76,8 +76,8 @@ def test_basic_operations():
 
     # Test touchscreens
     print("\n--- Testing Touchscreens ---")
-    chamber.left_m0.send_command("DISPLAY:/path/to/image.bmp")
-    chamber.left_m0.simulate_touch(160, 240, duration=0.2)
+    chamber.get_left_m0().send_command("DISPLAY:/path/to/image.bmp")
+    chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
     time.sleep(0.3)
 
     # Get final state
@@ -116,8 +116,8 @@ def test_with_gui():
         logger.info("Simulating demo activity...")
         
         # Display images
-        chamber.left_m0.send_command("DISPLAY:stimulus_left.bmp")
-        chamber.right_m0.send_command("DISPLAY:stimulus_right.bmp")
+        chamber.get_left_m0().send_command("DISPLAY:stimulus_left.bmp")
+        chamber.get_right_m0().send_command("DISPLAY:stimulus_right.bmp")
         time.sleep(1)
         
         # Reward LED on
