@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 import asyncio
 
-from Trainer import get_trainers
+from trainers import get_trainers
 from helpers import get_ip_address, get_best_ip_address
 from Session import Session
 from file_picker import file_picker

@@ -2,16 +2,16 @@ import os
 import sys
 import time
 import yaml
-import importlib
 import threading
 
 # Local modules
 from Chamber import Chamber
-from Trainer import Trainer
+from trainers import Trainer, get_trainer_class
 from Config import Config
 from Virtual.VirtualChamber import VirtualChamber
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
 session_logger = logging.getLogger('session_logger')
 session_logger.setLevel(logging.DEBUG)
 
@@ -71,10 +71,12 @@ class Session:
         )
 
         for handler in list(session_logger.handlers):
-            if isinstance(handler, logging.FileHandler):
+            if isinstance(handler, (logging.FileHandler, TimedRotatingFileHandler)):
                 session_logger.removeHandler(handler)
 
-        file_handler = logging.FileHandler(self.session_log_file)
+        file_handler = TimedRotatingFileHandler(
+            self.session_log_file, when="midnight", interval=1, backupCount=30
+        )
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         session_logger.addHandler(file_handler)
@@ -231,8 +233,7 @@ class Session:
     
     def set_trainer_name(self, trainer_name):
         try:
-            module = importlib.import_module(f"{trainer_name}")
-            trainer_class = getattr(module, trainer_name)
+            trainer_class = get_trainer_class(trainer_name)
             self.trainer = trainer_class(self.chamber, {})
             logger.debug(f"Trainer class loaded: {self.trainer}")
             self.config["trainer_name"] = trainer_name

@@ -42,9 +42,15 @@ class Chamber:
     self.config.ensure_param("buzzer_pin", 16)
     self.config.ensure_param("reset_pins", [25, 5, 6])
     self.config.ensure_param("camera_device", "/dev/video0")
+    self.config.ensure_param("reward_led_brightness", 140)
+    self.config.ensure_param("punishment_led_brightness", 255)
+    self.config.ensure_param("house_led_brightness", 100)
+    self.config.ensure_param("buzzer_volume", 60)
+    self.config.ensure_param("buzzer_frequency", 6000)
+    self.config.ensure_param("beambreak_memory", 0.2)
     # LED colors
-    self.config.ensure_param("reward_led_color", (0, 255, 0))
-    self.config.ensure_param("punishment_led_color", (255, 0, 0))
+    self.config.ensure_param("reward_led_color", [0, 255, 0])
+    self.config.ensure_param("punishment_led_color", [255, 0, 0])
 
     self.code_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -56,11 +62,11 @@ class Chamber:
 
     self.arduino_cli_discover()
 
-    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness = 255, color=self.config["reward_led_color"])
-    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness = 255, color=self.config["punishment_led_color"])
-    self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness = 100) 
-    self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"])
-    self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"])
+    self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness=self.config["reward_led_brightness"], color=self.config["reward_led_color"])
+    self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness=self.config["punishment_led_brightness"], color=self.config["punishment_led_color"])
+    self.house_led = LED(pi=self.pi, pin=self.config["house_LED_pin"], brightness=self.config["house_led_brightness"])
+    self.beambreak = BeamBreak(pi=self.pi, pin=self.config["beambreak_pin"], beam_break_memory=self.config["beambreak_memory"])
+    self.buzzer = Buzzer(pi=self.pi, pin=self.config["buzzer_pin"], volume=self.config["buzzer_volume"], frequency=self.config["buzzer_frequency"])
     self.reward = Reward(pi=self.pi, pin=self.config["reward_pump_pin"])
     self.camera = Camera(device=self.config["camera_device"])
   
