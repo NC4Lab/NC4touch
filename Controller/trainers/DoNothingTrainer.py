@@ -1,5 +1,4 @@
-from Trainer import Trainer
-from Chamber import Chamber
+from trainers.Trainer import Trainer
 
 from enum import Enum
 import time
@@ -18,8 +17,8 @@ class DoNothingTrainer(Trainer):
     """
     A trainer that does nothing. This is useful for testing purposes, and as an example of how to implement a trainer.
     """
-    def __init__(self, trainer_config = {}, chamber = None):
-        super().__init__(trainer_config, chamber)
+    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_DoNothing_config.yaml'):
+        super().__init__(chamber, trainer_config, trainer_config_file)
         self.trainer_name = "DoNothingTrainer"
         self.state = DoNothingState.IDLE
         self.switch_interval = 5 # Time in seconds to switch between states

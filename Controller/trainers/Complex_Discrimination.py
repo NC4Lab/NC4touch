@@ -2,7 +2,7 @@ from enum import Enum, auto
 from random import random
 import time
 import logging
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 logger = logging.getLogger(f"session_logger.{__name__}")
 
@@ -20,15 +20,15 @@ class SDState(Enum):
     END_TRIAL = auto()
     END_TRAINING = auto()
 
-class SimpleDiscrimination(Trainer):
+class ComplexDiscrimination(Trainer):
 
     CORRECT_IMAGE = "E01"
     INCORRECT_IMAGE = "D01"
 
-    def __init__(self, chamber, trainer_config={}, trainer_config_file="~/trainer_SD_config.yaml"):
+    def __init__(self, chamber, trainer_config={}, trainer_config_file="~/trainer_CD_config.yaml"):
         super().__init__(chamber, trainer_config, trainer_config_file)
 
-        self.config.ensure_param("trainer_name", "Simple Discrimination")
+        self.config.ensure_param("trainer_name", "Complex Discrimination")
         self.config.ensure_param("num_trials", 60)
         self.config.ensure_param("reward_pump_secs", 3.5)
         self.config.ensure_param("beam_break_wait_time", 10)
@@ -172,3 +172,12 @@ class SimpleDiscrimination(Trainer):
 
         elif self.state == SDState.END_TRAINING:
             self.stop_training()
+
+    def stop_training(self):
+        logger.info("Stopping Complex Discrimination...")
+        self.chamber.reward.stop()
+        self.chamber.reward_led.deactivate()
+        self.chamber.beambreak.deactivate()
+        self.clear_images()
+        self.close_data_file()
+        self.state = SDState.IDLE

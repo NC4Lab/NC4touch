@@ -2,7 +2,7 @@ from enum import Enum, auto
 from random import random
 import time
 import logging
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 logger = logging.getLogger(f"session_logger.{__name__}")
 
@@ -172,3 +172,12 @@ class SimpleDiscrimination(Trainer):
 
         elif self.state == SDState.END_TRAINING:
             self.stop_training()
+
+    def stop_training(self):
+        logger.info("Stopping Simple Discrimination...")
+        self.chamber.reward.stop()
+        self.chamber.reward_led.deactivate()
+        self.chamber.beambreak.deactivate()
+        self.clear_images()
+        self.close_data_file()
+        self.state = SDState.IDLE

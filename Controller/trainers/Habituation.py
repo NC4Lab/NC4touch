@@ -1,7 +1,7 @@
 import time
 from enum import Enum, auto
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")

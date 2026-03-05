@@ -2,7 +2,7 @@ import time
 from enum import Enum, auto
 import os
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -55,6 +55,7 @@ class PunishIncorrect(Trainer):
         self.config.ensure_param("trainer_seq_dir", "")        # Directory containing sequence file
         self.config.ensure_param("trainer_seq_file", "")       # Sequence file name
         self.config.ensure_param("correct_image", "A01")       # Image identifier for correct choice
+        self.config.ensure_param("initiation_timeout", 300)    # Timeout for trial initiation (seconds)
 
         # Local variables used during training
         self.current_trial = 0
@@ -225,7 +226,7 @@ class PunishIncorrect(Trainer):
             # Waiting for screen touch
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.get_left_m0().is_touched():
+                if self.chamber.get_left_m0().was_touched():
                     self.write_event("LeftScreenTouched", self.current_trial)
                     self.state = (
                         PunishIncorrectState.CORRECT
@@ -233,7 +234,7 @@ class PunishIncorrect(Trainer):
                         else PunishIncorrectState.INCORRECT
                     )
 
-                elif self.chamber.get_right_m0().is_touched():
+                elif self.chamber.get_right_m0().was_touched():
                     self.write_event("RightScreenTouched", self.current_trial)
                     self.state = (
                         PunishIncorrectState.CORRECT

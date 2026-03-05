@@ -1,7 +1,7 @@
 import time
 from enum import Enum, auto
 
-from Trainer import Trainer
+from trainers.Trainer import Trainer
 
 import logging
 import random
@@ -74,12 +74,13 @@ class PRL(Trainer):
         self.last_beam_break_time = time.time()
         self.iti_start_time = time.time()
 
-        self.left_image = "A01.bmp"
-        self.right_image = "B01.bmp"
+        self.left_image = "x"   # X always on left screen (not tied to reward)
+        self.right_image = "o"  # O always on right screen (not tied to reward)
         self.left_reward_probability = 0
         self.right_reward_probability = 0
         self.current_trial = 0
         self.current_trial_iti = self.config["iti_duration"]
+        self.touched_side = None  # track which side was touched for reward prob lookup
         self.state = PRLState.IDLE
 
 
@@ -161,6 +162,7 @@ class PRL(Trainer):
                 self.show_images()
                 # Start the trial timer
                 self.trial_start_time = current_time
+                self.reward_collected = False  # reset per trial
                 # Move to WAIT_FOR_TOUCH state
                 logger.info(f"Images loaded for trial {self.current_trial}: {self.left_image}, {self.right_image}")
                 logger.info(f"Reward probabilities set for trial {self.current_trial}: {self.left_reward_probability} (left), {self.right_reward_probability} (right)")
@@ -177,22 +179,17 @@ class PRL(Trainer):
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.get_left_m0().is_touched():
+                side = self.check_touch()
+                if side == "LEFT":
                     logger.info("Left screen touched")
-                    self.write_event("LeftScreenTouched ", self.current_trial)
-
-                    if self.left_reward_probability == self.config["high_reward_probability"]:
-                        self.state = PRLState.CORRECT
-                    else:
-                        self.state = PRLState.ERROR
-                elif self.chamber.get_right_m0().is_touched():
+                    self.write_event("LeftScreenTouched", self.current_trial)
+                    self.touched_side = "LEFT"
+                    self.state = PRLState.CORRECT if self.left_reward_probability == self.config["high_reward_probability"] else PRLState.ERROR
+                elif side == "RIGHT":
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
-
-                    if self.right_reward_probability == self.config["high_reward_probability"]:
-                        self.state = PRLState.CORRECT
-                    else:
-                        self.state = PRLState.ERROR
+                    self.touched_side = "RIGHT"
+                    self.state = PRLState.CORRECT if self.right_reward_probability == self.config["high_reward_probability"] else PRLState.ERROR
             else:
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
@@ -206,30 +203,32 @@ class PRL(Trainer):
             self.write_event("CorrectTouch ", self.current_trial)
 
             self.clear_images()
-            if random.random() <= self.config["high_reward_probability"]:
+            reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
+            if random.random() <= reward_prob:
                 self.state = PRLState.DELIVER_REWARD_START
                 logger.info("Delivering reward...")
-                self.write_event("DeliverRewardStart ", self.current_trial)
+                self.write_event("DeliverRewardStart", self.current_trial)
             else:
                 self.state = PRLState.ITI_START
                 logger.info("No reward delivered, moving to ITI...")
-                self.write_event("NoReward ", self.current_trial)
+                self.write_event("NoReward", self.current_trial)
         
         elif self.state == PRLState.ERROR:
             # ERROR state, handling incorrect touch
             logger.debug("Current state: ERROR")
             logger.info("Incorrect touch detected.")
-            self.write_event("IncorrectTouch ", self.current_trial)
+            self.write_event("IncorrectTouch", self.current_trial)
 
             self.clear_images()
-            if random.random() <= self.config["low_reward_probability"]:
+            reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
+            if random.random() <= reward_prob:
                 self.state = PRLState.DELIVER_REWARD_START
                 logger.info("Delivering reward...")
-                self.write_event("DeliverRewardStart ", self.current_trial)
+                self.write_event("DeliverRewardStart", self.current_trial)
             else:
                 self.state = PRLState.ITI_START
                 logger.info("No reward delivered, moving to ITI...")
-                self.write_event("NoReward ", self.current_trial)
+                self.write_event("NoReward", self.current_trial)
 
         elif self.state == PRLState.DELIVER_REWARD_START:
             # DELIVER_REWARD_START state, preparing to deliver the reward
