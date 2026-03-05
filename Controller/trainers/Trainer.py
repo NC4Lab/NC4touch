@@ -10,21 +10,6 @@ import time
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-def get_trainers():
-    # List of available trainers
-    return [
-        "DoNothingTrainer",
-        "Habituation",
-        "InitialTouch",
-        "MustTouch",
-        "Punish_Incorrect",
-        "Simple_Discrimination",
-        "Complex_Discrimination",
-        "PRL",
-        "SoundTest",
-        # Add more trainers as needed
-    ]
-
 class Trainer(ABC):
     # Base trainer class for running training sessions
 
