@@ -10,7 +10,7 @@
 #define TFT_RST  6
 #define TFT_BLK  9  
 
-const char* VERSION = "0.2.1_20260219";
+const char* VERSION = "0.2.2_20260305";
 
 
 const int pin0 = 10;
@@ -113,17 +113,28 @@ void setupDisplayAndSD() {
   screen.begin();
   screen.setColorMode(COLOR_MODE_RGB565);
 
-  while (!SD.begin()) {
-    Serial.println("SD init failed, retrying...");
+  bool sdOk = false;
+  for (int attempt = 1; attempt <= 25; attempt++) {
+    Serial.print("Attempting SD init...");
+    if (SD.begin()) {
+      sdOk = true;
+      break;
+    }
+    Serial.println(" failed, retrying...");
     delay(1000);
   }
-  Serial.println("SD init success!");
 
-  // List SD contents for debugging
-  Serial.println("SD contents:");
-  File root = SD.open("/");
-  printSDFileList(root);
-  root.close();
+  if (sdOk) {
+    Serial.println("SD init success!");
+    // List SD contents for debugging
+    Serial.println("SD contents:");
+    File root = SD.open("/");
+    printSDFileList(root);
+    root.close();
+  } else {
+    Serial.println("SD init failed - continuing without SD card");
+    Serial.println("Image loading will not be available");
+  }
 }
 
 void processSerialCommand() {

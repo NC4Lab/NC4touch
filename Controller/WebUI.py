@@ -68,17 +68,35 @@ class WebUI:
     def update_state(self):
         """Periodically update the state of the UI elements based on the session state."""
         # Update M0 status labels
-        self.left_m0_port_label.set_text(f"Port: {self.session.chamber.get_left_m0().port}")
-        self.left_m0_mode_label.set_text(f"Mode: {self.session.chamber.get_left_m0().mode.name}")
-        self.left_m0_version_label.set_text(f"Firmware: {self.session.chamber.get_left_m0().firmware_version}")
+        left_m0 = self.session.chamber.get_left_m0()
+        if left_m0 is not None:
+            self.left_m0_port_label.set_text(f"Port: {left_m0.port}")
+            self.left_m0_mode_label.set_text(f"Mode: {left_m0.mode.name}")
+            self.left_m0_version_label.set_text(f"Firmware: {left_m0.firmware_version}")
+        else:
+            self.left_m0_port_label.set_text("Port: N/A")
+            self.left_m0_mode_label.set_text("Mode: N/A")
+            self.left_m0_version_label.set_text("Firmware: N/A")
 
-        self.middle_m0_port_label.set_text(f"Port: {self.session.chamber.get_middle_m0().port}")
-        self.middle_m0_mode_label.set_text(f"Mode: {self.session.chamber.get_middle_m0().mode.name}")
-        self.middle_m0_version_label.set_text(f"Firmware: {self.session.chamber.get_middle_m0().firmware_version}")
+        middle_m0 = self.session.chamber.get_middle_m0()
+        if middle_m0 is not None:
+            self.middle_m0_port_label.set_text(f"Port: {middle_m0.port}")
+            self.middle_m0_mode_label.set_text(f"Mode: {middle_m0.mode.name}")
+            self.middle_m0_version_label.set_text(f"Firmware: {middle_m0.firmware_version}")
+        else:
+            self.middle_m0_port_label.set_text("Port: N/A")
+            self.middle_m0_mode_label.set_text("Mode: N/A")
+            self.middle_m0_version_label.set_text("Firmware: N/A")
 
-        self.right_m0_port_label.set_text(f"Port: {self.session.chamber.get_right_m0().port}")
-        self.right_m0_mode_label.set_text(f"Mode: {self.session.chamber.get_right_m0().mode.name}")
-        self.right_m0_version_label.set_text(f"Firmware: {self.session.chamber.get_right_m0().firmware_version}")
+        right_m0 = self.session.chamber.get_right_m0()
+        if right_m0 is not None:
+            self.right_m0_port_label.set_text(f"Port: {right_m0.port}")
+            self.right_m0_mode_label.set_text(f"Mode: {right_m0.mode.name}")
+            self.right_m0_version_label.set_text(f"Firmware: {right_m0.firmware_version}")
+        else:
+            self.right_m0_port_label.set_text("Port: N/A")
+            self.right_m0_mode_label.set_text("Mode: N/A")
+            self.right_m0_version_label.set_text("Firmware: N/A")
 
         self.house_led_brightness_slider.set_value(100.0 * self.session.chamber.house_led.brightness / 255.0)
         self.pump_test_button.set_value(self.session.chamber.reward.state)
@@ -288,19 +306,19 @@ class WebUI:
                     
                     self.left_m0_cmd_label = ui.label("Left M0 Command:")
                     self.left_m0_cmd_input = ui.input(value = "")
-                    self.left_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_left_m0().send_command(self.left_m0_cmd_input.value))
+                    self.left_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_left_m0().send_command(self.left_m0_cmd_input.value) if self.session.chamber.get_left_m0() is not None else ui.notify("Left M0 not found", type="negative"))
 
                     self.middle_m0_cmd_label = ui.label("Middle M0 Command:")
                     self.middle_m0_cmd_input = ui.input(value = "")
-                    self.middle_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_middle_m0().send_command(self.middle_m0_cmd_input.value))
+                    self.middle_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_middle_m0().send_command(self.middle_m0_cmd_input.value) if self.session.chamber.get_middle_m0() is not None else ui.notify("Middle M0 not found", type="negative"))
 
                     self.right_m0_cmd_label = ui.label("Right M0 Command:")
                     self.right_m0_cmd_input = ui.input(value = "")
-                    self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_right_m0().send_command(self.right_m0_cmd_input.value))
+                    self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_right_m0().send_command(self.right_m0_cmd_input.value) if self.session.chamber.get_right_m0() is not None else ui.notify("Right M0 not found", type="negative"))
 
     
     def rgb_to_hex(self, rgb):
-        return '#%02x%02x%02x' % rgb
+        return '#%02x%02x%02x' % tuple(rgb)
 
     def hex_to_rgb(self, hex_color):
         hex_color = hex_color.lstrip('#')

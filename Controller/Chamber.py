@@ -129,35 +129,75 @@ class Chamber:
   def arduino_cli_discover(self):
     """
     Uses arduino-cli to discover connected boards.
-    Looks for boards with VID: 0x2341 and PID: 0x0244 (DFRobot M0)
+    Looks for boards with VID: 0x3343 and PID: 0x8244 (DFRobot M0)
     """
     # Reset all the M0 boards in order before discovery
     self.m0_reset()
-    time.sleep(3)
 
-    logger.info("Discovering M0 boards using arduino-cli...")
+    # Poll until all expected boards appear or timeout (boards re-enumerate after reset)
+    logger.info("Waiting for M0 boards to re-enumerate after reset...")
+    deadline = time.time() + 10
     self.discovered_boards = []
+    while time.time() < deadline:
+        time.sleep(1)
+        self.discovered_boards = []
+        try:
+            result = subprocess.run([f"~/bin/arduino-cli board list --format json"], capture_output=True, shell=True)
+            boards = json.loads(result.stdout)
+            for board in boards['detected_ports']:
+                props = board['port']['properties']
+                if 'pid' in props and 'vid' in props and props['pid'] == '0x8244' and props['vid'] == '0x3343':
+                    self.discovered_boards.append(board['port']['address'])
+        except Exception as e:
+            logger.error(f"Error during board poll: {e}")
 
-    try:
-        result = subprocess.run([f"~/bin/arduino-cli board list --format json"], capture_output=True, shell=True)
-        boards = json.loads(result.stdout)
+        if len(self.discovered_boards) >= len(self.m0s):
+            break
+        logger.debug(f"Found {len(self.discovered_boards)}/{len(self.m0s)} boards, waiting...")
 
-        for board in boards['detected_ports']:
-            props = board['port']['properties']
-            if 'pid' in props and 'vid' in props and props['pid'] == '0x0244' and props['vid'] == '0x2341':
-                self.discovered_boards.append(board['port']['address'])
-                logger.debug(f"Discovered M0 board on {board['port']['address']}")
+    logger.info(f"Discovered {len(self.discovered_boards)} M0 board(s): {self.discovered_boards}")
 
-    except Exception as e:
-        logger.error(f"Error discovering boards with arduino-cli: {e}")
+    if not self.discovered_boards:
+        logger.error("No M0 boards discovered. Please check the connections.")
+        return
 
-    if len(self.discovered_boards) >= len(self.m0s):
-        for i, m0 in enumerate(self.m0s):
-            m0.port = self.discovered_boards[i]
-            m0.id = f"M0_{i}"
-            logger.info(f"Set {m0.id} serial port to {m0.port}")
-    else:
-        logger.error("Not enough M0 boards discovered. Please check the connections.")
+    # Open each port and read boot lines until "ID:" appears.
+    # Opening the port resets the SAMD21 via DTR, which triggers SD init.
+    # We loop through lines until we see the ID broadcast or timeout.
+    boot_timeout = 15  # seconds — enough for SD init retries
+    for port in self.discovered_boards:
+        board_id = None
+        try:
+            with serial.Serial(port, 115200, timeout=1) as ser:
+                logger.debug(f"Opened {port}, waiting for boot ID (up to {boot_timeout}s)...")
+                deadline = time.time() + boot_timeout
+                while time.time() < deadline:
+                    raw = ser.readline()
+                    if not raw:
+                        continue
+                    line = raw.decode("utf-8", errors="ignore").strip()
+                    if line:
+                        logger.debug(f"  [{port}] {line}")
+                    if line.startswith("ID:"):
+                        board_id = line.split("ID:")[1].split()[0]  # e.g. "M0_0"
+                        break
+        except Exception as e:
+            logger.error(f"Error reading from {port}: {e}")
+            continue
+
+        if board_id is None:
+            logger.warning(f"No ID received from {port} within {boot_timeout}s, skipping.")
+            continue
+
+        matched = False
+        for m0 in self.m0s:
+            if m0.id == board_id:
+                m0.port = port
+                logger.info(f"Matched {board_id} → {port}")
+                matched = True
+                break
+        if not matched:
+            logger.warning(f"No M0 object for self-reported ID '{board_id}' on {port}")
 
 
   
