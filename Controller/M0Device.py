@@ -115,7 +115,7 @@ class M0Device:
             except Exception as e:
                 logger.error(f"[{self.id}] Failed to open {self.port}: {e}")
         else:
-            logger.error(f"[{self.id}] Cannot open port in mode {self.mode}.")
+            logger.error(f"[{self.id}] Cannot open. Port in mode {self.mode}.")
     
     def close_port(self):
         """
@@ -130,7 +130,7 @@ class M0Device:
                 logger.info(f"[{self.id}] Closed port {self.port}.")
             self.mode = M0Mode.PORT_CLOSED
         else:
-            logger.error(f"[{self.id}] Cannot close port in mode {self.mode}.")
+            logger.error(f"[{self.id}] Cannot close. Port in mode {self.mode}.")
 
     def start_serial_comm(self):
         """
