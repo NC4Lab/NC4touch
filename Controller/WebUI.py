@@ -130,12 +130,11 @@ class WebUI:
 
     def init_ui(self):
         ui.timer(1, self.update_state)  # Start a timer to update M0 status labels every second
-        ui.label(f"{self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
+        ui.label(f"{self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center;')
         with ui.row():
             with ui.column():
                 with ui.card():
-                    ui.label('Session Configuration').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-
+                    ui.label('Session Configuration').style('font-size: 18px; font-weight: bold; text-align: center;')
                     ui.label('Chamber Name:').style('width: 200px;')
                     self.chamber_name_input = ui.input(self.session.config["chamber_name"],
                                                     on_change = lambda e:self.session.set_chamber_name(e.value)).style('width: 200px;')
@@ -173,7 +172,7 @@ class WebUI:
 
             with ui.column():
                 with ui.card():
-                    ui.label('Log').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    ui.label('Log').style('font-size: 18px; font-weight: bold; text-align: center;')
 
                     log = ui.log(max_lines=10).classes('w-full').style('width: 800px; height: 200px;')
                     self.log_handler = LogElementHandler(log)
@@ -182,12 +181,13 @@ class WebUI:
                     session_logger.addHandler(self.log_handler)
                     ui.context.client.on_disconnect(lambda: logger.removeHandler(self.log_handler))
 
-                    ui.label('Log Level:').style('width: 200px;')
-                    self.log_level_input = ui.select(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], value='DEBUG').style('width: 200px;')
-                    self.log_level_input.on('change', lambda e: self.log_handler.setLevel(getattr(logging, e.value)))
+                    with ui.row():
+                        ui.label('Log Level:').style('width: 200px;')
+                        self.log_level_input = ui.select(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], value='DEBUG').style('width: 200px;')
+                        self.log_level_input.on('change', lambda e: self.log_handler.setLevel(getattr(logging, e.value)))
 
                 with ui.card():
-                    ui.label('Camera Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    ui.label('Camera Control').style('font-size: 18px; font-weight: bold; text-align: center;')
                     # Show video stream from the camera
                     ui.label('Camera Stream:').style('width: 800px;')
                     ui.image(source=f"http://{self.ip}:{self.video_port}/stream").style('width: 640px; height: 480px;')
@@ -195,7 +195,7 @@ class WebUI:
                     with ui.row():
                         # Reinitialize the camera
                         self.reinitialize_camera_button = ui.button("Reinitialize").on_click(self.session.chamber.camera.reinitialize)
-                        self.reinitialize_camera_button.style('width: 200px; margin-top: 20px;')
+                        self.reinitialize_camera_button.style('width: 200px;')
                         self.video_recording_toggle = ui.toggle({0: "Video Rec Off", 1: "Video Rec On"}, value=False, on_change=lambda e: self.session.start_video_recording() if e.value else self.session.stop_video_recording())
                     
                     with ui.row():
@@ -206,7 +206,7 @@ class WebUI:
             
             with ui.column():
                 with ui.card():
-                    ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center;')
                     # Buttons to control M0 boards
                     # self.discover_button = ui.button("Discover").on_click(self.m0_discover)
                     self.discover_button = ui.button(text="Discover", color="blue").on_click(self.m0_discover)
@@ -240,26 +240,26 @@ class WebUI:
                         self.upload_code_button_spinner.visible = False
                     
                 with ui.card():
-                        ui.label('Left M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        ui.label('Left M0').style('font-size: 18px; font-weight: bold; text-align: center;')
                         # Show M0 port
                         self.left_m0_port_label = ui.label(f"Port: {self.session.chamber.get_left_m0().port}")
                         self.left_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_left_m0().mode.name}")
                         self.left_m0_version_label = ui.label(f"Firmware Version: {self.session.chamber.get_left_m0().firmware_version}")
 
-                        ui.label('Middle M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        ui.label('Middle M0').style('font-size: 18px; font-weight: bold; text-align: center;')
                         # Show M0 port
                         self.middle_m0_port_label = ui.label(f"Port: {self.session.chamber.get_middle_m0().port}")
                         self.middle_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_middle_m0().mode.name}")
                         self.middle_m0_version_label = ui.label(f"Firmware Version: {self.session.chamber.get_middle_m0().firmware_version}")
 
-                        ui.label('Right M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        ui.label('Right M0').style('font-size: 18px; font-weight: bold; text-align: center;')
                         # Show M0 port
                         self.right_m0_port_label = ui.label(f"Port: {self.session.chamber.get_right_m0().port}")
                         self.right_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_right_m0().mode.name}")
                         self.right_m0_version_label = ui.label(f"Firmware Version: {self.session.chamber.get_right_m0().firmware_version}")
 
                 with ui.card():
-                    ui.label('Training Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    ui.label('Training Control').style('font-size: 18px; font-weight: bold; text-align: center;')
                     # Buttons to control training session
                     self.start_training_button = ui.button("Start Training").on_click(self.session.start_training)
                     self.stop_training_button = ui.button("Stop Training").on_click(self.session.stop_training)
@@ -268,7 +268,7 @@ class WebUI:
             
             with ui.column():
                 with ui.card():
-                    ui.label('Chamber Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    ui.label('Chamber Control').style('font-size: 18px; font-weight: bold; text-align: center;')
                     # Button to test pumps
                     self.pump_test_button = ui.toggle({0: "Pump off", 1: "Pump on"}, value = self.session.chamber.reward.state, 
                                                       on_change=lambda e: self.session.chamber.reward.dispense() if e.value else self.session.chamber.reward.stop())
@@ -298,11 +298,15 @@ class WebUI:
                     self.right_m0_cmd_input = ui.input(value = "")
                     self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_right_m0().send_command(self.right_m0_cmd_input.value))
 
-    
-    def rgb_to_hex(self, rgb):
+    def rgb_to_hex(self, rgb: tuple) -> str:
+        if isinstance(rgb, list):
+            rgb = tuple(rgb)
+        if not isinstance(rgb, tuple) or len(rgb) != 3:
+            logger.error(f"Invalid RGB value: {rgb}. Must be a tuple of 3 integers.")
+            return "#000000"
         return '#%02x%02x%02x' % rgb
 
-    def hex_to_rgb(self, hex_color):
+    def hex_to_rgb(self, hex_color: str) -> tuple:
         hex_color = hex_color.lstrip('#')
         return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
