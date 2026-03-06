@@ -115,7 +115,7 @@ class M0Device:
             except Exception as e:
                 logger.error(f"[{self.id}] Failed to open {self.port}: {e}")
         else:
-            logger.error(f"[{self.id}] Cannot open. Port in mode {self.mode}.")
+            logger.error(f"[{self.id}] Cannot open port in mode {self.mode}.")
     
     def close_port(self):
         """
@@ -130,7 +130,7 @@ class M0Device:
                 logger.info(f"[{self.id}] Closed port {self.port}.")
             self.mode = M0Mode.PORT_CLOSED
         else:
-            logger.error(f"[{self.id}] Cannot close. Port in mode {self.mode}.")
+            logger.error(f"[{self.id}] Cannot close port in mode {self.mode}.")
 
     def start_serial_comm(self):
         """
@@ -209,11 +209,8 @@ class M0Device:
                             self.is_touched = False
 
                         if line.startswith("ID:"):
-                            reported_id = line.split("ID:")[1].split()[0]  # e.g. "M0_0" from "M0_0 is ready."
-                            if reported_id != self.id:
-                                logger.warning(f"[{self.id}] Board reports ID '{reported_id}' — port may be misassigned. Discovery should fix this.")
-                            else:
-                                logger.info(f"[{self.id}] Device ID confirmed from serial message.")                        
+                            self.id = line.split("ID:")[1]
+                            logger.info(f"[{self.id}] Updated device ID from serial message.")                        
                         
                         if line.startswith("VERSION:"):
                             self.firmware_version = line.split("VERSION:")[1]
