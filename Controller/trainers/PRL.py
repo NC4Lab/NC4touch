@@ -76,6 +76,8 @@ class PRL(Trainer):
 
         self.left_image = "x"   # X always on left screen (not tied to reward)
         self.right_image = "o"  # O always on right screen (not tied to reward)
+
+        #Initialize reward probabilities to 0, will be set at the start of training
         self.left_reward_probability = 0
         self.right_reward_probability = 0
         self.current_trial = 0
