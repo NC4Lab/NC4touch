@@ -58,9 +58,9 @@ class PRL(Trainer):
         # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
         self.config.ensure_param("trainer_name", "ProbabilisticReversalLearning")  # Name of the trainer
         self.config.ensure_param("num_trials", 60)  # Number of trials to run
-        self.config.ensure_param("high_reward_probability", 0.9)  # Probability of high reward
-        self.config.ensure_param("low_reward_probability", 0.1)
-        self.config.ensure_param("reward_pump_secs", 1.5)  # Duration for which the reward pump is activated
+        self.config.ensure_param("high_reward_probability", 1)  # Probability of high reward
+        self.config.ensure_param("low_reward_probability", 0)
+        self.config.ensure_param("reward_pump_secs", 0.5)  # Duration for which the reward pump is activated
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
@@ -68,7 +68,7 @@ class PRL(Trainer):
 
         # Local variables used by the trainer during the training session and not set in the config file.
         self.config.ensure_param("touch_timeout", 30) # Timeout for waiting for touch
-        self.config.ensure_param("trial_to_reverse", 30) # Trial at which to reverse reward probabilities
+        self.config.ensure_param("trial_to_reverse", 99) # Trial at which to reverse reward probabilities
         self.reward_start_time = time.time()
         self.reward_collected = False
         self.last_beam_break_time = time.time()
