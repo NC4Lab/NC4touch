@@ -51,6 +51,10 @@ class VirtualChamber:
         self.config.ensure_param("buzzer_pin", 16)
         self.config.ensure_param("reset_pins", [25, 5, 6])
         self.config.ensure_param("camera_device", "/dev/video0")
+        self.config.ensure_param("display_width", 1920)
+        self.config.ensure_param("display_height", 480)
+        self.config.ensure_param("display_zone_widths", [320, 320, 320])
+        self.config.ensure_param("display_zone_gaps", None)
         
         self.code_dir = os.path.dirname(os.path.abspath(__file__))
         
@@ -130,6 +134,49 @@ class VirtualChamber:
         logger.info(f"  - Virtual House LED")
         logger.info(f"  - Virtual Buzzer")
         logger.info("="*60)
+
+    def get_left_m0(self):
+        return self.left_m0
+
+    def get_middle_m0(self):
+        return self.middle_m0
+
+    def get_right_m0(self):
+        return self.right_m0
+
+    def get_display_layout(self):
+        """Return virtual single-display layout geometry for GUI rendering."""
+        display_width = int(self.config["display_width"])
+        display_height = int(self.config["display_height"])
+        zone_widths = [int(v) for v in self.config["display_zone_widths"]]
+        gaps = self.config["display_zone_gaps"]
+
+        if gaps is None or gaps == "auto":
+            zone_total = sum(zone_widths)
+            leftover = max(0, display_width - zone_total)
+            base = leftover // 4
+            rem = leftover % 4
+            gaps = [base + (1 if i < rem else 0) for i in range(4)]
+        else:
+            gaps = [int(v) for v in gaps]
+            if len(gaps) != 4:
+                gaps = [0, 0, 0, 0]
+
+        left_x = gaps[0]
+        middle_x = left_x + zone_widths[0] + gaps[1]
+        right_x = middle_x + zone_widths[1] + gaps[2]
+
+        return {
+            "display_width": display_width,
+            "display_height": display_height,
+            "zone_widths": zone_widths,
+            "gaps": gaps,
+            "zones": {
+                "left": {"x": left_x, "y": 0, "w": zone_widths[0], "h": display_height},
+                "middle": {"x": middle_x, "y": 0, "w": zone_widths[1], "h": display_height},
+                "right": {"x": right_x, "y": 0, "w": zone_widths[2], "h": display_height},
+            },
+        }
 
     def __del__(self):
         """Cleanup virtual resources."""
