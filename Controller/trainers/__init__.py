@@ -7,6 +7,7 @@ _TRAINER_CLASSES = {
     "Habituation":            ("trainers.Habituation",            "Habituation"),
     "InitialTouch":           ("trainers.InitialTouch",           "InitialTouch"),
     "MustTouch":              ("trainers.MustTouch",              "MustTouch"),
+    "MustInitiate":           ("trainers.MustInitiate",           "MustInitiate"),
     "Punish_Incorrect":       ("trainers.Punish_Incorrect",       "PunishIncorrect"),
     "Simple_Discrimination":  ("trainers.Simple_Discrimination",  "SimpleDiscrimination"),
     "Complex_Discrimination": ("trainers.Complex_Discrimination", "ComplexDiscrimination"),
