@@ -111,20 +111,20 @@ class PunishIncorrect(Trainer):
         self.right_image = self.trials[trial_num][1]
 
         # Send commands to M0 devices to load images
-        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
-        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+        self.chamber.display_command("left", f"IMG:{self.left_image}")
+        self.chamber.display_command("right", f"IMG:{self.right_image}")
 
     def show_images(self):
         """Display images on the M0 devices."""
         # Send show command to both screens
-        self.chamber.get_left_m0().send_command("SHOW")
-        self.chamber.get_right_m0().send_command("SHOW")
+        self.chamber.display_command("left", "SHOW")
+        self.chamber.display_command("right", "SHOW")
 
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Blank both screens
-        self.chamber.get_left_m0().send_command("BLACK")
-        self.chamber.get_right_m0().send_command("BLACK")
+        self.chamber.display_command("left", "BLACK")
+        self.chamber.display_command("right", "BLACK")
 
     def run_training(self):
         """Main loop controlling the training state machine."""
@@ -229,7 +229,7 @@ class PunishIncorrect(Trainer):
             # Waiting for screen touch
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.get_left_m0().was_touched():
+                if self.chamber.display_was_touched("left"):
                     self.write_event("LeftScreenTouched", self.current_trial)
                     self.state = (
                         PunishIncorrectState.CORRECT
@@ -237,7 +237,7 @@ class PunishIncorrect(Trainer):
                         else PunishIncorrectState.INCORRECT
                     )
 
-                elif self.chamber.get_right_m0().was_touched():
+                elif self.chamber.display_was_touched("right"):
                     self.write_event("RightScreenTouched", self.current_trial)
                     self.state = (
                         PunishIncorrectState.CORRECT

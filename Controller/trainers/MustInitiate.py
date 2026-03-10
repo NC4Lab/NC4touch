@@ -110,26 +110,26 @@ class MustInitiate(Trainer):
         self.right_image = self.trials[trial_num][1]
 
         if self.left_image == "BLACK":
-            self.chamber.get_left_m0().send_command("BLACK")
+            self.chamber.display_command("left", "BLACK")
         else:
-            self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+            self.chamber.display_command("left", f"IMG:{self.left_image}")
 
         if self.right_image == "BLACK":
-            self.chamber.get_right_m0().send_command("BLACK")
+            self.chamber.display_command("right", "BLACK")
         else:
-            self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+            self.chamber.display_command("right", f"IMG:{self.right_image}")
 
     def show_images(self):
         """Display loaded images."""
         if self.left_image != "BLACK":
-            self.chamber.get_left_m0().send_command("SHOW")
+            self.chamber.display_command("left", "SHOW")
         if self.right_image != "BLACK":
-            self.chamber.get_right_m0().send_command("SHOW")
+            self.chamber.display_command("right", "SHOW")
 
     def clear_images(self):
         """Blank both screens."""
-        self.chamber.get_left_m0().send_command("BLACK")
-        self.chamber.get_right_m0().send_command("BLACK")
+        self.chamber.display_command("left", "BLACK")
+        self.chamber.display_command("right", "BLACK")
 
     def run_training(self):
         current_time = time.time()

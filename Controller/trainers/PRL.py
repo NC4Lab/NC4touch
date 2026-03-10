@@ -90,20 +90,20 @@ class PRL(Trainer):
         """Load images for the current trial."""
         # Load images from the sequence file
         # Send commands to M0 devices to load images
-        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
-        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+        self.chamber.display_command("left", f"IMG:{self.left_image}")
+        self.chamber.display_command("right", f"IMG:{self.right_image}")
     
     def show_images(self):
         """Display images on the M0 devices."""
         # Send commands to M0 devices to show images
-        self.chamber.get_left_m0().send_command("SHOW")
-        self.chamber.get_right_m0().send_command("SHOW")
+        self.chamber.display_command("left", "SHOW")
+        self.chamber.display_command("right", "SHOW")
     
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.get_left_m0().send_command("BLACK")
-        self.chamber.get_right_m0().send_command("BLACK")
+        self.chamber.display_command("left", "BLACK")
+        self.chamber.display_command("right", "BLACK")
 
 
     def start_training(self):

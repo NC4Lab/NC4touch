@@ -53,7 +53,7 @@ class SoundTest(Trainer):
             pass
 
         elif self.state == SoundTestState.START_LOOP:
-            self.chamber.m0_clear()
+            self.chamber.display_clear("all")
             self.current_loop += 1
             if self.current_loop <= self.config["num_loops"]:
                 logger.info(f"Starting loop {self.current_loop}")
@@ -131,14 +131,14 @@ class SoundTest(Trainer):
             if not getattr(self, 'images_active', False):
                 logger.info("Images ON")
                 self.write_event("Images", "ON")
-                self.chamber.m0_show_image()
+                self.chamber.display_show("all")
                 self.images_active = True
                 self.state_start_time = current_time
 
             if self.check_duration(self.config["step_duration"]):
                 logger.info("Images OFF")
                 self.write_event("Images", "OFF")
-                self.chamber.m0_clear()
+                self.chamber.display_clear("all")
                 self.images_active = False
                 self.state = SoundTestState.REWARD
 

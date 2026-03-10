@@ -90,32 +90,32 @@ class InitialTouch(Trainer):
 
         if not self.left_image == "BLACK":
             logger.info(f"Loading left image: {self.left_image}")
-            self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+            self.chamber.display_command("left", f"IMG:{self.left_image}")
         else:
             logger.info("Left image is BLACK, sending BLACK command")
-            self.chamber.get_left_m0().send_command("BLACK")
+            self.chamber.display_command("left", "BLACK")
 
         if not self.right_image == "BLACK":
             logger.info(f"Loading right image: {self.right_image}")
-            self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+            self.chamber.display_command("right", f"IMG:{self.right_image}")
         else:
             logger.info("Right image is BLACK, sending BLACK command")
-            self.chamber.get_right_m0().send_command("BLACK")
+            self.chamber.display_command("right", "BLACK")
     
     def show_images(self):
         """Display images on the M0 devices."""
         # Send commands to M0 devices to show images
         if not self.left_image == "BLACK":
-            self.chamber.get_left_m0().send_command("SHOW")
+            self.chamber.display_command("left", "SHOW")
 
         if not self.right_image == "BLACK":
-            self.chamber.get_right_m0().send_command("SHOW")
+            self.chamber.display_command("right", "SHOW")
     
     def clear_images(self):
         """Clear the images on the M0 devices."""
         # Send commands to M0 devices to blank images
-        self.chamber.get_left_m0().send_command("OFF")
-        self.chamber.get_right_m0().send_command("OFF")
+        self.chamber.display_command("left", "OFF")
+        self.chamber.display_command("right", "OFF")
     
     def run_training(self):
         """Main loop for running the training session."""
@@ -218,7 +218,7 @@ class InitialTouch(Trainer):
         elif self.state == InitialTouchState.WAIT_FOR_TOUCH:
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.get_left_m0().was_touched():
+                if self.chamber.display_was_touched("left"):
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial)
 
@@ -226,7 +226,7 @@ class InitialTouch(Trainer):
                         self.state = InitialTouchState.ERROR
                     else:
                         self.state = InitialTouchState.CORRECT
-                elif self.chamber.get_right_m0().was_touched():
+                elif self.chamber.display_was_touched("right"):
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
 
