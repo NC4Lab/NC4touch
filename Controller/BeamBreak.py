@@ -25,7 +25,7 @@ class BeamBreak:
         self.beam_break_memory = beam_break_memory  # 200 ms
         self.read_interval = 0.05  # 50 ms
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
-        self.state = 1  # 1 = beam not broken, 0 = beam broken
+        self.state = False  # False = beam broken, True = beam not broken
 
         self.pi.set_mode(self.pin, pigpio.INPUT)
         self.pi.set_pull_up_down(self.pin, pigpio.PUD_UP)
@@ -38,9 +38,9 @@ class BeamBreak:
         reading = self.pi.read(self.pin)
         if reading == 0: # Beam is broken
             self.last_break_time = current_time
-            self.state = 0
+            self.state = False
         elif current_time - self.last_break_time > self.beam_break_memory:
-            self.state = 1
+            self.state = True
 
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
         self.read_timer.start()
