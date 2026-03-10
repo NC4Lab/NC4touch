@@ -36,8 +36,8 @@ def test_basic_operations():
     # Create virtual chamber
     chamber = VirtualChamber()
 
-    # Initialize M0 devices
-    chamber.initialize_m0s()
+    # Initialize display devices
+    chamber.initialize_display_devices()
 
     # Test LED control
     print("\n--- Testing LEDs ---")
@@ -76,15 +76,15 @@ def test_basic_operations():
 
     # Test touchscreens
     print("\n--- Testing Touchscreens ---")
-    chamber.get_left_m0().send_command("DISPLAY:/path/to/image.bmp")
-    chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
+    chamber.get_left_display_device().send_command("DISPLAY:/path/to/image.bmp")
+    chamber.get_left_display_device().simulate_touch(160, 240, duration=0.2)
     time.sleep(0.3)
 
     # Get final state
     print("\n--- Final Chamber State ---")
     state = chamber.get_state()
     print(f"Reward count: {state['reward']['total_dispensed']}")
-    print(f"Left screen image: {state['left_m0']['current_image']}")
+    print(f"Left screen image: {state['left_display_device']['current_image']}")
 
     print("\n✓ Basic operations test completed!")
 
@@ -104,7 +104,7 @@ def test_with_gui():
 
     # Create virtual chamber
     chamber = VirtualChamber()
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     chamber.beambreak.activate()
 
     # Create and run GUI
@@ -116,8 +116,8 @@ def test_with_gui():
         logger.info("Simulating demo activity...")
         
         # Display images
-        chamber.get_left_m0().send_command("DISPLAY:stimulus_left.bmp")
-        chamber.get_right_m0().send_command("DISPLAY:stimulus_right.bmp")
+        chamber.get_left_display_device().send_command("DISPLAY:stimulus_left.bmp")
+        chamber.get_right_display_device().send_command("DISPLAY:stimulus_right.bmp")
         time.sleep(1)
         
         # Reward LED on

@@ -67,29 +67,29 @@ class VirtualChamber:
         self.pi = None
 
         # Initialize virtual display-zone devices (legacy-compatible adapter)
-        self.left_m0 = VirtualDisplayDevice(
+        self.left_display_device = VirtualDisplayDevice(
             pi=self.pi,
-            id="M0_0",
+            id="DISPLAY_LEFT",
             reset_pin=self.config["reset_pins"][0],
             location="left",
             image_dir=self.config["image_dir"]
         )
-        self.middle_m0 = VirtualDisplayDevice(
+        self.middle_display_device = VirtualDisplayDevice(
             pi=self.pi,
-            id="M0_1",
+            id="DISPLAY_MIDDLE",
             reset_pin=self.config["reset_pins"][1],
             location="middle",
             image_dir=self.config["image_dir"]
         )
-        self.right_m0 = VirtualDisplayDevice(
+        self.right_display_device = VirtualDisplayDevice(
             pi=self.pi,
-            id="M0_2",
+            id="DISPLAY_RIGHT",
             reset_pin=self.config["reset_pins"][2],
             location="right",
             image_dir=self.config["image_dir"]
         )
 
-        self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
+        self.display_devices_all = [self.left_display_device, self.middle_display_device, self.right_display_device]
 
         # Initialize virtual peripherals
         self.reward_led = VirtualLED(
@@ -135,14 +135,14 @@ class VirtualChamber:
         logger.info(f"  - Virtual Buzzer")
         logger.info("="*60)
 
-    def get_left_m0(self):
-        return self.left_m0
+    def get_left_display_device(self):
+        return self.left_display_device
 
-    def get_middle_m0(self):
-        return self.middle_m0
+    def get_middle_display_device(self):
+        return self.middle_display_device
 
-    def get_right_m0(self):
-        return self.right_m0
+    def get_right_display_device(self):
+        return self.right_display_device
 
     def _normalize_zone(self, zone):
         zone_name = str(zone).strip().lower()
@@ -153,11 +153,11 @@ class VirtualChamber:
     def _zone_device(self, zone):
         zone_name = self._normalize_zone(zone)
         if zone_name == "left":
-            return self.left_m0
+            return self.left_display_device
         if zone_name == "middle":
-            return self.middle_m0
+            return self.middle_display_device
         if zone_name == "right":
-            return self.right_m0
+            return self.right_display_device
         return None
 
     def get_display_device(self, zone):
@@ -170,7 +170,7 @@ class VirtualChamber:
     def display_command(self, zone, command):
         zone_name = self._normalize_zone(zone)
         if zone_name == "all":
-            for display_device in self.m0s:
+            for display_device in self.display_devices_all:
                 display_device.send_command(command)
             return
         self._zone_device(zone_name).send_command(command)
@@ -191,7 +191,7 @@ class VirtualChamber:
     def display_was_touched(self, zone):
         zone_name = self._normalize_zone(zone)
         if zone_name == "all":
-            return any(display_device.was_touched() for display_device in self.m0s)
+            return any(display_device.was_touched() for display_device in self.display_devices_all)
         return self._zone_device(zone_name).was_touched()
 
     def configure_display_zones(self, zone_widths=None, zone_gaps=None, center_layout=None):
@@ -237,8 +237,8 @@ class VirtualChamber:
 
     def __del__(self):
         """Cleanup virtual resources."""
-        if hasattr(self, 'm0s'):
-            for display_device in self.m0s:
+        if hasattr(self, 'display_devices_all'):
+            for display_device in self.display_devices_all:
                 display_device.stop()
         logger.info("Virtual Chamber cleaned up")
 
@@ -251,55 +251,45 @@ class VirtualChamber:
         logger.info("Virtual Chamber: Board discovery skipped (virtual mode)")
         self.discovered_boards = [f"VIRTUAL_PORT_{i}" for i in range(3)]
 
-    def m0_discover(self):
+    def display_discover(self):
         """Virtual method - simulates display-controller discovery."""
         logger.info("Virtual Chamber: display-controller discovery completed (virtual mode)")
         return {
-            "M0_0": "VIRTUAL_PORT_0",
-            "M0_1": "VIRTUAL_PORT_1",
-            "M0_2": "VIRTUAL_PORT_2"
+            "DISPLAY_LEFT": "VIRTUAL_PORT_0",
+            "DISPLAY_MIDDLE": "VIRTUAL_PORT_1",
+            "DISPLAY_RIGHT": "VIRTUAL_PORT_2"
         }
 
-    def m0_reset(self):
+    def display_reset(self):
         """Virtual method - simulates display-controller reset."""
         logger.info("Virtual Chamber: display controllers reset (virtual mode)")
 
-    def initialize_m0s(self):
+    def initialize_display_devices(self):
         """Initialize all display-zone devices."""
-        for display_device in self.m0s:
+        for display_device in self.display_devices_all:
             display_device.initialize()
             time.sleep(0.1)
         logger.info("All virtual display-zone devices initialized")
 
-    def initialize_display_devices(self):
-        """Preferred alias for initialize_m0s()."""
-        self.initialize_m0s()
-
-    def m0_send_command(self, command):
-        """
-        Sends a command to all display-zone devices.
-        """
-        for display_device in self.m0s:
+    def send_display_command(self, command):
+        """Send one command to all display-zone devices."""
+        for display_device in self.display_devices_all:
             display_device.send_command(command)
         logger.debug(f"Virtual Chamber: sent command '{command}' to all display zones")
 
-    def send_display_command(self, command):
-        """Preferred alias for m0_send_command()."""
-        self.m0_send_command(command)
+    def display_show_image(self):
+        """Virtual method - show images on all display zones."""
+        self.send_display_command("SHOW")
 
-    def m0_show_image(self):
-        """Virtual method - show images on all M0s."""
-        self.m0_send_command("SHOW")
-
-    def m0_clear(self):
-        """Virtual method - clear images on all M0s."""
-        self.m0_send_command("BLACK")
+    def display_clear_all(self):
+        """Virtual method - clear images on all display zones."""
+        self.send_display_command("BLACK")
 
     def default_state(self):
         """
         Reset chamber to default state (all hardware off/clear).
         """
-        self.m0_send_command("CLEAR")
+        self.send_display_command("CLEAR")
         self.reward_led.deactivate()
         self.punishment_led.deactivate()
         self.house_led.deactivate()
@@ -337,9 +327,9 @@ class VirtualChamber:
             'middle_display': middle_state,
             'right_display': right_state,
             # Legacy keys retained for compatibility with older scripts/UI.
-            'left_m0': left_state,
-            'middle_m0': middle_state,
-            'right_m0': right_state,
+            'left_display_device': left_state,
+            'middle_display_device': middle_state,
+            'right_display_device': right_state,
             'reward_led': self.reward_led.get_state(),
             'punishment_led': self.punishment_led.get_state(),
             'house_led': self.house_led.get_state(),

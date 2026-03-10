@@ -43,7 +43,7 @@ def main():
     # 2. Create virtual chamber
     print("Creating virtual chamber...")
     chamber = VirtualChamber(chamber_config=chamber_config)
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     chamber.beambreak.activate()
     
     print(f"Image directory: {chamber.config['image_dir']}")

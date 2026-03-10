@@ -204,7 +204,7 @@ class VirtualChamberGUI:
             self._log(f"Touched non-responsive gap at x={real_x}")
             return
 
-        display_device = getattr(self.chamber, f"{zone_name}_m0")
+        display_device = getattr(self.chamber, f"{zone_name}_display_device")
         zone = self.layout["zones"][zone_name]
         local_x = max(0, min(zone["w"] - 1, real_x - zone["x"]))
         local_y = max(0, min(zone["h"] - 1, real_y - zone["y"]))
@@ -214,7 +214,7 @@ class VirtualChamberGUI:
         self._log(f"{zone_name.capitalize()} zone touched at ({local_x}, {local_y})")
 
     def _simulate_zone_touch(self, zone_name):
-        display_device = getattr(self.chamber, f"{zone_name}_m0")
+        display_device = getattr(self.chamber, f"{zone_name}_display_device")
         zone = self.layout["zones"][zone_name]
         display_device.simulate_touch(zone["w"] // 2, zone["h"] // 2, duration=0.2)
         self._zone_touch_until[zone_name] = time.time() + 0.25
@@ -362,7 +362,7 @@ class VirtualChamberGUI:
                 self.virtual_canvas.create_rectangle(x1, y1, x2, y2, outline="red", width=4)
 
             img_name = zone_state["current_image"]
-            img_path = getattr(self.chamber.m0s[["left", "middle", "right"].index(zone_name)], "_current_image_path", None)
+            img_path = getattr(self.chamber.display_devices_all[["left", "middle", "right"].index(zone_name)], "_current_image_path", None)
 
             if img_name:
                 display_name = img_name if "/" not in img_name else img_name.split("/")[-1]

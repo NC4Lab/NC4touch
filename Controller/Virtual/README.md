@@ -19,7 +19,7 @@ from Virtual.VirtualChamber import VirtualChamber
 
 # Create virtual chamber
 chamber = VirtualChamber()
-chamber.initialize_m0s()
+chamber.initialize_display_devices()
 
 # Use exactly like physical chamber
 chamber.reward_led.on()
@@ -67,7 +67,7 @@ from Virtual.VirtualChamber import VirtualChamber
 from Virtual.VirtualChamberGUI import VirtualChamberGUI
 
 chamber = VirtualChamber()
-chamber.initialize_m0s()
+chamber.initialize_display_devices()
 
 # Launch interactive GUI
 gui = VirtualChamberGUI(chamber)
@@ -162,7 +162,7 @@ import time
 def test_must_touch_logic():
     """Automated test for MustTouch trainer."""
     chamber = VirtualChamber()
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     
     # Your trainer logic here
     # ...

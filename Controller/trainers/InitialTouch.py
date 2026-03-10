@@ -103,8 +103,8 @@ class InitialTouch(Trainer):
             self.chamber.display_command("right", "BLACK")
     
     def show_images(self):
-        """Display images on the M0 devices."""
-        # Send commands to M0 devices to show images
+        """Display images on the operant display zones."""
+        # Send commands to display zones to show images
         if not self.left_image == "BLACK":
             self.chamber.display_command("left", "SHOW")
 
@@ -112,8 +112,8 @@ class InitialTouch(Trainer):
             self.chamber.display_command("right", "SHOW")
     
     def clear_images(self):
-        """Clear the images on the M0 devices."""
-        # Send commands to M0 devices to blank images
+        """Clear images on the operant display zones."""
+        # Send commands to display zones to blank images
         self.chamber.display_command("left", "OFF")
         self.chamber.display_command("right", "OFF")
     

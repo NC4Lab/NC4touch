@@ -9,7 +9,7 @@ Quick Start:
     
     # Create virtual chamber
     chamber = VirtualChamber()
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     
     # Launch GUI
     gui = VirtualChamberGUI(chamber)
@@ -18,7 +18,7 @@ Quick Start:
 See Virtual/README.md for complete documentation.
 """
 
-from .VirtualDisplayDevice import VirtualDisplayDevice, VirtualM0Device
+from .VirtualDisplayDevice import VirtualDisplayDevice
 from .VirtualBeamBreak import VirtualBeamBreak
 from .VirtualBuzzer import VirtualBuzzer
 from .VirtualLED import VirtualLED
@@ -28,7 +28,6 @@ from .VirtualChamberGUI import VirtualChamberGUI
 
 __all__ = [
     'VirtualDisplayDevice',
-    'VirtualM0Device',
     'VirtualBeamBreak',
     'VirtualBuzzer',
     'VirtualLED',

@@ -89,19 +89,19 @@ class PRL(Trainer):
     def load_images(self):
         """Load images for the current trial."""
         # Load images from the sequence file
-        # Send commands to M0 devices to load images
+        # Send commands to display zones to load images
         self.chamber.display_command("left", f"IMG:{self.left_image}")
         self.chamber.display_command("right", f"IMG:{self.right_image}")
     
     def show_images(self):
-        """Display images on the M0 devices."""
-        # Send commands to M0 devices to show images
+        """Display images on the operant display zones."""
+        # Send commands to display zones to show images
         self.chamber.display_command("left", "SHOW")
         self.chamber.display_command("right", "SHOW")
     
     def clear_images(self):
-        """Clear the images on the M0 devices."""
-        # Send commands to M0 devices to blank images
+        """Clear images on the operant display zones."""
+        # Send commands to display zones to blank images
         self.chamber.display_command("left", "BLACK")
         self.chamber.display_command("right", "BLACK")
 
@@ -161,7 +161,7 @@ class PRL(Trainer):
                         self.right_reward_probability = self.config["low_reward_probability"]
                 # Load images for the current trial
                 self.load_images()
-                # Show images on the M0 devices
+                # Show images on the display zones
                 self.show_images()
                 # Start the trial timer
                 self.trial_start_time = current_time

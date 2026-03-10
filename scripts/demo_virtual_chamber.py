@@ -28,7 +28,7 @@ def simple_demo():
     # Create and initialize virtual chamber
     print("Creating virtual chamber...")
     chamber = VirtualChamber()
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     chamber.beambreak.activate()
 
     # Test each component
@@ -49,12 +49,12 @@ def simple_demo():
 
     print("\n3. Testing Touchscreens...")
     print("   - Displaying images on left and right screens")
-    chamber.get_left_m0().send_command("DISPLAY:/data/images/stimulus_left.bmp")
-    chamber.get_right_m0().send_command("DISPLAY:/data/images/stimulus_right.bmp")
+    chamber.get_left_display_device().send_command("DISPLAY:/data/images/stimulus_left.bmp")
+    chamber.get_right_display_device().send_command("DISPLAY:/data/images/stimulus_right.bmp")
     time.sleep(1)
 
     print("   - Simulating touch on LEFT screen")
-    chamber.get_left_m0().simulate_touch(160, 240, duration=0.3)
+    chamber.get_left_display_device().simulate_touch(160, 240, duration=0.3)
     time.sleep(0.5)
 
     print("\n4. Testing Reward System...")
@@ -72,7 +72,7 @@ def simple_demo():
     print("\n5. Getting chamber state...")
     state = chamber.get_state()
     print(f"   - Total rewards dispensed: {state['reward']['total_dispensed']}")
-    print(f"   - Left screen image: {state['left_m0']['current_image']}")
+    print(f"   - Left screen image: {state['left_display_device']['current_image']}")
     print(f"   - Beam break state: {'BROKEN' if state['beambreak']['state'] == 0 else 'OK'}")
 
     print("\n" + "="*60)
@@ -90,12 +90,12 @@ def interactive_demo():
     
     # Create chamber
     chamber = VirtualChamber()
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     chamber.beambreak.activate()
 
     # Display some initial content
-    chamber.get_left_m0().send_command("DISPLAY:left_stimulus.bmp")
-    chamber.get_right_m0().send_command("DISPLAY:right_stimulus.bmp")
+    chamber.get_left_display_device().send_command("DISPLAY:left_stimulus.bmp")
+    chamber.get_right_display_device().send_command("DISPLAY:right_stimulus.bmp")
 
     print("GUI Controls:")
     print("  • Click on touchscreens to simulate touches")
@@ -119,7 +119,7 @@ def automated_trial_demo():
     print("="*60 + "\n")
 
     chamber = VirtualChamber()
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     chamber.beambreak.activate()
 
     print("Simulating a complete training trial...\n")
@@ -130,14 +130,14 @@ def automated_trial_demo():
 
     # Present stimuli
     print("[TRIAL START] Presenting stimuli")
-    chamber.get_left_m0().send_command("DISPLAY:plus.bmp")
-    chamber.get_right_m0().send_command("DISPLAY:minus.bmp")
+    chamber.get_left_display_device().send_command("DISPLAY:plus.bmp")
+    chamber.get_right_display_device().send_command("DISPLAY:minus.bmp")
     chamber.reward_led.on(brightness=100)  # House light
     time.sleep(1)
 
     # Animal makes choice (left = correct)
     print("[RESPONSE] Animal touches LEFT screen (correct!)")
-    chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
+    chamber.get_left_display_device().simulate_touch(160, 240, duration=0.2)
     time.sleep(0.5)
 
     # Deliver reward
@@ -157,8 +157,8 @@ def automated_trial_demo():
 
     # Clear screens
     print("[CLEANUP] Clearing screens")
-    chamber.get_left_m0().send_command("CLEAR")
-    chamber.get_right_m0().send_command("CLEAR")
+    chamber.get_left_display_device().send_command("CLEAR")
+    chamber.get_right_display_device().send_command("CLEAR")
     chamber.reward_led.off()
 
     # Show results

@@ -1,5 +1,5 @@
 # Display.py
-"""Single physical display backend with M0-compatible zone adapters."""
+"""Single physical display backend with legacy-compatible zone adapters."""
 
 import os
 from enum import Enum
@@ -19,7 +19,7 @@ class DisplayZone:
 
 
 class DisplayMode(Enum):
-    """M0-like mode values so existing UI code can read `mode.name`."""
+    """Mode values kept stable so existing UI code can read `mode.name`."""
 
     UNINITIALIZED = 0
     PORT_OPEN = 1
@@ -265,7 +265,7 @@ class DisplayManager:
 
 
 class DisplayZoneDevice:
-    """M0-compatible command API for one logical zone on the single display."""
+    """Legacy-compatible command API for one logical zone on the single display."""
 
     def __init__(self, display_manager, zone, device_id):
         self.display = display_manager

@@ -45,7 +45,7 @@ def test_trainer_with_gui(TrainerClass, trainer_config=None, chamber_config=None
     # Setup chamber
     print("Creating virtual chamber...")
     chamber = VirtualChamber(chamber_config=chamber_config or {})
-    chamber.initialize_m0s()
+    chamber.initialize_display_devices()
     chamber.beambreak.activate()
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

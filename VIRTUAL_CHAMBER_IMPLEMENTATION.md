@@ -7,7 +7,7 @@ A complete virtualization system for your NC4touch touchscreen chambers that all
 ## 📂 New Files Created
 
 ### Core Virtual Components
-- **`Controller/Virtual/VirtualM0Device.py`** - Virtual touchscreen controller
+- **`Controller/Virtual/VirtualDisplayDevice.py`** - Virtual touchscreen controller
 - **`Controller/Virtual/VirtualBeamBreak.py`** - Virtual IR beam sensor  
 - **`Controller/Virtual/VirtualLED.py`** - Virtual LED controller
 - **`Controller/Virtual/VirtualBuzzer.py`** - Virtual buzzer
@@ -40,7 +40,7 @@ All virtual components implement the exact same interface as physical hardware:
 ```python
 # Works with both physical and virtual chambers
 chamber.reward_led.on()
-chamber.get_left_m0().send_command("DISPLAY:image.bmp")
+chamber.get_left_display_device().send_command("DISPLAY:image.bmp")
 chamber.reward.dispense()
 ```
 
@@ -54,7 +54,7 @@ chamber.reward.dispense()
 ### 3. **Programmatic Control**
 ```python
 # Simulate hardware events programmatically
-chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
+chamber.get_left_display_device().simulate_touch(160, 240, duration=0.2)
 chamber.beambreak.simulate_break()
 chamber.reward.dispense()
 ```
@@ -98,7 +98,7 @@ session.start_session()
 from Controller.Virtual import VirtualChamber, VirtualChamberGUI
 
 chamber = VirtualChamber()
-chamber.initialize_m0s()
+chamber.initialize_display_devices()
 
 gui = VirtualChamberGUI(chamber)
 gui.run()
@@ -110,12 +110,12 @@ from Controller.Virtual import VirtualChamber
 import time
 
 chamber = VirtualChamber()
-chamber.initialize_m0s()
+chamber.initialize_display_devices()
 
 # Run your test sequence
-chamber.get_left_m0().send_command("DISPLAY:stim.bmp")
+chamber.get_left_display_device().send_command("DISPLAY:stim.bmp")
 time.sleep(1)
-chamber.get_left_m0().simulate_touch(160, 240)
+chamber.get_left_display_device().simulate_touch(160, 240)
 chamber.reward.dispense()
 time.sleep(0.5)
 chamber.reward.stop()
@@ -127,8 +127,8 @@ assert state['reward']['total_dispensed'] == 1
 
 ## 🎨 Virtual Hardware Components
 
-### VirtualM0Device
-- **Purpose**: Simulates Arduino M0 touchscreen controllers
+### VirtualDisplayDevice
+- **Purpose**: Simulates Arduino display-controller touchscreen controllers
 - **Methods**: `initialize()`, `send_command()`, `is_touched()`, `simulate_touch()`
 - **State**: Tracks current image, touch status, coordinates
 

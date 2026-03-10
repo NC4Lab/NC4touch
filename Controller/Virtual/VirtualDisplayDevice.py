@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 
-class M0Mode(Enum):
+class DisplayDeviceMode(Enum):
     UNINITIALIZED = 0
     PORT_OPEN = 1
     SERIAL_COMM = 2
@@ -54,7 +54,7 @@ class VirtualDisplayDevice:
         self._loaded_image = None  # Image loaded but not yet shown
 
         self.code_dir = os.path.dirname(os.path.abspath(__file__))
-        self.mode = M0Mode.UNINITIALIZED
+        self.mode = DisplayDeviceMode.UNINITIALIZED
 
         # Virtual read thread
         self._virtual_read_thread = None
@@ -70,14 +70,14 @@ class VirtualDisplayDevice:
         if self._virtual_read_thread and self._virtual_read_thread.is_alive():
             self._virtual_read_thread.join(timeout=1.0)
         logger.info(f"[{self.id}] Virtual device stopped.")
-        self.mode = M0Mode.UNINITIALIZED
+        self.mode = DisplayDeviceMode.UNINITIALIZED
 
     def initialize(self):
         """Initialize the virtual device."""
         logger.info(f"[{self.id}] Initializing virtual display device...")
-        self.mode = M0Mode.PORT_OPEN
+        self.mode = DisplayDeviceMode.PORT_OPEN
         time.sleep(0.1)
-        self.mode = M0Mode.SERIAL_COMM
+        self.mode = DisplayDeviceMode.SERIAL_COMM
         self.start_read_thread()
         time.sleep(0.1)
         self.message_queue.put((self.id, f"ID:{self.id}"))
@@ -176,7 +176,7 @@ class VirtualDisplayDevice:
         return self._is_touched
 
     def was_touched(self):
-        """Return touch edge state and reset, matching physical M0Device API."""
+        """Return touch edge state and reset, matching physical device API."""
         touched = self._is_touched
         self._is_touched = False
         return touched
@@ -247,6 +247,3 @@ class VirtualDisplayDevice:
         self._display_enabled = enabled
         logger.debug(f"[{self.id}] Display {'enabled' if enabled else 'disabled'}")
 
-
-# Backward-compatible alias for any remaining external imports.
-VirtualM0Device = VirtualDisplayDevice

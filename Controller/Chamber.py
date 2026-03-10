@@ -66,15 +66,15 @@ class Chamber:
         )
 
         # Retained names for UI and virtual tooling compatibility.
-        self.left_m0 = DisplayZoneDevice(self.display, DisplayZone.LEFT, "DISPLAY_LEFT")
-        self.middle_m0 = DisplayZoneDevice(self.display, DisplayZone.MIDDLE, "DISPLAY_MIDDLE")
-        self.right_m0 = DisplayZoneDevice(self.display, DisplayZone.RIGHT, "DISPLAY_RIGHT")
+        self.left_display_device = DisplayZoneDevice(self.display, DisplayZone.LEFT, "DISPLAY_LEFT")
+        self.middle_display_device = DisplayZoneDevice(self.display, DisplayZone.MIDDLE, "DISPLAY_MIDDLE")
+        self.right_display_device = DisplayZoneDevice(self.display, DisplayZone.RIGHT, "DISPLAY_RIGHT")
         self.display_devices = {
-            "left": self.left_m0,
-            "middle": self.middle_m0,
-            "right": self.right_m0,
+            "left": self.left_display_device,
+            "middle": self.middle_display_device,
+            "right": self.right_display_device,
         }
-        self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
+        self.display_devices_all = [self.left_display_device, self.middle_display_device, self.right_display_device]
 
         self.reward_led = LED(
             pi=self.pi,
@@ -169,58 +169,58 @@ class Chamber:
 
     # ---- Retained methods used by current UI/tests ----
 
-    def get_left_m0(self):
-        return self.left_m0
+    def get_left_display_device(self):
+        return self.left_display_device
 
-    def get_middle_m0(self):
-        return self.middle_m0
+    def get_middle_display_device(self):
+        return self.middle_display_device
 
-    def get_right_m0(self):
-        return self.right_m0
+    def get_right_display_device(self):
+        return self.right_display_device
 
-    # Legacy M0 control methods are no-ops in single-display mode.
+    # Legacy board-control methods are no-ops in single-display mode.
     def compile_sketch(self, sketch_path=None):
         logger.info("Skipping sketch compile in single-display mode.")
 
     def arduino_cli_discover(self):
         logger.info("Skipping board discovery in single-display mode.")
 
-    def m0_discover(self):
-        logger.info("Skipping M0 discovery in single-display mode.")
+    def display_discover(self):
+        logger.info("Skipping board discovery in single-display mode.")
         return {
-            "DISPLAY_LEFT": self.left_m0.port,
-            "DISPLAY_MIDDLE": self.middle_m0.port,
-            "DISPLAY_RIGHT": self.right_m0.port,
+            "DISPLAY_LEFT": self.left_display_device.port,
+            "DISPLAY_MIDDLE": self.middle_display_device.port,
+            "DISPLAY_RIGHT": self.right_display_device.port,
         }
 
-    def m0_reset(self):
-        logger.info("Skipping M0 reset in single-display mode.")
+    def display_reset(self):
+        logger.info("Skipping display reset in single-display mode.")
 
-    def m0_initialize(self):
-        logger.info("Skipping M0 initialize in single-display mode.")
+    def display_initialize(self):
+        logger.info("Skipping display initialize in single-display mode.")
 
-    def m0_reopen_serial(self):
+    def display_reopen_serial(self):
         logger.info("Skipping serial reopen in single-display mode.")
 
-    def m0_close_serial(self):
+    def display_close_serial(self):
         logger.info("Skipping serial close in single-display mode.")
 
-    def m0_open_serial(self):
+    def display_open_serial(self):
         logger.info("Skipping serial open in single-display mode.")
 
-    def m0_sync_images(self):
+    def display_sync_images(self):
         logger.info("Skipping image sync in single-display mode.")
 
-    def m0_upload_sketches(self):
+    def display_upload_assets(self):
         logger.info("Skipping sketch upload in single-display mode.")
 
-    def m0_send_command(self, command):
+    def send_display_command(self, command):
         self.display_command("all", command)
 
-    def m0_clear(self):
+    def display_clear_all(self):
         self.display_clear("all")
 
-    def m0_show_image(self):
+    def display_show_image(self):
         self.display_show("all")
 
     def default_state(self):
