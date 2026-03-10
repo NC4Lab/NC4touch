@@ -102,8 +102,9 @@ class Habituation(Trainer):
             self.chamber.house_led.set_brightness(200)
             self.current_trial += 1
             if self.current_trial < self.config["num_trials"]:
-                logger.info(f"Starting trial {self.current_trial}...")
-                self.write_event("StartTrial", self.current_trial)
+                trial_number = self.current_trial
+                logger.info("Starting trial %s", trial_number)
+                self.write_event("StartTrial", trial_number)
 
                 self.state = HabituationState.DELIVER_REWARD_START
             else:

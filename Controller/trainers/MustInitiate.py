@@ -176,6 +176,7 @@ class MustInitiate(Trainer):
 
         elif self.state == MustInitiateState.START_TRIAL:
             trial_number = self.current_trial + 1
+            logger.info("Starting trial %s", trial_number)
             self.write_event("StartTrial", trial_number)
             self.load_images(self.current_trial)
             self.show_images()

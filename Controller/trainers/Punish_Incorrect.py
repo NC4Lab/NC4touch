@@ -140,6 +140,8 @@ class PunishIncorrect(Trainer):
             self.write_event("StartTraining", 1)
 
             self.current_trial = 1
+            logger.info("Starting trial %s", self.current_trial)
+            self.write_event("StartTrial", self.current_trial)
             self.state = PunishIncorrectState.PRELOAD_FIRST
 
         # ---------------- TRIAL 1 (FREE REWARD) ---------------- #
@@ -181,8 +183,9 @@ class PunishIncorrect(Trainer):
             # Start a new trial
             logger.debug("Current state: START_TRIAL")
             if self.current_trial <= self.config["num_trials"]:
-                logger.info(f"Starting trial {self.current_trial}")
-                self.write_event("StartTrial", self.current_trial)
+                trial_number = self.current_trial
+                logger.info("Starting trial %s", trial_number)
+                self.write_event("StartTrial", trial_number)
                 self.state = PunishIncorrectState.ITI_START
             else:
                 # All trials completed

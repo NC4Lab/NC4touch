@@ -89,6 +89,10 @@ class SimpleDiscrimination(Trainer):
                 self.state = SDState.END_TRAINING
                 return
 
+            trial_number = self.current_trial
+            logger.info("Starting trial %s", trial_number)
+            self.write_event("StartTrial", trial_number)
+
             # randomize ONLY on first attempt
             self.randomize_images()
             self.load_images()
