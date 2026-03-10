@@ -22,6 +22,7 @@ from Reward import Reward
 from BeamBreak import BeamBreak
 from Buzzer import Buzzer
 from M0Device import M0Device, M0Mode
+from Display import DisplayManager, DisplayZone, DisplayZoneDevice
 from Camera import Camera
 from Config import Config
 
@@ -48,6 +49,13 @@ class Chamber:
     self.config.ensure_param("buzzer_volume", 60)
     self.config.ensure_param("buzzer_frequency", 6000)
     self.config.ensure_param("beambreak_memory", 0.2)
+    self.config.ensure_param("display_backend", "single_display")
+    self.config.ensure_param("display_width", 1920)
+    self.config.ensure_param("display_height", 480)
+    self.config.ensure_param("display_image_folder", "../data/images")
+    self.config.ensure_param("display_zone_widths", [320, 320, 320])
+    self.config.ensure_param("display_zone_gaps", None)
+    self.config.ensure_param("display_center_layout", True)
     # LED colors
     self.config.ensure_param("reward_led_color", [0, 255, 0])
     self.config.ensure_param("punishment_led_color", [255, 0, 0])
@@ -56,11 +64,30 @@ class Chamber:
 
     self.pi = pigpio.pi() if pigpio is not None else None
 
-    # Initialize M0s
-    self.m0s = [M0Device(pi = self.pi, id = f"M0_{i}", 
-                         reset_pin = self.config["reset_pins"][i]) for i in range(3)]
+    backend = str(self.config["display_backend"]).lower().strip()
+    self.single_display_mode = backend in {"single_display", "single-display", "pi_display", "pi-single-display"}
 
-    self.arduino_cli_discover()
+    if self.single_display_mode:
+      logger.info("Using single Raspberry Pi display backend.")
+      self.display = DisplayManager(
+        width=self.config["display_width"],
+        height=self.config["display_height"],
+        image_folder=self.config["display_image_folder"],
+        zone_widths=self.config["display_zone_widths"],
+        zone_gaps=self.config["display_zone_gaps"],
+        center_layout=self.config["display_center_layout"],
+      )
+      self.left_m0 = DisplayZoneDevice(self.display, DisplayZone.LEFT, "M0_0")
+      self.middle_m0 = DisplayZoneDevice(self.display, DisplayZone.MIDDLE, "M0_1")
+      self.right_m0 = DisplayZoneDevice(self.display, DisplayZone.RIGHT, "M0_2")
+      self.m0s = [self.left_m0, self.middle_m0, self.right_m0]
+    else:
+      # Initialize physical M0 boards
+      self.m0s = [
+        M0Device(pi=self.pi, id=f"M0_{i}", reset_pin=self.config["reset_pins"][i])
+        for i in range(3)
+      ]
+      self.arduino_cli_discover()
 
     self.reward_led = LED(pi=self.pi, rgb_pins=self.config["reward_LED_pins"], brightness=self.config["reward_led_brightness"], color=self.config["reward_led_color"])
     self.punishment_led = LED(pi=self.pi, rgb_pins=self.config["punishment_LED_pins"], brightness=self.config["punishment_led_brightness"], color=self.config["punishment_led_color"])
@@ -72,42 +99,60 @@ class Chamber:
   
   def get_left_m0(self):
     """Returns the left M0 device (M0_0)"""
+    if hasattr(self, "left_m0"):
+        return self.left_m0
     try:
-        idx = [m0.id for m0 in self.m0s].index("M0_0")
-        return self.m0s[idx]
+      idx = [m0.id for m0 in self.m0s].index("M0_0")
+      return self.m0s[idx]
     except ValueError:
-        logger.error("Left M0 (M0_0) not found in m0s list.")
-        return None
+      logger.error("Left M0 (M0_0) not found in m0s list.")
+      return None
 
   def get_middle_m0(self):
     """Returns the middle M0 device (M0_1)"""
+    if hasattr(self, "middle_m0"):
+      return self.middle_m0
     try:
-        idx = [m0.id for m0 in self.m0s].index("M0_1")
-        return self.m0s[idx]
+      idx = [m0.id for m0 in self.m0s].index("M0_1")
+      return self.m0s[idx]
     except ValueError:
-        logger.error("Middle M0 (M0_1) not found in m0s list.")
-        return None
+      logger.error("Middle M0 (M0_1) not found in m0s list.")
+      return None
 
   def get_right_m0(self):
     """Returns the right M0 device (M0_2)"""
+    if hasattr(self, "right_m0"):
+      return self.right_m0
     try:
-        idx = [m0.id for m0 in self.m0s].index("M0_2")
-        return self.m0s[idx]
+      idx = [m0.id for m0 in self.m0s].index("M0_2")
+      return self.m0s[idx]
     except ValueError:
-        logger.error("Right M0 (M0_2) not found in m0s list.")
-        return None
+      logger.error("Right M0 (M0_2) not found in m0s list.")
+      return None
 
   def __del__(self):
     """Clean up the chamber by stopping pigpio and M0s."""
     logger.info("Cleaning up chamber...")
-    self.pi.stop()
-    [m0.stop() for m0 in self.m0s]
+    if self.pi is not None:
+      self.pi.stop()
+    for m0 in getattr(self, "m0s", []):
+      if hasattr(m0, "stop"):
+        m0.stop()
+      else:
+        if hasattr(m0, "stop_serial_comm"):
+          m0.stop_serial_comm()
+        if hasattr(m0, "close_port"):
+          m0.close_port()
 
   def compile_sketch(self, sketch_path=None):
       """
       Compiles the M0Touch sketch using arduino-cli. 
       If sketch_path is None, it defaults to ../M0Touch/M0Touch.ino relative to this file.
       """
+      if self.single_display_mode:
+          logger.info("Skipping M0 sketch compile in single-display mode.")
+          return
+
       if sketch_path is None:
           sketch_path = os.path.join(self.code_dir, "../M0Touch/M0Touch.ino")
 
@@ -125,12 +170,41 @@ class Chamber:
 
       except Exception as e:
           logger.error(f"Error compiling sketch: {e}")
+
+  def configure_display_zones(self, zone_widths=None, zone_gaps=None, center_layout=None):
+    """Allow trainers to reconfigure active display geometry for tasks.
+
+    Default behavior uses equal auto-gaps for any leftover width.
+    Pass explicit zone_gaps=[edge_l, l_m, m_r, edge_r] to override.
+    """
+    if not self.single_display_mode:
+      logger.warning("configure_display_zones is only available in single-display mode.")
+      return
+
+    if center_layout is None:
+      center_layout = self.config["display_center_layout"]
+
+    if zone_widths is not None:
+      self.config["display_zone_widths"] = zone_widths
+    if zone_gaps is not None:
+      self.config["display_zone_gaps"] = zone_gaps
+    self.config["display_center_layout"] = center_layout
+
+    self.display.configure_zones(
+      zone_widths=self.config["display_zone_widths"],
+      zone_gaps=self.config["display_zone_gaps"],
+      center_layout=self.config["display_center_layout"],
+    )
   
   def arduino_cli_discover(self):
     """
     Uses arduino-cli to discover connected boards.
     Looks for boards with VID: 0x3343 and PID: 0x8244 (DFRobot M0)
     """
+    if self.single_display_mode:
+      logger.info("Skipping M0 discovery in single-display mode.")
+      return
+
     # Reset all the M0 boards in order before discovery
     self.m0_reset()
 
@@ -249,7 +323,12 @@ class Chamber:
   
   def m0_initialize(self):
     """Initialize all M0 boards"""
-    [m0.initialize() for m0 in self.m0s]
+    for m0 in self.m0s:
+      if hasattr(m0, "initialize"):
+        m0.initialize()
+      elif hasattr(m0, "open_port") and hasattr(m0, "start_serial_comm"):
+        m0.open_port()
+        m0.start_serial_comm()
   
   def m0_reopen_serial(self):
     """Close and re-open serial connections to all M0 boards"""
@@ -259,22 +338,35 @@ class Chamber:
   
   def m0_close_serial(self):
     """Close serial connections to all M0 boards"""
-    [m0.stop_serial_comm() for m0 in self.m0s]
-    [m0.close_port() for m0 in self.m0s]
+    for m0 in self.m0s:
+      if hasattr(m0, "stop_serial_comm"):
+        m0.stop_serial_comm()
+      if hasattr(m0, "close_port"):
+        m0.close_port()
   
   def m0_open_serial(self):
     """Open serial connections to all M0 boards"""
-    [m0.open_port() for m0 in self.m0s]
-    [m0.start_serial_comm() for m0 in self.m0s]
+    for m0 in self.m0s:
+      if hasattr(m0, "open_port"):
+        m0.open_port()
+      if hasattr(m0, "start_serial_comm"):
+        m0.start_serial_comm()
   
   def m0_sync_images(self):
     """Sync the image folders for all M0s"""
-    [m0.sync_image_folder() for m0 in self.m0s]
+    for m0 in self.m0s:
+      if hasattr(m0, "sync_image_folder"):
+        m0.sync_image_folder()
 
   def m0_upload_sketches(self):
     """Upload sketches to all M0s"""
+    if self.single_display_mode:
+      logger.info("Skipping M0 sketch upload in single-display mode.")
+      return
     self.compile_sketch()
-    [m0.upload_sketch() for m0 in self.m0s]
+    for m0 in self.m0s:
+      if hasattr(m0, "upload_sketch"):
+        m0.upload_sketch()
   
   def m0_clear(self):
     """Send the blank command to all M0s"""
