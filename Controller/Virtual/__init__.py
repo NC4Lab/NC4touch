@@ -18,7 +18,7 @@ Quick Start:
 See Virtual/README.md for complete documentation.
 """
 
-from .VirtualM0Device import VirtualM0Device
+from .VirtualDisplayDevice import VirtualDisplayDevice, VirtualM0Device
 from .VirtualBeamBreak import VirtualBeamBreak
 from .VirtualBuzzer import VirtualBuzzer
 from .VirtualLED import VirtualLED
@@ -27,6 +27,7 @@ from .VirtualChamber import VirtualChamber
 from .VirtualChamberGUI import VirtualChamberGUI
 
 __all__ = [
+    'VirtualDisplayDevice',
     'VirtualM0Device',
     'VirtualBeamBreak',
     'VirtualBuzzer',

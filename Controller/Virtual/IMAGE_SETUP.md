@@ -2,7 +2,7 @@
 
 ## Quick Setup
 
-Your virtual chamber needs BMP image files to display stimuli on virtual touchscreens, just like the physical M0 controllers have images stored locally.
+Your virtual chamber needs BMP image files to display stimuli on virtual touchscreens, just like the physical touchscreen controllers have images stored locally.
 
 ### 1. Put Your BMP Files Here
 
@@ -24,8 +24,8 @@ Your trainer code will work automatically:
 
 ```python
 # This works exactly like physical chamber
-chamber.get_left_m0().send_command("IMG:A01")   # Loads A01.bmp
-chamber.get_left_m0().send_command("SHOW")       # Displays it
+chamber.display_command("left", "IMG:A01")   # Loads A01.bmp
+chamber.display_command("left", "SHOW")       # Displays it
 ```
 
 ## Custom Image Directory
@@ -64,7 +64,7 @@ test_trainer_with_gui(YourTrainer,
 
 ## Supported Commands
 
-The virtual M0 devices understand the same commands as physical M0s:
+The virtual display-zone devices understand the same commands as physical touchscreen controllers:
 
 - `IMG:filename` - Load image (automatically adds `.bmp` extension)
 - `SHOW` - Display the loaded image
@@ -85,10 +85,10 @@ Check:
 Example:
 ```python
 # ✓ Correct
-chamber.get_left_m0().send_command("IMG:A01")   # Looks for A01.bmp
+chamber.display_command("left", "IMG:A01")   # Looks for A01.bmp
 
 # ✗ Wrong
-chamber.get_left_m0().send_command("IMG:A01.bmp")  # Looks for A01.bmp.bmp
+chamber.display_command("left", "IMG:A01.bmp")  # Looks for A01.bmp.bmp
 ```
 
 **Can't find images in logs?**
@@ -99,7 +99,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
-The virtual M0 will log:
+The virtual display device will log:
 - When images are loaded
 - When images are displayed
 - If image files aren't found (with full path tried)
@@ -109,8 +109,8 @@ The virtual M0 will log:
 Your existing BMP files from the physical chamber work perfectly! Just copy them:
 
 ```bash
-# From your M0's SD card or wherever they're stored
-cp /path/to/m0/images/*.bmp ~/NC4touch/data/images/
+# From your touchscreen controller storage (or any source folder)
+cp /path/to/images/*.bmp ~/NC4touch/data/images/
 ```
 
 Or create new ones (320x480 pixels, 24-bit BMP format recommended).

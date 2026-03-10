@@ -5,7 +5,7 @@ Virtual Chamber - Complete virtualized touchscreen chamber for testing.
 import os
 import time
 
-from Virtual.VirtualM0Device import VirtualM0Device
+from Virtual.VirtualDisplayDevice import VirtualDisplayDevice
 from Virtual.VirtualBeamBreak import VirtualBeamBreak
 from Virtual.VirtualBuzzer import VirtualBuzzer
 from Virtual.VirtualLED import VirtualLED
@@ -58,7 +58,7 @@ class VirtualChamber:
         
         self.code_dir = os.path.dirname(os.path.abspath(__file__))
         
-        # Image directory for stimulus BMPs (mimics M0 internal storage)
+        # Image directory for stimulus BMPs (mimics local display storage)
         # Default: <project_root>/data/images/
         default_image_dir = os.path.join(os.path.dirname(os.path.dirname(self.code_dir)), 'data', 'images')
         self.config.ensure_param("image_dir", default_image_dir)
@@ -66,22 +66,22 @@ class VirtualChamber:
         # No pigpio needed for virtual
         self.pi = None
 
-        # Initialize virtual M0 devices
-        self.left_m0 = VirtualM0Device(
+        # Initialize virtual display-zone devices (legacy-compatible adapter)
+        self.left_m0 = VirtualDisplayDevice(
             pi=self.pi,
             id="M0_0",
             reset_pin=self.config["reset_pins"][0],
             location="left",
             image_dir=self.config["image_dir"]
         )
-        self.middle_m0 = VirtualM0Device(
+        self.middle_m0 = VirtualDisplayDevice(
             pi=self.pi,
             id="M0_1",
             reset_pin=self.config["reset_pins"][1],
             location="middle",
             image_dir=self.config["image_dir"]
         )
-        self.right_m0 = VirtualM0Device(
+        self.right_m0 = VirtualDisplayDevice(
             pi=self.pi,
             id="M0_2",
             reset_pin=self.config["reset_pins"][2],
@@ -127,7 +127,7 @@ class VirtualChamber:
         self._state_history = []
 
         logger.info("Virtual Chamber initialized successfully")
-        logger.info(f"  - 3 Virtual M0 Touchscreens (L/M/R)")
+        logger.info(f"  - 3 Virtual display zones (L/M/R)")
         logger.info(f"  - Virtual Reward Pump")
         logger.info(f"  - Virtual Beam Break Sensor")
         logger.info(f"  - 2 Virtual LEDs (reward/punishment)")
@@ -170,8 +170,8 @@ class VirtualChamber:
     def display_command(self, zone, command):
         zone_name = self._normalize_zone(zone)
         if zone_name == "all":
-            for m0 in self.m0s:
-                m0.send_command(command)
+            for display_device in self.m0s:
+                display_device.send_command(command)
             return
         self._zone_device(zone_name).send_command(command)
 
@@ -191,7 +191,7 @@ class VirtualChamber:
     def display_was_touched(self, zone):
         zone_name = self._normalize_zone(zone)
         if zone_name == "all":
-            return any(m0.was_touched() for m0 in self.m0s)
+            return any(display_device.was_touched() for display_device in self.m0s)
         return self._zone_device(zone_name).was_touched()
 
     def configure_display_zones(self, zone_widths=None, zone_gaps=None, center_layout=None):
@@ -238,8 +238,8 @@ class VirtualChamber:
     def __del__(self):
         """Cleanup virtual resources."""
         if hasattr(self, 'm0s'):
-            for m0 in self.m0s:
-                m0.stop()
+            for display_device in self.m0s:
+                display_device.stop()
         logger.info("Virtual Chamber cleaned up")
 
     def compile_sketch(self, sketch_path=None):
@@ -252,8 +252,8 @@ class VirtualChamber:
         self.discovered_boards = [f"VIRTUAL_PORT_{i}" for i in range(3)]
 
     def m0_discover(self):
-        """Virtual method - simulates M0 discovery."""
-        logger.info("Virtual Chamber: M0 discovery completed (virtual mode)")
+        """Virtual method - simulates display-controller discovery."""
+        logger.info("Virtual Chamber: display-controller discovery completed (virtual mode)")
         return {
             "M0_0": "VIRTUAL_PORT_0",
             "M0_1": "VIRTUAL_PORT_1",
@@ -261,23 +261,31 @@ class VirtualChamber:
         }
 
     def m0_reset(self):
-        """Virtual method - simulates M0 reset."""
-        logger.info("Virtual Chamber: M0 boards reset (virtual mode)")
+        """Virtual method - simulates display-controller reset."""
+        logger.info("Virtual Chamber: display controllers reset (virtual mode)")
 
     def initialize_m0s(self):
-        """Initialize all M0 devices."""
-        for m0 in self.m0s:
-            m0.initialize()
+        """Initialize all display-zone devices."""
+        for display_device in self.m0s:
+            display_device.initialize()
             time.sleep(0.1)
-        logger.info("All virtual M0 devices initialized")
+        logger.info("All virtual display-zone devices initialized")
+
+    def initialize_display_devices(self):
+        """Preferred alias for initialize_m0s()."""
+        self.initialize_m0s()
 
     def m0_send_command(self, command):
         """
-        Sends a command to all M0 boards.
+        Sends a command to all display-zone devices.
         """
-        for m0 in self.m0s:
-            m0.send_command(command)
-        logger.debug(f"Virtual Chamber: sent command '{command}' to all M0s")
+        for display_device in self.m0s:
+            display_device.send_command(command)
+        logger.debug(f"Virtual Chamber: sent command '{command}' to all display zones")
+
+    def send_display_command(self, command):
+        """Preferred alias for m0_send_command()."""
+        self.m0_send_command(command)
 
     def m0_show_image(self):
         """Virtual method - show images on all M0s."""
@@ -303,23 +311,35 @@ class VirtualChamber:
 
     def get_state(self):
         """Get complete virtual chamber state."""
+        left_device = self.get_display_device("left")
+        middle_device = self.get_display_device("middle")
+        right_device = self.get_display_device("right")
+
+        left_state = {
+            'is_touched': left_device.is_touched(),
+            'current_image': left_device.get_current_image(),
+            'touch_coords': left_device.get_touch_coordinates()
+        }
+        middle_state = {
+            'is_touched': middle_device.is_touched(),
+            'current_image': middle_device.get_current_image(),
+            'touch_coords': middle_device.get_touch_coordinates()
+        }
+        right_state = {
+            'is_touched': right_device.is_touched(),
+            'current_image': right_device.get_current_image(),
+            'touch_coords': right_device.get_touch_coordinates()
+        }
+
         return {
             'timestamp': time.time(),
-            'left_m0': {
-                'is_touched': self.get_left_m0().is_touched(),
-                'current_image': self.get_left_m0().get_current_image(),
-                'touch_coords': self.get_left_m0().get_touch_coordinates()
-            },
-            'middle_m0': {
-                'is_touched': self.get_middle_m0().is_touched(),
-                'current_image': self.get_middle_m0().get_current_image(),
-                'touch_coords': self.get_middle_m0().get_touch_coordinates()
-            },
-            'right_m0': {
-                'is_touched': self.get_right_m0().is_touched(),
-                'current_image': self.get_right_m0().get_current_image(),
-                'touch_coords': self.get_right_m0().get_touch_coordinates()
-            },
+            'left_display': left_state,
+            'middle_display': middle_state,
+            'right_display': right_state,
+            # Legacy keys retained for compatibility with older scripts/UI.
+            'left_m0': left_state,
+            'middle_m0': middle_state,
+            'right_m0': right_state,
             'reward_led': self.reward_led.get_state(),
             'punishment_led': self.punishment_led.get_state(),
             'house_led': self.house_led.get_state(),

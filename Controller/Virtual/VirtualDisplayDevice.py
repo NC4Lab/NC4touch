@@ -1,7 +1,7 @@
 """
-Virtual M0 Device for touchscreen simulation.
+Virtual display-zone device for touchscreen simulation.
 
-Simulates the M0 board touchscreen interface without requiring physical hardware.
+Provides a legacy-compatible touchscreen interface without requiring physical hardware.
 """
 
 import time
@@ -22,10 +22,10 @@ class M0Mode(Enum):
     UD = 4
 
 
-class VirtualM0Device:
+class VirtualDisplayDevice:
     """
-    Virtual implementation of M0Device for testing without physical hardware.
-    Maintains the same API as the real M0Device.
+    Virtual implementation of the legacy touchscreen device API.
+    Maintains legacy-compatible methods for existing trainer and script code.
     """
 
     def __init__(self, pi=None, id=None, reset_pin=None,
@@ -59,7 +59,7 @@ class VirtualM0Device:
         # Virtual read thread
         self._virtual_read_thread = None
 
-        logger.info(f"[{self.id}] Virtual M0 Device initialized")
+        logger.info(f"[{self.id}] Virtual display device initialized")
 
     def __del__(self):
         self.stop()
@@ -74,7 +74,7 @@ class VirtualM0Device:
 
     def initialize(self):
         """Initialize the virtual device."""
-        logger.info(f"[{self.id}] Initializing virtual M0 device...")
+        logger.info(f"[{self.id}] Initializing virtual display device...")
         self.mode = M0Mode.PORT_OPEN
         time.sleep(0.1)
         self.mode = M0Mode.SERIAL_COMM
@@ -111,7 +111,7 @@ class VirtualM0Device:
             if command == "WHOAREYOU?":
                 self.message_queue.put((self.id, f"ID:{self.id}"))
             elif command.startswith("IMG:"):
-                # Load image (like real M0: IMG:A01 loads A01.bmp)
+                # Load image (IMG:A01 resolves to A01.bmp)
                 image_name = command.split(":", 1)[1]
                 image_path = self._resolve_image_path(image_name)
                 if image_path:
@@ -171,7 +171,7 @@ class VirtualM0Device:
     def is_touched(self):
         """
         Check if the touchscreen is currently being touched.
-        Method version for compatibility with trainer code that calls m0.is_touched().
+        Method kept for compatibility with existing trainer/script code.
         """
         return self._is_touched
 
@@ -246,3 +246,7 @@ class VirtualM0Device:
         """Enable or disable the virtual display."""
         self._display_enabled = enabled
         logger.debug(f"[{self.id}] Display {'enabled' if enabled else 'disabled'}")
+
+
+# Backward-compatible alias for any remaining external imports.
+VirtualM0Device = VirtualDisplayDevice

@@ -24,10 +24,10 @@ chamber.initialize_m0s()
 # Use exactly like physical chamber
 chamber.reward_led.on()
 chamber.reward.dispense()
-chamber.get_left_m0().send_command("DISPLAY:image.bmp")
+chamber.display_command("left", "DISPLAY:image.bmp")
 
 # Simulate user interactions
-chamber.get_left_m0().simulate_touch(160, 240)
+chamber.get_display_device("left").simulate_touch(160, 240)
 chamber.beambreak.simulate_break()
 ```
 
@@ -80,8 +80,9 @@ gui.run()  # Blocking, or use gui.run_async() for background
 
 All virtual components maintain **identical APIs** to their physical counterparts:
 
-#### VirtualM0Device
-- Simulates Arduino M0 touchscreen controllers
+#### VirtualDisplayDevice
+
+- Simulates touchscreen display controllers (legacy-compatible)
 - Methods: `initialize()`, `send_command()`, `is_touched()`
 - Virtual methods: `simulate_touch(x, y, duration)`, `get_current_image()`
 
@@ -113,9 +114,9 @@ Complete virtualized chamber matching the `Chamber` class interface:
 chamber = VirtualChamber()
 
 # Same interface as Chamber
-chamber.left_m0      # VirtualM0Device
-chamber.middle_m0    # VirtualM0Device
-chamber.right_m0     # VirtualM0Device
+chamber.get_display_device("left")    # VirtualDisplayDevice
+chamber.get_display_device("middle")  # VirtualDisplayDevice
+chamber.get_display_device("right")   # VirtualDisplayDevice
 chamber.reward       # VirtualReward
 chamber.beambreak    # VirtualBeamBreak
 chamber.reward_led   # VirtualLED
@@ -167,7 +168,7 @@ def test_must_touch_logic():
     # ...
     
     # Simulate animal behavior
-    chamber.get_left_m0().simulate_touch(160, 240)
+    chamber.get_display_device("left").simulate_touch(160, 240)
     time.sleep(0.1)
     
     # Verify expected outcome
@@ -205,13 +206,13 @@ The Virtual Chamber GUI provides:
 
 ### Image Files for Stimulus Presentation
 
-The virtual M0 devices mimic how physical M0 controllers store BMP files in local memory. When you run a trainer, image commands work automatically:
+The virtual display-zone devices mimic how physical touchscreen controllers store BMP files in local memory. When you run a trainer, image commands work automatically:
 
 ```python
 # Trainer code (works for both physical and virtual)
-chamber.get_left_m0().send_command("IMG:A01")   # Load A01.bmp
-chamber.get_left_m0().send_command("SHOW")       # Display it
-chamber.get_left_m0().send_command("BLACK")      # Clear screen
+chamber.display_command("left", "IMG:A01")   # Load A01.bmp
+chamber.display_command("left", "SHOW")       # Display it
+chamber.display_command("left", "BLACK")      # Clear screen
 ```
 
 **Default Image Directory**: `<project_root>/data/images/`
@@ -258,7 +259,7 @@ The virtual system automatically:
 state = chamber.get_state()
 
 # Returns dictionary with:
-# - All M0 touch states and images
+# - All display touch states and images
 # - LED states and brightness
 # - Beam break status
 # - Buzzer activity
@@ -277,12 +278,12 @@ import time
 def simulate_correct_trial(chamber):
     """Simulate an animal completing a correct trial."""
     # Stimuli presented
-    chamber.get_left_m0().send_command("DISPLAY:plus.bmp")
-    chamber.get_right_m0().send_command("DISPLAY:minus.bmp")
+    chamber.display_command("left", "DISPLAY:plus.bmp")
+    chamber.display_command("right", "DISPLAY:minus.bmp")
     
     # Animal chooses left (correct)
     time.sleep(1)
-    chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
+    chamber.get_display_device("left").simulate_touch(160, 240, duration=0.2)
     
     # Reward delivered
     chamber.reward_led.on()
@@ -296,8 +297,8 @@ def simulate_correct_trial(chamber):
     
     # Cleanup
     chamber.reward_led.off()
-    chamber.get_left_m0().send_command("CLEAR")
-    chamber.get_right_m0().send_command("CLEAR")
+    chamber.display_command("left", "CLEAR")
+    chamber.display_command("right", "CLEAR")
 ```
 
 ### Integration with Existing Code
@@ -308,10 +309,10 @@ def simulate_correct_trial(chamber):
 # This code works with BOTH physical and virtual chambers:
 def run_trial(chamber):
     chamber.reward_led.on()
-    chamber.get_left_m0().send_command("DISPLAY:stim.bmp")
+    chamber.display_command("left", "DISPLAY:stim.bmp")
     
     # Wait for touch...
-    while not chamber.get_left_m0().is_touched:
+    while not chamber.get_display_device("left").is_touched():
         time.sleep(0.1)
     
     chamber.reward.dispense()
@@ -346,7 +347,7 @@ You can test completely headless:
 ```python
 chamber = VirtualChamber()
 # No GUI needed - just simulate interactions programmatically
-chamber.get_left_m0().simulate_touch(160, 240)
+chamber.get_display_device("left").simulate_touch(160, 240)
 ```
 
 ## Example Test Scripts

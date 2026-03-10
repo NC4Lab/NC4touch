@@ -115,16 +115,16 @@ class VirtualChamberGUI:
         self.virtual_canvas.bind("<Button-1>", self._handle_virtual_canvas_click)
 
         self.zone_status_labels = {}
-        for idx, (zone_name, m0_id) in enumerate([
-            ("left", self.chamber.left_m0.id),
-            ("middle", self.chamber.middle_m0.id),
-            ("right", self.chamber.right_m0.id),
+        for idx, (zone_name, display_id) in enumerate([
+            ("left", self.chamber.get_display_device("left").id),
+            ("middle", self.chamber.get_display_device("middle").id),
+            ("right", self.chamber.get_display_device("right").id),
         ]):
             zone_frame = ttk.Frame(ts_frame)
             zone_frame.grid(row=2, column=idx, padx=8, sticky="ew")
             ttk.Label(
                 zone_frame,
-                text=f"{zone_name.capitalize()} Zone ({m0_id})",
+                text=f"{zone_name.capitalize()} Zone ({display_id})",
                 font=("Arial", 9, "bold"),
             ).pack()
             status_label = ttk.Label(zone_frame, text="No image", foreground="gray")
@@ -204,19 +204,19 @@ class VirtualChamberGUI:
             self._log(f"Touched non-responsive gap at x={real_x}")
             return
 
-        m0 = getattr(self.chamber, f"{zone_name}_m0")
+        display_device = getattr(self.chamber, f"{zone_name}_m0")
         zone = self.layout["zones"][zone_name]
         local_x = max(0, min(zone["w"] - 1, real_x - zone["x"]))
         local_y = max(0, min(zone["h"] - 1, real_y - zone["y"]))
 
-        m0.simulate_touch(local_x, local_y, duration=0.2)
+        display_device.simulate_touch(local_x, local_y, duration=0.2)
         self._zone_touch_until[zone_name] = time.time() + 0.25
         self._log(f"{zone_name.capitalize()} zone touched at ({local_x}, {local_y})")
 
     def _simulate_zone_touch(self, zone_name):
-        m0 = getattr(self.chamber, f"{zone_name}_m0")
+        display_device = getattr(self.chamber, f"{zone_name}_m0")
         zone = self.layout["zones"][zone_name]
-        m0.simulate_touch(zone["w"] // 2, zone["h"] // 2, duration=0.2)
+        display_device.simulate_touch(zone["w"] // 2, zone["h"] // 2, duration=0.2)
         self._zone_touch_until[zone_name] = time.time() + 0.25
         self._log(f"{zone_name.capitalize()} zone touched at center")
 
@@ -232,12 +232,12 @@ class VirtualChamberGUI:
         state = self.chamber.get_state()
         self._log("=" * 50)
         self._log("CHAMBER STATE:")
-        self._log(f"  Left M0: {'TOUCHED' if state['left_m0']['is_touched'] else 'not touched'}")
-        self._log(f"    Image: {state['left_m0']['current_image'] or 'none'}")
-        self._log(f"  Middle M0: {'TOUCHED' if state['middle_m0']['is_touched'] else 'not touched'}")
-        self._log(f"    Image: {state['middle_m0']['current_image'] or 'none'}")
-        self._log(f"  Right M0: {'TOUCHED' if state['right_m0']['is_touched'] else 'not touched'}")
-        self._log(f"    Image: {state['right_m0']['current_image'] or 'none'}")
+        self._log(f"  Left Display: {'TOUCHED' if state['left_display']['is_touched'] else 'not touched'}")
+        self._log(f"    Image: {state['left_display']['current_image'] or 'none'}")
+        self._log(f"  Middle Display: {'TOUCHED' if state['middle_display']['is_touched'] else 'not touched'}")
+        self._log(f"    Image: {state['middle_display']['current_image'] or 'none'}")
+        self._log(f"  Right Display: {'TOUCHED' if state['right_display']['is_touched'] else 'not touched'}")
+        self._log(f"    Image: {state['right_display']['current_image'] or 'none'}")
         self._log(f"  Beam: {'BROKEN' if state['beambreak']['state'] == 0 else 'intact'}")
         self._log(f"  Reward LED: {'ON' if state['reward_led']['is_on'] else 'OFF'}")
         self._log(f"  Punishment LED: {'ON' if state['punishment_led']['is_on'] else 'OFF'}")
@@ -345,23 +345,23 @@ class VirtualChamberGUI:
         state = self.chamber.get_state()
         self._draw_virtual_display_base()
 
-        for zone_name, m0_key in [
-            ("left", "left_m0"),
-            ("middle", "middle_m0"),
-            ("right", "right_m0"),
+        for zone_name, state_key in [
+            ("left", "left_display"),
+            ("middle", "middle_display"),
+            ("right", "right_display"),
         ]:
             zone = self.layout["zones"][zone_name]
-            m0_state = state[m0_key]
+            zone_state = state[state_key]
             label = self.zone_status_labels[zone_name]
 
-            if m0_state["is_touched"] or time.time() < self._zone_touch_until[zone_name]:
+            if zone_state["is_touched"] or time.time() < self._zone_touch_until[zone_name]:
                 x1 = int(zone["x"] * self.canvas_scale)
                 y1 = int(zone["y"] * self.canvas_scale)
                 x2 = int((zone["x"] + zone["w"]) * self.canvas_scale)
                 y2 = int((zone["y"] + zone["h"]) * self.canvas_scale)
                 self.virtual_canvas.create_rectangle(x1, y1, x2, y2, outline="red", width=4)
 
-            img_name = m0_state["current_image"]
+            img_name = zone_state["current_image"]
             img_path = getattr(self.chamber.m0s[["left", "middle", "right"].index(zone_name)], "_current_image_path", None)
 
             if img_name:
