@@ -47,12 +47,19 @@ def test_trainer_with_gui(TrainerClass, trainer_config=None, chamber_config=None
     chamber = VirtualChamber(chamber_config=chamber_config or {})
     chamber.initialize_m0s()
     chamber.beambreak.activate()
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    default_data_dir = os.path.join(project_root, 'data')
+    os.makedirs(default_data_dir, exist_ok=True)
+
+    effective_trainer_config = dict(trainer_config or {})
+    effective_trainer_config.setdefault('data_dir', default_data_dir)
     
     # Init trainer
     print(f"Initializing {TrainerClass.__name__} trainer...")
     trainer = TrainerClass(
         chamber=chamber,
-        trainer_config=trainer_config or {}
+        trainer_config=effective_trainer_config
     )
     
     print("\n" + "="*70)
@@ -103,7 +110,7 @@ def main():
     }
     
     # Example 1: Test Habituation
-    # from Habituation import Habituation
+    # from trainers.Habituation import Habituation
     # test_trainer_with_gui(Habituation, 
     #     trainer_config={
     #         \"trainer_name\": \"Habituation\",
@@ -116,7 +123,7 @@ def main():
     # )
     
     # Example 2: Test InitialTouch
-    # from InitialTouch import InitialTouch
+    # from trainers.InitialTouch import InitialTouch
     # test_trainer_with_gui(InitialTouch, 
     #     trainer_config={
     #         "trainer_name": "InitialTouch",
@@ -128,7 +135,7 @@ def main():
     # )
     
     # Example 3: Test MustTouch
-    # from MustTouch import MustTouch
+    # from trainers.MustTouch import MustTouch
     # test_trainer_with_gui(MustTouch, 
     #     trainer_config={
     #         "trainer_name": "MustTouch",
@@ -139,7 +146,7 @@ def main():
     # )
 
     # Example 4: Test PRL
-    from PRL import PRL
+    from trainers.PRL import PRL
     test_trainer_with_gui(PRL, 
         trainer_config={
             "trainer_name": "ProbabilisticReversalLearning",
@@ -150,7 +157,7 @@ def main():
     )
     
     # Example 5: Test punish incorrect
-    # from Punish_Incorrect import PunishIncorrect
+    # from trainers.Punish_Incorrect import PunishIncorrect
     # test_trainer_with_gui(PunishIncorrect, 
     #     trainer_config={
     #         "trainer_name": "PunishIncorrect",
