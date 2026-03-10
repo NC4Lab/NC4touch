@@ -142,6 +142,7 @@ class MustTouch(Trainer):
                 return
 
             trial_number = self.current_trial + 1
+            logger.info("Starting trial %s", trial_number)
             self.write_event("StartTrial", trial_number)
             self.default_start_trial()
             self.load_images(self.current_trial)
