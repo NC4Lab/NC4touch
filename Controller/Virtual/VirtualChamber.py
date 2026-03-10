@@ -144,6 +144,63 @@ class VirtualChamber:
     def get_right_m0(self):
         return self.right_m0
 
+    def _normalize_zone(self, zone):
+        zone_name = str(zone).strip().lower()
+        if zone_name in {"left", "middle", "right", "all"}:
+            return zone_name
+        raise ValueError(f"Unknown display zone '{zone}'")
+
+    def _zone_device(self, zone):
+        zone_name = self._normalize_zone(zone)
+        if zone_name == "left":
+            return self.left_m0
+        if zone_name == "middle":
+            return self.middle_m0
+        if zone_name == "right":
+            return self.right_m0
+        return None
+
+    def get_display_device(self, zone):
+        zone_name = self._normalize_zone(zone)
+        if zone_name == "all":
+            return None
+        return self._zone_device(zone_name)
+
+    # ---- Single-display API used by trainers ----
+    def display_command(self, zone, command):
+        zone_name = self._normalize_zone(zone)
+        if zone_name == "all":
+            for m0 in self.m0s:
+                m0.send_command(command)
+            return
+        self._zone_device(zone_name).send_command(command)
+
+    def display_load_image(self, zone, image_name):
+        self.display_command(zone, f"IMG:{image_name}")
+
+    def display_show(self, zone):
+        self.display_command(zone, "SHOW")
+
+    def display_clear(self, zone="all"):
+        zone_name = self._normalize_zone(zone)
+        if zone_name == "all":
+            self.display_command("all", "BLACK")
+            return
+        self.display_command(zone_name, "BLACK")
+
+    def display_was_touched(self, zone):
+        zone_name = self._normalize_zone(zone)
+        if zone_name == "all":
+            return any(m0.was_touched() for m0 in self.m0s)
+        return self._zone_device(zone_name).was_touched()
+
+    def configure_display_zones(self, zone_widths=None, zone_gaps=None, center_layout=None):
+        """Update virtual layout config used by VirtualChamberGUI rendering."""
+        if zone_widths is not None:
+            self.config["display_zone_widths"] = zone_widths
+        if zone_gaps is not None:
+            self.config["display_zone_gaps"] = zone_gaps
+
     def get_display_layout(self):
         """Return virtual single-display layout geometry for GUI rendering."""
         display_width = int(self.config["display_width"])

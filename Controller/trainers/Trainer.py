@@ -180,9 +180,9 @@ class Trainer(ABC):
         self.chamber.punishment_led.set_color(self.config["punishment_led_color"])
 
     def default_end_trial(self):
-        """Clear images on all M0s and write EndTrial event."""
-        self.chamber.get_left_m0().send_command("BLACK")
-        self.chamber.get_right_m0().send_command("BLACK")
+        """Clear operant display zones at the end of a trial."""
+        self.chamber.display_clear("left")
+        self.chamber.display_clear("right")
 
     def default_start_training(self):
         """Reset chamber to default state, set LED colors, and open data file."""
@@ -204,9 +204,9 @@ class Trainer(ABC):
 
     def check_touch(self):
         """Returns 'LEFT', 'RIGHT', or None based on which screen was touched."""
-        if self.chamber.get_left_m0().was_touched():
+        if self.chamber.display_was_touched("left"):
             return "LEFT"
-        elif self.chamber.get_right_m0().was_touched():
+        elif self.chamber.display_was_touched("right"):
             return "RIGHT"
         return None
 

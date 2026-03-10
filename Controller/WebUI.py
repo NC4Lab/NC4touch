@@ -1,6 +1,5 @@
 # Create a WebUI using NiceUI that replicates the functionality of TUI
 from nicegui import ui
-from datetime import datetime
 import logging
 import asyncio
 
@@ -8,8 +7,6 @@ from trainers import get_trainers
 from helpers import get_ip_address, get_best_ip_address
 from Session import Session
 from file_picker import file_picker
-from M0Device import M0Mode, M0Device
-import time
 
 import logging
 session_logger = logging.getLogger('session_logger')
@@ -67,36 +64,36 @@ class WebUI:
     
     def update_state(self):
         """Periodically update the state of the UI elements based on the session state."""
-        # Update M0 status labels
-        left_m0 = self.session.chamber.get_left_m0()
-        if left_m0 is not None:
-            self.left_m0_port_label.set_text(f"Port: {left_m0.port}")
-            self.left_m0_mode_label.set_text(f"Mode: {left_m0.mode.name}")
-            self.left_m0_version_label.set_text(f"Firmware: {left_m0.firmware_version}")
+        # Update display-zone status labels
+        left_display = self.session.chamber.get_display_device("left")
+        if left_display is not None:
+            self.left_display_port_label.set_text(f"Port: {left_display.port}")
+            self.left_display_mode_label.set_text(f"Mode: {left_display.mode.name}")
+            self.left_display_version_label.set_text(f"Firmware: {left_display.firmware_version}")
         else:
-            self.left_m0_port_label.set_text("Port: N/A")
-            self.left_m0_mode_label.set_text("Mode: N/A")
-            self.left_m0_version_label.set_text("Firmware: N/A")
+            self.left_display_port_label.set_text("Port: N/A")
+            self.left_display_mode_label.set_text("Mode: N/A")
+            self.left_display_version_label.set_text("Firmware: N/A")
 
-        middle_m0 = self.session.chamber.get_middle_m0()
-        if middle_m0 is not None:
-            self.middle_m0_port_label.set_text(f"Port: {middle_m0.port}")
-            self.middle_m0_mode_label.set_text(f"Mode: {middle_m0.mode.name}")
-            self.middle_m0_version_label.set_text(f"Firmware: {middle_m0.firmware_version}")
+        middle_display = self.session.chamber.get_display_device("middle")
+        if middle_display is not None:
+            self.middle_display_port_label.set_text(f"Port: {middle_display.port}")
+            self.middle_display_mode_label.set_text(f"Mode: {middle_display.mode.name}")
+            self.middle_display_version_label.set_text(f"Firmware: {middle_display.firmware_version}")
         else:
-            self.middle_m0_port_label.set_text("Port: N/A")
-            self.middle_m0_mode_label.set_text("Mode: N/A")
-            self.middle_m0_version_label.set_text("Firmware: N/A")
+            self.middle_display_port_label.set_text("Port: N/A")
+            self.middle_display_mode_label.set_text("Mode: N/A")
+            self.middle_display_version_label.set_text("Firmware: N/A")
 
-        right_m0 = self.session.chamber.get_right_m0()
-        if right_m0 is not None:
-            self.right_m0_port_label.set_text(f"Port: {right_m0.port}")
-            self.right_m0_mode_label.set_text(f"Mode: {right_m0.mode.name}")
-            self.right_m0_version_label.set_text(f"Firmware: {right_m0.firmware_version}")
+        right_display = self.session.chamber.get_display_device("right")
+        if right_display is not None:
+            self.right_display_port_label.set_text(f"Port: {right_display.port}")
+            self.right_display_mode_label.set_text(f"Mode: {right_display.mode.name}")
+            self.right_display_version_label.set_text(f"Firmware: {right_display.firmware_version}")
         else:
-            self.right_m0_port_label.set_text("Port: N/A")
-            self.right_m0_mode_label.set_text("Mode: N/A")
-            self.right_m0_version_label.set_text("Firmware: N/A")
+            self.right_display_port_label.set_text("Port: N/A")
+            self.right_display_mode_label.set_text("Mode: N/A")
+            self.right_display_version_label.set_text("Firmware: N/A")
 
         self.house_led_brightness_slider.set_value(100.0 * self.session.chamber.house_led.brightness / 255.0)
         self.pump_test_button.set_value(self.session.chamber.reward.state)
@@ -105,49 +102,16 @@ class WebUI:
         self.punishment_led_test_button.set_value(self.session.chamber.punishment_led.active)
         # self.punishment_color_input.set_value(self.rgb_to_hex(self.session.chamber.punishment_led.color))
 
-    async def m0_discover(self):
-        self.discover_button.props('color=red')
-        self.discover_button_spinner.visible = True
-        await asyncio.sleep(0.1)  # Briefly change button color to indicate action
-        self.session.chamber.arduino_cli_discover()
-        self.discover_button.props('color=blue')
-        self.discover_button_spinner.visible = False
-    
-    async def m0_reopen_serial(self):
-        self.open_serial_button.props('color=red')
-        self.open_serial_button_spinner.visible = True
-        await asyncio.sleep(0.1)  # Briefly change button color to indicate action
-        self.session.chamber.m0_reopen_serial()
-        await asyncio.sleep(2.0)  # Wait a moment for the serial port to reopen before updating M0 status
-        self.open_serial_button.props('color=blue')
-        self.open_serial_button_spinner.visible = False
-    
-    async def m0_close_serial(self):
-        self.close_serial_button.props('color=red')
-        self.close_serial_button_spinner.visible = True
-        await asyncio.sleep(0.1)  # Briefly change button color to indicate action
-        self.session.chamber.m0_close_serial()
-        self.close_serial_button.props('color=blue')
-        self.close_serial_button_spinner.visible = False
-    
-    async def m0_sync_images(self):
-        self.sync_images_button.props('color=red')
-        self.sync_images_button_spinner.visible = True
-        await asyncio.sleep(0.1)  # Briefly change button color to indicate action
-        self.session.chamber.m0_sync_images()
-        self.sync_images_button.props('color=blue')
-        self.sync_images_button_spinner.visible = False
-    
-    async def m0_upload_sketches(self):
-        self.upload_code_button.props('color=red')
-        self.upload_code_button_spinner.visible = True
-        await asyncio.sleep(0.1)  # Briefly change button color to indicate action
-        self.session.chamber.m0_upload_sketches()
-        self.upload_code_button.props('color=blue')
-        self.upload_code_button_spinner.visible = False
+    async def refresh_display_status(self):
+        self.refresh_display_button.props('color=red')
+        self.refresh_display_spinner.visible = True
+        await asyncio.sleep(0.1)
+        self.update_state()
+        self.refresh_display_button.props('color=blue')
+        self.refresh_display_spinner.visible = False
 
     def init_ui(self):
-        ui.timer(1, self.update_state)  # Start a timer to update M0 status labels every second
+        ui.timer(1, self.update_state)  # Start a timer to update display status labels every second
         ui.label(f"{self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
         with ui.row():
             with ui.column():
@@ -224,57 +188,30 @@ class WebUI:
             
             with ui.column():
                 with ui.card():
-                    ui.label('M0 Board Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                    # Buttons to control M0 boards
-                    # self.discover_button = ui.button("Discover").on_click(self.m0_discover)
-                    self.discover_button = ui.button(text="Discover", color="blue").on_click(self.m0_discover)
-                    with self.discover_button:
-                        # ui.label("Discover").style('color: white;')
-                        self.discover_button_spinner = ui.spinner(color='white').style('margin-left: 10px;')
-                        self.discover_button_spinner.visible = False
-
-                    self.open_serial_button = ui.button(text="Open Serial Comm", color="blue").on_click(self.m0_reopen_serial)
-                    with self.open_serial_button:
-                        # ui.label("Open Serial Comm").style('color: white;')
-                        self.open_serial_button_spinner = ui.spinner(color='white').style('margin-left: 10px;')
-                        self.open_serial_button_spinner.visible = False
-
-                    self.close_serial_button = ui.button(text="Close Serial Comm", color="blue").on_click(self.m0_close_serial)
-                    with self.close_serial_button:
-                        # ui.label("Close Serial Comm").style('color: white;')
-                        self.close_serial_button_spinner = ui.spinner(color='white').style('margin-left: 10px;')
-                        self.close_serial_button_spinner.visible = False
-
-                    self.sync_images_button = ui.button(text="Sync Images", color="blue").on_click(self.m0_sync_images)
-                    with self.sync_images_button:
-                        # ui.label("Sync Images").style('color: white;')
-                        self.sync_images_button_spinner = ui.spinner(color='white').style('margin-left: 10px;')
-                        self.sync_images_button_spinner.visible = False
-
-                    self.upload_code_button = ui.button(text="Upload Code", color="blue").on_click(self.m0_upload_sketches)
-                    with self.upload_code_button:
-                        # ui.label("Upload Code").style('color: white;')
-                        self.upload_code_button_spinner = ui.spinner(color='white').style('margin-left: 10px;')
-                        self.upload_code_button_spinner.visible = False
+                    ui.label('Display Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                    self.refresh_display_button = ui.button(text="Refresh Status", color="blue").on_click(self.refresh_display_status)
+                    with self.refresh_display_button:
+                        self.refresh_display_spinner = ui.spinner(color='white').style('margin-left: 10px;')
+                        self.refresh_display_spinner.visible = False
                     
                 with ui.card():
-                        ui.label('Left M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                        # Show M0 port
-                        self.left_m0_port_label = ui.label(f"Port: {self.session.chamber.get_left_m0().port}")
-                        self.left_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_left_m0().mode.name}")
-                        self.left_m0_version_label = ui.label(f"Firmware Version: {self.session.chamber.get_left_m0().firmware_version}")
+                        ui.label('Left Display Zone').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        left_display = self.session.chamber.get_display_device("left")
+                        self.left_display_port_label = ui.label(f"Port: {left_display.port if left_display else 'N/A'}")
+                        self.left_display_mode_label = ui.label(f"Mode: {left_display.mode.name if left_display else 'N/A'}")
+                        self.left_display_version_label = ui.label(f"Firmware Version: {left_display.firmware_version if left_display else 'N/A'}")
 
-                        ui.label('Middle M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                        # Show M0 port
-                        self.middle_m0_port_label = ui.label(f"Port: {self.session.chamber.get_middle_m0().port}")
-                        self.middle_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_middle_m0().mode.name}")
-                        self.middle_m0_version_label = ui.label(f"Firmware Version: {self.session.chamber.get_middle_m0().firmware_version}")
+                        ui.label('Middle Display Zone').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        middle_display = self.session.chamber.get_display_device("middle")
+                        self.middle_display_port_label = ui.label(f"Port: {middle_display.port if middle_display else 'N/A'}")
+                        self.middle_display_mode_label = ui.label(f"Mode: {middle_display.mode.name if middle_display else 'N/A'}")
+                        self.middle_display_version_label = ui.label(f"Firmware Version: {middle_display.firmware_version if middle_display else 'N/A'}")
 
-                        ui.label('Right M0').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                        # Show M0 port
-                        self.right_m0_port_label = ui.label(f"Port: {self.session.chamber.get_right_m0().port}")
-                        self.right_m0_mode_label = ui.label(f"Mode: {self.session.chamber.get_right_m0().mode.name}")
-                        self.right_m0_version_label = ui.label(f"Firmware Version: {self.session.chamber.get_right_m0().firmware_version}")
+                        ui.label('Right Display Zone').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
+                        right_display = self.session.chamber.get_display_device("right")
+                        self.right_display_port_label = ui.label(f"Port: {right_display.port if right_display else 'N/A'}")
+                        self.right_display_mode_label = ui.label(f"Mode: {right_display.mode.name if right_display else 'N/A'}")
+                        self.right_display_version_label = ui.label(f"Firmware Version: {right_display.firmware_version if right_display else 'N/A'}")
 
                 with ui.card():
                     ui.label('Training Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
@@ -304,17 +241,17 @@ class WebUI:
                                                                 value = self.session.chamber.punishment_led.active,
                                                                 on_change=lambda e: self.session.chamber.punishment_led.activate() if e.value else self.session.chamber.punishment_led.deactivate())
                     
-                    self.left_m0_cmd_label = ui.label("Left M0 Command:")
-                    self.left_m0_cmd_input = ui.input(value = "")
-                    self.left_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_left_m0().send_command(self.left_m0_cmd_input.value) if self.session.chamber.get_left_m0() is not None else ui.notify("Left M0 not found", type="negative"))
+                    self.left_display_cmd_label = ui.label("Left Zone Command:")
+                    self.left_display_cmd_input = ui.input(value = "")
+                    self.left_display_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.display_command("left", self.left_display_cmd_input.value))
 
-                    self.middle_m0_cmd_label = ui.label("Middle M0 Command:")
-                    self.middle_m0_cmd_input = ui.input(value = "")
-                    self.middle_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_middle_m0().send_command(self.middle_m0_cmd_input.value) if self.session.chamber.get_middle_m0() is not None else ui.notify("Middle M0 not found", type="negative"))
+                    self.middle_display_cmd_label = ui.label("Middle Zone Command:")
+                    self.middle_display_cmd_input = ui.input(value = "")
+                    self.middle_display_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.display_command("middle", self.middle_display_cmd_input.value))
 
-                    self.right_m0_cmd_label = ui.label("Right M0 Command:")
-                    self.right_m0_cmd_input = ui.input(value = "")
-                    self.right_m0_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.get_right_m0().send_command(self.right_m0_cmd_input.value) if self.session.chamber.get_right_m0() is not None else ui.notify("Right M0 not found", type="negative"))
+                    self.right_display_cmd_label = ui.label("Right Zone Command:")
+                    self.right_display_cmd_input = ui.input(value = "")
+                    self.right_display_cmd_button = ui.button("Send").on_click(lambda: self.session.chamber.display_command("right", self.right_display_cmd_input.value))
 
     
     def rgb_to_hex(self, rgb):
