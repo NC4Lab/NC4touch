@@ -63,6 +63,13 @@ class Trainer(ABC):
 
     def ensure_trainer_param(self, param: str, default_value):
         if self.config.has_explicit_param(param):
+            # Legacy config files may contain copied base defaults (for example,
+            # num_trials=30, touch_timeout=120) that should not block
+            # trainer-specific defaults like PRL's 60/30.
+            if param in self.base_trainer_defaults and self.config[param] == self.base_trainer_defaults[param]:
+                self.config.config[param] = default_value
+                logger.debug(f"Replacing legacy base default for {param} with trainer default: {default_value}")
+                self.config.save_config_file()
             return
 
         if self.config[param] != default_value:
