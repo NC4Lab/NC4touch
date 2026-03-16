@@ -11,6 +11,7 @@ class Config:
     """
     def __init__(self, config: dict = {}, config_file: str = '~/config.yaml'):
         config_file = expanduser(config_file)
+        self.explicit_keys = set()
         
         if not isinstance(config, dict):
             logger.error("config must be a dictionary")
@@ -21,12 +22,14 @@ class Config:
         self.config_file = config_file
         self.update_with_file(config_file)
         self.config.update(config)
+        self.explicit_keys.update(config.keys())
     
     def __getitem__(self, key: str):
         return self.config.get(key, None)
     
     def __setitem__(self, key, value):
         self.config[key] = value
+        self.explicit_keys.add(key)
         logger.debug(f"Config updated: {key} = {value}")
         self.save_config_file()
 
@@ -36,6 +39,7 @@ class Config:
             return
         
         self.config.update(config)
+        self.explicit_keys.update(config.keys())
         logger.debug(f"Config updated: {config}")
         self.save_config_file()
     
@@ -43,8 +47,12 @@ class Config:
         if os.path.isfile(config_file):
             try:
                 with open(config_file, "r") as f:
-                    loaded_config = yaml.safe_load(f)
+                    loaded_config = yaml.safe_load(f) or {}
+                    if not isinstance(loaded_config, dict):
+                        logger.error(f"Config file {config_file} must contain a dictionary at the top level.")
+                        loaded_config = {}
                     self.config.update(loaded_config)
+                    self.explicit_keys.update(loaded_config.keys())
                     self.config_file = config_file
                     self.save_config_file()
             except Exception as e:
@@ -60,6 +68,9 @@ class Config:
             self.save_config_file()
         # else:
             # logger.debug(f"Config parameter {param} already exists with value: {self.config[param]}")
+
+    def has_explicit_param(self, param: str):
+        return param in self.explicit_keys
         
     def save_config_file(self):
         if self.config_file:

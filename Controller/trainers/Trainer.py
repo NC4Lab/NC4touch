@@ -27,6 +27,15 @@ class Trainer(ABC):
 
         self.chamber = chamber
         self.config = Config(config = trainer_config, config_file = trainer_config_file)
+        self.base_trainer_defaults = {
+            "num_trials": 30,
+            "iti_duration": 10,
+            "max_iti_duration": 20,
+            "iti_increment": 1,
+            "touch_timeout": 120,
+            "beam_break_wait_time": 10,
+            "reward_pump_secs": 1.0,
+        }
 
         # Ensure required parameters are set in the config
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
@@ -37,13 +46,8 @@ class Trainer(ABC):
         self.config.ensure_param("house_led_brightness_iti", 50)
 
         # Common training
-        self.config.ensure_param("num_trials", 30)
-        self.config.ensure_param("iti_duration", 10)
-        self.config.ensure_param("max_iti_duration", 20)
-        self.config.ensure_param("iti_increment", 1)
-        self.config.ensure_param("touch_timeout", 120)
-        self.config.ensure_param("beam_break_wait_time", 10)
-        self.config.ensure_param("reward_pump_secs", 3.0)
+        for param, default_value in self.base_trainer_defaults.items():
+            self.config.ensure_param(param, default_value)
 
         # LED colors
         self.config.ensure_param("reward_led_color", (0, 255, 0))
@@ -56,6 +60,19 @@ class Trainer(ABC):
         self.config.ensure_param("data_dir", "/mnt/shared/data")
 
         self.data_file = None
+
+    def ensure_trainer_param(self, param: str, default_value):
+        if self.config.has_explicit_param(param):
+            return
+
+        if self.config[param] != default_value:
+            self.config.config[param] = default_value
+            logger.debug(f"Applying trainer default for {param}: {default_value}")
+            self.config.save_config_file()
+
+    def ensure_trainer_params(self, params: dict):
+        for param, default_value in params.items():
+            self.ensure_trainer_param(param, default_value)
     
     def read_trainer_seq_file(self, csv_file_path, min_num_columns = 2):
         # Read trial sequence from CSV file
