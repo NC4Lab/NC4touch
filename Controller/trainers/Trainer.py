@@ -27,55 +27,11 @@ class Trainer(ABC):
 
         self.chamber = chamber
         self.config = Config(config = trainer_config, config_file = trainer_config_file)
-        self.base_trainer_defaults = {
-            "num_trials": 30,
-            "iti_duration": 10,
-            "max_iti_duration": 20,
-            "iti_increment": 1,
-            "touch_timeout": 120,
-            "beam_break_wait_time": 10,
-            "reward_pump_secs": 1.0,
-        }
-
-        # Ensure required parameters are set in the config
-        self.config.ensure_param("trainer_name", "DoNothingTrainer")
-        self.config.ensure_param("rodent_name", "TestRodent")
-
-        # House LED
-        self.config.ensure_param("house_led_brightness_active", 200)
-        self.config.ensure_param("house_led_brightness_iti", 50)
-
-        # Common training
-        for param, default_value in self.base_trainer_defaults.items():
-            self.config.ensure_param(param, default_value)
-
-        # LED colors
-        self.config.ensure_param("reward_led_color", (0, 255, 0))
-        self.config.ensure_param("punishment_led_color", (255, 0, 0))
-
-        # Punishment
-        self.config.ensure_param("punish_duration", 5.0)
-        self.config.ensure_param("buzzer_duration", 0.5)
-
-        self.config.ensure_param("data_dir", "/mnt/shared/data")
 
         self.data_file = None
 
     def ensure_trainer_param(self, param: str, default_value):
-        if self.config.has_explicit_param(param):
-            # Legacy config files may contain copied base defaults (for example,
-            # num_trials=30, touch_timeout=120) that should not block
-            # trainer-specific defaults like PRL's 60/30.
-            if param in self.base_trainer_defaults and self.config[param] == self.base_trainer_defaults[param]:
-                self.config.config[param] = default_value
-                logger.debug(f"Replacing legacy base default for {param} with trainer default: {default_value}")
-                self.config.save_config_file()
-            return
-
-        if self.config[param] != default_value:
-            self.config.config[param] = default_value
-            logger.debug(f"Applying trainer default for {param}: {default_value}")
-            self.config.save_config_file()
+        self.config.ensure_param(param, default_value)
 
     def ensure_trainer_params(self, params: dict):
         for param, default_value in params.items():
@@ -156,12 +112,18 @@ class Trainer(ABC):
 
     def default_start_trial(self):
         """Set house LED to active brightness and activate it."""
-        self.chamber.house_led.set_brightness(self.config["house_led_brightness_active"])
+        active_brightness = self.config["house_led_brightness_active"]
+        if active_brightness is None:
+            active_brightness = 200
+        self.chamber.house_led.set_brightness(active_brightness)
         self.chamber.house_led.activate()
 
     def default_iti_start(self):
         """Dim house LED, deactivate reward LED, activate beambreak. Returns current time."""
-        self.chamber.house_led.set_brightness(self.config["house_led_brightness_iti"])
+        iti_brightness = self.config["house_led_brightness_iti"]
+        if iti_brightness is None:
+            iti_brightness = 50
+        self.chamber.house_led.set_brightness(iti_brightness)
         self.chamber.reward_led.deactivate()
         self.chamber.beambreak.activate()
         return time.time()
@@ -170,8 +132,14 @@ class Trainer(ABC):
         """Check for beam break during ITI and extend duration if needed."""
         if self.chamber.beambreak.state == False:
             logger.info("Beam broken during ITI. Adding iti_increment to ITI duration.")
-            if current_iti_duration < self.config["max_iti_duration"]:
-                current_iti_duration += self.config["iti_increment"]
+            max_iti_duration = self.config["max_iti_duration"]
+            iti_increment = self.config["iti_increment"]
+            if max_iti_duration is None:
+                max_iti_duration = 20
+            if iti_increment is None:
+                iti_increment = 1
+            if current_iti_duration < max_iti_duration:
+                current_iti_duration += iti_increment
         return current_iti_duration
 
     def default_deliver_reward(self, duration=None):
@@ -200,8 +168,14 @@ class Trainer(ABC):
 
     def default_setup_led_colors(self):
         """Set reward/punishment LED colors from config."""
-        self.chamber.reward_led.set_color(self.config["reward_led_color"])
-        self.chamber.punishment_led.set_color(self.config["punishment_led_color"])
+        reward_color = self.config["reward_led_color"]
+        punishment_color = self.config["punishment_led_color"]
+        if reward_color is None:
+            reward_color = (0, 255, 0)
+        if punishment_color is None:
+            punishment_color = (255, 0, 0)
+        self.chamber.reward_led.set_color(reward_color)
+        self.chamber.punishment_led.set_color(punishment_color)
 
     def default_end_trial(self):
         """Clear images on all M0s and write EndTrial event."""

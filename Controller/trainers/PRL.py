@@ -50,6 +50,7 @@ class PRL(Trainer):
     """
     def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_PRL_config.yaml'):
         super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+        explicit_runtime_keys = set(trainer_config.keys()) if isinstance(trainer_config, dict) else set()
 
         # Initialize the trainer configuration.
         # All variables used by the trainer are recommended to be set in the config file.
@@ -73,6 +74,32 @@ class PRL(Trainer):
             "touch_timeout": 30,
             "trial_to_reverse": 99,
         })
+
+        # Migrate legacy generic trainer defaults that may have been persisted in
+        # old PRL config files (from when Trainer seeded shared defaults).
+        # Runtime-provided trainer_config values always win.
+        legacy_to_prl_defaults = {
+            "num_trials": (30, 60),
+            "touch_timeout": (120, 30),
+            "max_iti_duration": (20, 30),
+            "reward_pump_secs": (1.0, 0.5),
+        }
+        migrated_any = False
+        for param, (legacy_value, prl_default_value) in legacy_to_prl_defaults.items():
+            if param in explicit_runtime_keys:
+                continue
+            if self.config[param] == legacy_value:
+                self.config[param] = prl_default_value
+                migrated_any = True
+                logger.info(
+                    "Migrated legacy PRL config value for %s: %s -> %s",
+                    param,
+                    legacy_value,
+                    prl_default_value,
+                )
+        if migrated_any:
+            logger.info("PRL legacy config migration complete.")
+
         self.reward_start_time = time.time()
         self.reward_collected = False
         self.last_beam_break_time = time.time()
