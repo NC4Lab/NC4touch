@@ -113,6 +113,7 @@ class PRL(Trainer):
         self.right_reward_probability = 0
         self.current_trial = 0
         self.current_trial_iti = self.config["iti_duration"]
+        self.use_timeout_iti = False
         self.touched_side = None  # track which side was touched for reward prob lookup
         self.state = PRLState.IDLE
 
@@ -197,6 +198,7 @@ class PRL(Trainer):
                 # Start the trial timer
                 self.trial_start_time = current_time
                 self.reward_collected = False  # reset per trial
+                self.use_timeout_iti = False
                 # Move to WAIT_FOR_TOUCH state
                 logger.info(f"Images loaded for trial {self.current_trial}: {self.left_image}, {self.right_image}")
                 logger.info(f"Reward probabilities set for trial {self.current_trial}: {self.left_reward_probability} (left), {self.right_reward_probability} (right)")
@@ -228,6 +230,8 @@ class PRL(Trainer):
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
                 self.write_event("TouchTimeout ", self.current_trial)
+                self.clear_images()
+                self.use_timeout_iti = True
                 self.state = PRLState.ITI_START
         
         elif self.state == PRLState.CORRECT:
@@ -318,7 +322,11 @@ class PRL(Trainer):
             self.chamber.reward_led.deactivate()
             # Turn off house lights during ITI
             # self.chamber.house_lights.deactivate()
-            self.current_trial_iti = self.config["iti_duration"]
+            if self.use_timeout_iti:
+                self.current_trial_iti = self.config["max_iti_duration"]
+            else:
+                self.current_trial_iti = self.config["iti_duration"]
+            self.use_timeout_iti = False
             self.iti_start_time = current_time
             self.state = PRLState.ITI
         
