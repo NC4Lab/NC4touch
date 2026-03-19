@@ -13,16 +13,9 @@ class PunishIncorrectState(Enum):
     IDLE = auto()                    # Trainer is idle, waiting to start
     START_TRAINING = auto()          # Initialize training session
 
-    PRELOAD_FIRST = auto()           # Preload images for the first trial
-    FREE_REWARD_START = auto()       # Start free reward for first trial
-    DELIVERING_FREE_REWARD = auto()  # Delivering free reward
-    SHOW_FIRST = auto()              # Show images for first trial
-
     START_TRIAL = auto()             # Start a new trial
     ITI_START = auto()               # Start inter-trial interval
     ITI = auto()                     # Inter-trial interval
-    WAIT_FOR_INITIATION = auto()     # Waiting for trial initiation
-    SHOW_IMAGES = auto()             # Display images on screens
 
     WAIT_FOR_TOUCH = auto()          # Waiting for animal to touch screen
     CORRECT = auto()                 # Correct touch detected
@@ -47,7 +40,6 @@ class PunishIncorrect(Trainer):
         self.config.ensure_param("trainer_name", "PunishIncorrect")
         self.config.ensure_param("num_trials", 30)             # Total number of trials
         self.config.ensure_param("iti_duration", 10)           # Inter-trial interval duration (seconds)
-        self.config.ensure_param("free_reward_duration", 4.0)  # Duration of free reward on first trial
         self.config.ensure_param("reward_duration", 3.0)       # Reward duration for correct response
         self.config.ensure_param("punish_duration", 5.0)       # Punishment duration for incorrect response
         self.config.ensure_param("buzzer_duration", 0.5)       # Duration of buzzer during punishment
@@ -55,7 +47,6 @@ class PunishIncorrect(Trainer):
         self.config.ensure_param("trainer_seq_dir", "")        # Directory containing sequence file
         self.config.ensure_param("trainer_seq_file", "")       # Sequence file name
         self.config.ensure_param("correct_image", "A01")       # Image identifier for correct choice
-        self.config.ensure_param("initiation_timeout", 300)    # Timeout for trial initiation (seconds)
 
         # Local variables used during training
         self.current_trial = 0
@@ -107,18 +98,29 @@ class PunishIncorrect(Trainer):
     def load_images(self, trial_num):
         """Load images for the current trial."""
         # Get image identifiers from the sequence file
-        self.left_image = self.trials[trial_num][0]
-        self.right_image = self.trials[trial_num][1]
+        self.left_image = str(self.trials[trial_num][0]).strip()
+        self.right_image = str(self.trials[trial_num][1]).strip()
+        left_token = self.left_image.upper()
+        right_token = self.right_image.upper()
 
         # Send commands to M0 devices to load images
-        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
-        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+        if left_token == "BLACK":
+            self.chamber.get_left_m0().send_command("BLACK")
+        else:
+            self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+
+        if right_token == "BLACK":
+            self.chamber.get_right_m0().send_command("BLACK")
+        else:
+            self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
 
     def show_images(self):
         """Display images on the M0 devices."""
         # Send show command to both screens
-        self.chamber.get_left_m0().send_command("SHOW")
-        self.chamber.get_right_m0().send_command("SHOW")
+        if self.left_image.upper() != "BLACK":
+            self.chamber.get_left_m0().send_command("SHOW")
+        if self.right_image.upper() != "BLACK":
+            self.chamber.get_right_m0().send_command("SHOW")
 
     def clear_images(self):
         """Clear the images on the M0 devices."""
@@ -140,44 +142,7 @@ class PunishIncorrect(Trainer):
             self.write_event("StartTraining", 1)
 
             self.current_trial = 1
-            logger.info("Starting trial %s", self.current_trial)
-            self.write_event("StartTrial", self.current_trial)
-            self.state = PunishIncorrectState.PRELOAD_FIRST
-
-        # ---------------- TRIAL 1 (FREE REWARD) ---------------- #
-
-        elif self.state == PunishIncorrectState.PRELOAD_FIRST:
-            # Preload images for the first trial
-            logger.debug("Current state: PRELOAD_FIRST")
-            self.load_images(0)
-            self.state = PunishIncorrectState.FREE_REWARD_START
-
-        elif self.state == PunishIncorrectState.FREE_REWARD_START:
-            # Start free reward delivery
-            logger.debug("Current state: FREE_REWARD_START")
-            self.reward_start_time = current_time
-            logger.info("Dispensing free reward")
-            self.write_event("FreeRewardStart", 1)
-            self.chamber.reward.dispense()
-            self.chamber.reward_led.activate()
-            self.state = PunishIncorrectState.DELIVERING_FREE_REWARD
-
-        elif self.state == PunishIncorrectState.DELIVERING_FREE_REWARD:
-            # Delivering free reward
-            logger.debug("Current state: DELIVERING_FREE_REWARD")
-            if current_time - self.reward_start_time >= self.config["free_reward_duration"]:
-                self.chamber.reward.stop()
-                self.chamber.reward_led.deactivate()
-                self.state = PunishIncorrectState.SHOW_FIRST
-
-        elif self.state == PunishIncorrectState.SHOW_FIRST:
-            # Show images after free reward
-            logger.debug("Current state: SHOW_FIRST")
-            self.show_images()
-            self.trial_start_time = current_time
-            self.state = PunishIncorrectState.WAIT_FOR_TOUCH
-
-        # ---------------- SUBSEQUENT TRIALS ---------------- #
+            self.state = PunishIncorrectState.START_TRIAL
 
         elif self.state == PunishIncorrectState.START_TRIAL:
             # Start a new trial
@@ -186,7 +151,10 @@ class PunishIncorrect(Trainer):
                 trial_number = self.current_trial
                 logger.info("Starting trial %s", trial_number)
                 self.write_event("StartTrial", trial_number)
-                self.state = PunishIncorrectState.ITI_START
+                self.load_images(self.current_trial - 1)
+                self.show_images()
+                self.trial_start_time = current_time
+                self.state = PunishIncorrectState.WAIT_FOR_TOUCH
             else:
                 # All trials completed
                 self.state = PunishIncorrectState.END_TRAINING
@@ -202,26 +170,7 @@ class PunishIncorrect(Trainer):
             # Waiting during inter-trial interval
             logger.debug("Current state: ITI")
             if current_time - self.iti_start_time >= self.config["iti_duration"]:
-                self.initiation_start_time = current_time
-                self.state = PunishIncorrectState.WAIT_FOR_INITIATION
-
-        elif self.state == PunishIncorrectState.WAIT_FOR_INITIATION:
-            #  initiation logic
-            logger.debug("Current state: WAIT_FOR_INITIATION")
-            self.load_images(self.current_trial - 1)
-            if self.chamber.beambreak.state==False:
-                logger.info(f"Trial {self.current_trial} initiated by beam break") 
-                self.state = PunishIncorrectState.SHOW_IMAGES
-            elif current_time - self.initiation_start_time >= self.config["initiation_timeout"]:
-                logger.info(f"Initiation timeout on trial {self.current_trial}")
-                self.state = PunishIncorrectState.SHOW_IMAGES
-
-        elif self.state == PunishIncorrectState.SHOW_IMAGES:
-            # Display images for the trial
-            logger.debug("Current state: SHOW_IMAGES")
-            self.show_images()
-            self.trial_start_time = current_time
-            self.state = PunishIncorrectState.WAIT_FOR_TOUCH
+                self.state = PunishIncorrectState.END_TRIAL
 
         # ---------------- CHOICE LOGIC ---------------- #
 
@@ -229,19 +178,23 @@ class PunishIncorrect(Trainer):
             # Waiting for screen touch
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
-                if self.chamber.get_left_m0().was_touched():
+                side = self.check_touch()
+                if side == "LEFT":
                     self.write_event("LeftScreenTouched", self.current_trial)
+                    touched_image = self.left_image
+                    correct_image = str(self.config["correct_image"]).strip().upper()
                     self.state = (
                         PunishIncorrectState.CORRECT
-                        if self.left_image == self.config["correct_image"]
+                        if str(touched_image).strip().upper() == correct_image
                         else PunishIncorrectState.INCORRECT
                     )
-
-                elif self.chamber.get_right_m0().was_touched():
+                elif side == "RIGHT":
                     self.write_event("RightScreenTouched", self.current_trial)
+                    touched_image = self.right_image
+                    correct_image = str(self.config["correct_image"]).strip().upper()
                     self.state = (
                         PunishIncorrectState.CORRECT
-                        if self.right_image == self.config["correct_image"]
+                        if str(touched_image).strip().upper() == correct_image
                         else PunishIncorrectState.INCORRECT
                     )
             else:
@@ -267,7 +220,7 @@ class PunishIncorrect(Trainer):
             # No response detected
             logger.debug("Current state: NO_TOUCH")
             self.clear_images()
-            self.state = PunishIncorrectState.END_TRIAL
+            self.state = PunishIncorrectState.ITI_START
 
         elif self.state == PunishIncorrectState.REWARD_START:
             # Start reward delivery
@@ -284,7 +237,7 @@ class PunishIncorrect(Trainer):
             if current_time - self.reward_start_time >= self.config["reward_duration"]:
                 self.chamber.reward.stop()
                 self.chamber.reward_led.deactivate()
-                self.state = PunishIncorrectState.END_TRIAL
+                self.state = PunishIncorrectState.ITI_START
 
         elif self.state == PunishIncorrectState.PUNISH_START:
             # Start punishment
@@ -305,17 +258,13 @@ class PunishIncorrect(Trainer):
 
             if elapsed >= self.config["punish_duration"]:
                 self.chamber.punishment_led.deactivate()
-                self.state = PunishIncorrectState.END_TRIAL
+                self.state = PunishIncorrectState.ITI_START
 
         elif self.state == PunishIncorrectState.END_TRIAL:
             # End of trial cleanup
             logger.debug("Current state: END_TRIAL")
             self.write_event("EndTrial", self.current_trial)
             self.current_trial += 1
-
-            # Preload images for next trial if available
-            if self.current_trial <= len(self.trials):
-                self.load_images(self.current_trial - 1)
 
             self.state = PunishIncorrectState.START_TRIAL
 
