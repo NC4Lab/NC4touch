@@ -65,27 +65,30 @@ class PunishIncorrect(Trainer):
     def start_training(self):
         # Starting the training session
         logger.info("Starting Punish Incorrect training session...")
+        trainer_seq_dir = str(self.config["trainer_seq_dir"] or "")
+        trainer_seq_file_name = str(self.config["trainer_seq_file"] or "")
+        num_trials = int(self.config["num_trials"] or 0)
 
         # Reset chamber hardware to default state
         self.chamber.default_state()
 
         # Open and read the trainer sequence file
-        trainer_seq_file = os.path.join(self.config["trainer_seq_dir"], self.config["trainer_seq_file"])
+        trainer_seq_file = os.path.join(trainer_seq_dir, trainer_seq_file_name)
         self.trials = self.read_trainer_seq_file(trainer_seq_file, 2)
         if not self.trials:
             logger.error(f"Failed to read trainer sequence file: {trainer_seq_file}")
             return
 
         # Validate number of trials in the sequence file
-        if len(self.trials) > self.config["num_trials"]:
+        if len(self.trials) > num_trials:
             logger.warning(
-                f"Number of trials in the sequence file exceeds the expected number of trials: {self.config['num_trials']}"
+                f"Number of trials in the sequence file exceeds the expected number of trials: {num_trials}"
             )
             # Truncate trials if too many
-            self.trials = self.trials[:self.config["num_trials"]]
-        elif len(self.trials) < self.config["num_trials"]:
+            self.trials = self.trials[:num_trials]
+        elif len(self.trials) < num_trials:
             logger.error(
-                f"Number of trials in the sequence file does not match the expected number of trials: {self.config['num_trials']}"
+                f"Number of trials in the sequence file does not match the expected number of trials: {num_trials}"
             )
             return
 
@@ -131,6 +134,13 @@ class PunishIncorrect(Trainer):
     def run_training(self):
         """Main loop controlling the training state machine."""
         current_time = time.time()
+        num_trials = int(self.config["num_trials"] or 0)
+        iti_duration = float(self.config["iti_duration"] or 0.0)
+        touch_timeout = float(self.config["touch_timeout"] or 0.0)
+        reward_duration = float(self.config["reward_duration"] or 0.0)
+        buzzer_duration = float(self.config["buzzer_duration"] or 0.0)
+        punish_duration = float(self.config["punish_duration"] or 0.0)
+        correct_image = str(self.config["correct_image"] or "").strip().upper()
 
         if self.state == PunishIncorrectState.IDLE:
             # IDLE state, waiting for training to start
@@ -147,7 +157,7 @@ class PunishIncorrect(Trainer):
         elif self.state == PunishIncorrectState.START_TRIAL:
             # Start a new trial
             logger.debug("Current state: START_TRIAL")
-            if self.current_trial <= self.config["num_trials"]:
+            if self.current_trial <= num_trials:
                 trial_number = self.current_trial
                 logger.info("Starting trial %s", trial_number)
                 self.write_event("StartTrial", trial_number)
@@ -169,7 +179,7 @@ class PunishIncorrect(Trainer):
         elif self.state == PunishIncorrectState.ITI:
             # Waiting during inter-trial interval
             logger.debug("Current state: ITI")
-            if current_time - self.iti_start_time >= self.config["iti_duration"]:
+            if current_time - self.iti_start_time >= iti_duration:
                 self.state = PunishIncorrectState.END_TRIAL
 
         # ---------------- CHOICE LOGIC ---------------- #
@@ -177,12 +187,11 @@ class PunishIncorrect(Trainer):
         elif self.state == PunishIncorrectState.WAIT_FOR_TOUCH:
             # Waiting for screen touch
             logger.debug("Current state: WAIT_FOR_TOUCH")
-            if current_time - self.trial_start_time <= self.config["touch_timeout"]:
+            if current_time - self.trial_start_time <= touch_timeout:
                 side = self.check_touch()
                 if side == "LEFT":
                     self.write_event("LeftScreenTouched", self.current_trial)
                     touched_image = self.left_image
-                    correct_image = str(self.config["correct_image"]).strip().upper()
                     self.state = (
                         PunishIncorrectState.CORRECT
                         if str(touched_image).strip().upper() == correct_image
@@ -191,7 +200,6 @@ class PunishIncorrect(Trainer):
                 elif side == "RIGHT":
                     self.write_event("RightScreenTouched", self.current_trial)
                     touched_image = self.right_image
-                    correct_image = str(self.config["correct_image"]).strip().upper()
                     self.state = (
                         PunishIncorrectState.CORRECT
                         if str(touched_image).strip().upper() == correct_image
@@ -234,7 +242,7 @@ class PunishIncorrect(Trainer):
         elif self.state == PunishIncorrectState.DELIVERING_REWARD:
             # Delivering reward
             logger.debug("Current state: DELIVERING_REWARD")
-            if current_time - self.reward_start_time >= self.config["reward_duration"]:
+            if current_time - self.reward_start_time >= reward_duration:
                 self.chamber.reward.stop()
                 self.chamber.reward_led.deactivate()
                 self.state = PunishIncorrectState.ITI_START
@@ -253,10 +261,10 @@ class PunishIncorrect(Trainer):
             logger.debug("Current state: DELIVERING_PUNISH")
             elapsed = current_time - self.punish_start_time
 
-            if elapsed >= self.config["buzzer_duration"]:
+            if elapsed >= buzzer_duration:
                 self.chamber.buzzer.deactivate()
 
-            if elapsed >= self.config["punish_duration"]:
+            if elapsed >= punish_duration:
                 self.chamber.punishment_led.deactivate()
                 self.state = PunishIncorrectState.ITI_START
 

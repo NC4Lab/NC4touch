@@ -109,10 +109,10 @@ class PRL(Trainer):
         self.right_image = "o"  # O always on right screen (not tied to reward)
 
         #Initialize reward probabilities to 0, will be set at the start of training
-        self.left_reward_probability = 0
-        self.right_reward_probability = 0
+        self.left_reward_probability = 0.0
+        self.right_reward_probability = 0.0
         self.current_trial = 0
-        self.current_trial_iti = self.config["iti_duration"]
+        self.current_trial_iti = float(self.config["iti_duration"] or 10.0)
         self.use_timeout_iti = False
         self.touched_side = None  # track which side was touched for reward prob lookup
         self.state = PRLState.IDLE
@@ -153,6 +153,15 @@ class PRL(Trainer):
     def run_training(self):
         """Main loop for running the training session."""
         current_time = time.time()
+        num_trials = int(self.config["num_trials"] or 0)
+        high_reward_probability = float(self.config["high_reward_probability"] or 0.0)
+        low_reward_probability = float(self.config["low_reward_probability"] or 0.0)
+        touch_timeout = float(self.config["touch_timeout"] or 0.0)
+        trial_to_reverse = int(self.config["trial_to_reverse"] or 0)
+        reward_pump_secs = float(self.config["reward_pump_secs"] or 0.0)
+        beam_break_wait_time = float(self.config["beam_break_wait_time"] or 0.0)
+        iti_duration = float(self.config["iti_duration"] or 0.0)
+        max_iti_duration = float(self.config["max_iti_duration"] or iti_duration)
 
         if self.state == PRLState.IDLE:
             # IDLE state, waiting for the start signal
@@ -166,11 +175,11 @@ class PRL(Trainer):
             self.write_event("StartTraining ", 1)
             ##randomly assign the reward probability to the touch screens
             if random.random() < 0.5:
-                self.left_reward_probability=(self.config["high_reward_probability"])
-                self.right_reward_probability=(self.config["low_reward_probability"])
+                self.left_reward_probability = high_reward_probability
+                self.right_reward_probability = low_reward_probability
             else:
-                self.left_reward_probability=(self.config["low_reward_probability"])
-                self.right_reward_probability=(self.config["high_reward_probability"])
+                self.left_reward_probability = low_reward_probability
+                self.right_reward_probability = high_reward_probability
             self.current_trial = 0
             self.state = PRLState.START_TRIAL
 
@@ -178,19 +187,19 @@ class PRL(Trainer):
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
             self.current_trial += 1
-            if self.current_trial <= self.config["num_trials"]:
+            if self.current_trial <= num_trials:
                 trial_number = self.current_trial
                 logger.info("Starting trial %s", trial_number)
                 self.write_event("StartTrial", trial_number)
-                if self.current_trial == self.config["trial_to_reverse"]:
+                if self.current_trial == trial_to_reverse:
                     # Reverse the reward probabilities
                     logger.info("Reversing reward probabilities...")
-                    if self.left_reward_probability == self.config["high_reward_probability"]:
-                        self.left_reward_probability = self.config["low_reward_probability"]
-                        self.right_reward_probability = self.config["high_reward_probability"]
+                    if self.left_reward_probability == high_reward_probability:
+                        self.left_reward_probability = low_reward_probability
+                        self.right_reward_probability = high_reward_probability
                     else:
-                        self.left_reward_probability = self.config["high_reward_probability"]
-                        self.right_reward_probability = self.config["low_reward_probability"]
+                        self.left_reward_probability = high_reward_probability
+                        self.right_reward_probability = low_reward_probability
                 # Load images for the current trial
                 self.load_images()
                 # Show images on the M0 devices
@@ -214,18 +223,18 @@ class PRL(Trainer):
         elif self.state == PRLState.WAIT_FOR_TOUCH:
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             logger.debug("Current state: WAIT_FOR_TOUCH")
-            if current_time - self.trial_start_time <= self.config["touch_timeout"]:
+            if current_time - self.trial_start_time <= touch_timeout:
                 side = self.check_touch()
                 if side == "LEFT":
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial)
                     self.touched_side = "LEFT"
-                    self.state = PRLState.CORRECT if self.left_reward_probability == self.config["high_reward_probability"] else PRLState.ERROR
+                    self.state = PRLState.CORRECT if self.left_reward_probability == high_reward_probability else PRLState.ERROR
                 elif side == "RIGHT":
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
                     self.touched_side = "RIGHT"
-                    self.state = PRLState.CORRECT if self.right_reward_probability == self.config["high_reward_probability"] else PRLState.ERROR
+                    self.state = PRLState.CORRECT if self.right_reward_probability == high_reward_probability else PRLState.ERROR
             else:
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
@@ -282,7 +291,7 @@ class PRL(Trainer):
         elif self.state == PRLState.DELIVERING_REWARD:
             # DELIVERING_REWARD state, dispensing the reward
             logger.debug("Current state: DELIVERING_REWARD")
-            if current_time - self.reward_start_time < self.config["reward_pump_secs"]:
+            if current_time - self.reward_start_time < reward_pump_secs:
                 if self.chamber.beambreak.state==False and not self.reward_collected:
                     # Beam break detected during reward dispense
                     self.reward_collected = True
@@ -300,7 +309,7 @@ class PRL(Trainer):
         elif self.state == PRLState.POST_REWARD:
             # POST_REWARD state, waiting for beam break or timeout
             logger.debug("Current state: POST_REWARD")
-            if (current_time - self.reward_start_time) < self.config["beam_break_wait_time"]:
+            if (current_time - self.reward_start_time) < beam_break_wait_time:
                 if not self.reward_collected and self.chamber.beambreak.state==False:
                     # Beam break detected after reward dispense
                     self.reward_collected = True
@@ -323,9 +332,9 @@ class PRL(Trainer):
             # Turn off house lights during ITI
             # self.chamber.house_lights.deactivate()
             if self.use_timeout_iti:
-                self.current_trial_iti = self.config["max_iti_duration"]
+                self.current_trial_iti = max_iti_duration
             else:
-                self.current_trial_iti = self.config["iti_duration"]
+                self.current_trial_iti = iti_duration
             self.use_timeout_iti = False
             self.iti_start_time = current_time
             self.state = PRLState.ITI

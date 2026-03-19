@@ -1,6 +1,7 @@
 import os
 import yaml
 from os.path import expanduser
+from typing import Any
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -18,14 +19,14 @@ class Config:
             config = {}
         
         # Construct config by loading parameters from config argument > config_file
-        self.config = {}
+        self.config: dict[str, Any] = {}
         self.config_file = config_file
         self.update_with_file(config_file)
         self.config.update(config)
         self.explicit_keys.update(config.keys())
     
-    def __getitem__(self, key: str):
-        return self.config.get(key, None)
+    def __getitem__(self, key: str) -> Any:
+        return self.config.get(key)
     
     def __setitem__(self, key, value):
         self.config[key] = value
