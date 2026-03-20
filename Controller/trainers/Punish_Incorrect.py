@@ -105,6 +105,29 @@ class PunishIncorrect(Trainer):
         self.right_image = str(self.trials[trial_num][1]).strip()
         left_token = self.left_image.upper()
         right_token = self.right_image.upper()
+        side_hint = ""
+        if len(self.trials[trial_num]) >= 3:
+            side_hint = str(self.trials[trial_num][2]).strip().upper()
+
+        # PunishIncorrect should present only one active stimulus per trial.
+        # Active side is determined by sequence row values.
+        left_is_black = left_token == "BLACK"
+        right_is_black = right_token == "BLACK"
+        if not left_is_black and not right_is_black:
+            if side_hint in ("LEFT", "L"):
+                self.right_image = "BLACK"
+                right_token = "BLACK"
+            elif side_hint in ("RIGHT", "R"):
+                self.left_image = "BLACK"
+                left_token = "BLACK"
+            else:
+                # Keep behavior deterministic if sequence row is ambiguous.
+                self.right_image = "BLACK"
+                right_token = "BLACK"
+                logger.warning(
+                    "Trial %s has two active stimuli but no valid side hint in column 3; defaulting to LEFT active.",
+                    trial_num + 1,
+                )
 
         # Send commands to M0 devices to load images
         if left_token == "BLACK":
