@@ -194,6 +194,16 @@ class VirtualChamber:
             return any(display_device.was_touched() for display_device in self.display_devices_all)
         return self._zone_device(zone_name).was_touched()
 
+    def display_clear_touches(self, drain_events=True):
+        """Virtual display touch clear for trainer compatibility."""
+        for display_device in self.display_devices_all:
+            if hasattr(display_device, "_is_touched"):
+                display_device._is_touched = False
+
+    def display_flush(self):
+        """Virtual flush no-op for API parity with Chamber.display_flush()."""
+        return
+
     def configure_display_zones(self, zone_widths=None, zone_gaps=None, center_layout=None):
         """Update virtual layout config used by VirtualChamberGUI rendering."""
         if zone_widths is not None:

@@ -112,6 +112,7 @@ class WebUI:
 
     def init_ui(self):
         ui.timer(1, self.update_state)  # Start a timer to update display status labels every second
+        ui.timer(0.05, lambda: self.session.chamber.display_flush())
         ui.label(f"{self.chamber_name} Control Panel").style('font-size: 24px; font-weight: bold; text-align: center; margin-top: 20px;')
         with ui.row():
             with ui.column():

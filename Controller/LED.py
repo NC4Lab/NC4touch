@@ -14,6 +14,9 @@ class LED:
         if pigpio is not None and not isinstance(pi, pigpio.pi):
             logger.error("pi must be an instance of pigpio.pi")
             raise ValueError("pi must be an instance of pigpio.pi")
+        if pi is not None and not getattr(pi, "connected", False):
+            logger.error("pigpio client is not connected; LED will run in no-hardware mode")
+            pi = None
 
         self.pi = pi
         self.pin = pin

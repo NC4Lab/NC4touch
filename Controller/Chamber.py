@@ -40,20 +40,41 @@ class Chamber:
         self.config.ensure_param("buzzer_volume", 60)
         self.config.ensure_param("buzzer_frequency", 6000)
         self.config.ensure_param("beambreak_memory", 0.2)
+        self.config.ensure_param("pigpio_host", None)
+        self.config.ensure_param("pigpio_port", 8888)
 
         # Single-display config
+        # Note: DSI-2 is physically 480x1920 but has a 270-degree transform applied,
+        # so xrandr/pygame see it as 1920x480. We use the xrandr dimensions for pygame.
         self.config.ensure_param("display_width", 1920)
         self.config.ensure_param("display_height", 480)
         self.config.ensure_param("display_image_folder", "../data/images")
         self.config.ensure_param("display_zone_widths", [320, 320, 320])
         self.config.ensure_param("display_zone_gaps", None)
         self.config.ensure_param("display_center_layout", True)
+        self.config.ensure_param("display_output_name", "DSI-2")
+        self.config.ensure_param("display_output_index", None)
+        self.config.ensure_param("display_window_mode", "fullscreen")
+        self.config.ensure_param("display_image_border_color", [255, 255, 255])
+        self.config.ensure_param("display_image_border_width", 1)
 
         # LED colors
         self.config.ensure_param("reward_led_color", [0, 255, 0])
         self.config.ensure_param("punishment_led_color", [255, 0, 0])
 
-        self.pi = pigpio.pi() if pigpio is not None else None
+        self.pi = None
+        if pigpio is not None:
+            pigpio_host = self.config["pigpio_host"]
+            pigpio_port = int(self.config["pigpio_port"])
+            self.pi = pigpio.pi(pigpio_host, pigpio_port)
+            if not getattr(self.pi, "connected", False):
+                logger.error(
+                    "Unable to connect to pigpio daemon at host=%s port=%s. "
+                    "Start pigpiod on the target Pi and verify host/port settings.",
+                    pigpio_host,
+                    pigpio_port,
+                )
+                self.pi = None
 
         logger.info("Using single Raspberry Pi display backend.")
         self.display = DisplayManager(
@@ -63,6 +84,11 @@ class Chamber:
             zone_widths=self.config["display_zone_widths"],
             zone_gaps=self.config["display_zone_gaps"],
             center_layout=self.config["display_center_layout"],
+            display_name=self.config["display_output_name"],
+            display_index=self.config["display_output_index"],
+            window_mode=self.config["display_window_mode"],
+            image_border_color=self.config["display_image_border_color"],
+            image_border_width=self.config["display_image_border_width"],
         )
 
         # Retained names for UI and virtual tooling compatibility.
@@ -149,6 +175,14 @@ class Chamber:
         if zone_name == "all":
             return any(device.was_touched() for device in self.display_devices.values())
         return self.display_devices[zone_name].was_touched()
+
+    def display_clear_touches(self, drain_events=True):
+        """Clear latched/pending touches so new trials start from a clean touch state."""
+        self.display.clear_touch_states(drain_events=drain_events)
+
+    def display_flush(self):
+        """Flush queued display operations (must be called from display owner thread)."""
+        self.display.flush_pending_operations()
 
     def configure_display_zones(self, zone_widths=None, zone_gaps=None, center_layout=None):
         """Allow trainers/tasks to reconfigure active display geometry."""

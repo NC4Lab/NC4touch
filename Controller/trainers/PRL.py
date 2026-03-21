@@ -64,6 +64,7 @@ class PRL(Trainer):
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
+        self.config.ensure_param("display_refresh_interval", 1.0) # Re-show images while waiting for touch
 
 
         # Local variables used by the trainer during the training session and not set in the config file.
@@ -83,6 +84,7 @@ class PRL(Trainer):
         self.current_trial = 0
         self.current_trial_iti = self.config["iti_duration"]
         self.touched_side = None  # track which side was touched for reward prob lookup
+        self.last_image_show_time = 0.0
         self.state = PRLState.IDLE
 
 
@@ -98,6 +100,7 @@ class PRL(Trainer):
         # Send commands to display zones to show images
         self.chamber.display_command("left", "SHOW")
         self.chamber.display_command("right", "SHOW")
+        self.last_image_show_time = time.time()
     
     def clear_images(self):
         """Clear images on the operant display zones."""
@@ -146,7 +149,8 @@ class PRL(Trainer):
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
             self.current_trial += 1
-            if self.current_trial < self.config["num_trials"]:
+            num_trials = int(self.config["num_trials"] or 0)
+            if self.current_trial <= num_trials:
                 trial_number = self.current_trial
                 logger.info("Starting trial %s", trial_number)
                 self.write_event("StartTrial", trial_number)
@@ -160,6 +164,7 @@ class PRL(Trainer):
                         self.left_reward_probability = self.config["high_reward_probability"]
                         self.right_reward_probability = self.config["low_reward_probability"]
                 # Load images for the current trial
+                self.chamber.display_clear_touches(drain_events=True)
                 self.load_images()
                 # Show images on the display zones
                 self.show_images()
@@ -171,7 +176,6 @@ class PRL(Trainer):
                 logger.info(f"Reward probabilities set for trial {self.current_trial}: {self.left_reward_probability} (left), {self.right_reward_probability} (right)")
                 self.write_event("ImagesLoaded", self.current_trial)
                 self.write_event("RewardProbabilitiesSet", self.current_trial)
-                self.show_images()
                 self.state = PRLState.WAIT_FOR_TOUCH
             else:
                 # All trials completed, move to end training state
@@ -181,7 +185,15 @@ class PRL(Trainer):
         elif self.state == PRLState.WAIT_FOR_TOUCH:
             # WAIT_FOR_TOUCH state, waiting for the animal to touch the screen
             logger.debug("Current state: WAIT_FOR_TOUCH")
-            if current_time - self.trial_start_time <= self.config["touch_timeout"]:
+            display_refresh_interval = float(self.config["display_refresh_interval"] or 1.0)
+            touch_timeout = float(self.config["touch_timeout"] or 0.0)
+
+            if current_time - self.last_image_show_time >= display_refresh_interval:
+                # Keep trial stimuli visible even if another component cleared the display.
+                self.show_images()
+                logger.debug("Refreshed PRL images during WAIT_FOR_TOUCH")
+
+            if current_time - self.trial_start_time <= touch_timeout:
                 side = self.check_touch()
                 if side == "LEFT":
                     logger.info("Left screen touched")
@@ -205,9 +217,10 @@ class PRL(Trainer):
             logger.info("Correct touch detected.")
             self.write_event("CorrectTouch ", self.current_trial)
 
+            logger.debug("Clearing trial images after correct touch")
             self.clear_images()
             reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
-            if random.random() <= reward_prob:
+            if random.random() <= float(reward_prob or 0.0):
                 self.state = PRLState.DELIVER_REWARD_START
                 logger.info("Delivering reward...")
                 self.write_event("DeliverRewardStart", self.current_trial)
@@ -222,9 +235,10 @@ class PRL(Trainer):
             logger.info("Incorrect touch detected.")
             self.write_event("IncorrectTouch", self.current_trial)
 
+            logger.debug("Clearing trial images after incorrect touch")
             self.clear_images()
             reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
-            if random.random() <= reward_prob:
+            if random.random() <= float(reward_prob or 0.0):
                 self.state = PRLState.DELIVER_REWARD_START
                 logger.info("Delivering reward...")
                 self.write_event("DeliverRewardStart", self.current_trial)
@@ -247,7 +261,8 @@ class PRL(Trainer):
         elif self.state == PRLState.DELIVERING_REWARD:
             # DELIVERING_REWARD state, dispensing the reward
             logger.debug("Current state: DELIVERING_REWARD")
-            if current_time - self.reward_start_time < self.config["reward_pump_secs"]:
+            reward_pump_secs = float(self.config["reward_pump_secs"] or 0.0)
+            if current_time - self.reward_start_time < reward_pump_secs:
                 if self.chamber.beambreak.state==False and not self.reward_collected:
                     # Beam break detected during reward dispense
                     self.reward_collected = True
@@ -265,7 +280,8 @@ class PRL(Trainer):
         elif self.state == PRLState.POST_REWARD:
             # POST_REWARD state, waiting for beam break or timeout
             logger.debug("Current state: POST_REWARD")
-            if (current_time - self.reward_start_time) < self.config["beam_break_wait_time"]:
+            beam_break_wait_time = float(self.config["beam_break_wait_time"] or 0.0)
+            if (current_time - self.reward_start_time) < beam_break_wait_time:
                 if not self.reward_collected and self.chamber.beambreak.state==False:
                     # Beam break detected after reward dispense
                     self.reward_collected = True
@@ -294,7 +310,8 @@ class PRL(Trainer):
         elif self.state == PRLState.ITI:
             # ITI state, waiting for the ITI duration
             logger.debug("Current state: ITI")
-            if current_time - self.iti_start_time < self.current_trial_iti:
+            current_trial_iti = float(self.current_trial_iti or 0.0)
+            if current_time - self.iti_start_time < current_trial_iti:
                 # Check if beam break is detected during ITI
                 # if self.chamber.beambreak.state==False:
                 #     logger.info("Beam broken during ITI. Adding 1 second to ITI duration.")
@@ -303,7 +320,7 @@ class PRL(Trainer):
                 #         self.current_trial_iti += 1
                 pass
             else:
-                logger.info(f"ITI duration of {self.current_trial_iti} seconds completed")
+                logger.info(f"ITI duration of {current_trial_iti} seconds completed")
                 self.state = PRLState.END_TRIAL
         
         elif self.state == PRLState.END_TRIAL:
