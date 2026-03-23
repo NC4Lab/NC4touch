@@ -22,6 +22,7 @@ class Camera:
         self.network_stream = None
         self.stream_port = stream_port
         self.video_recorder = None
+        self._autofocus_control_name = None
 
         # Start the video capture
         self.start_video_stream()
@@ -68,6 +69,7 @@ class Camera:
                 self.stream_port,
             )
             self.network_stream = None
+            self.disable_autofocus()
             return
 
         if shutil.which("ustreamer") is None:
@@ -112,6 +114,96 @@ class Camera:
             return
 
         logger.info("Network stream started on 0.0.0.0:%s", self.stream_port)
+        self.disable_autofocus()
+
+    def _set_focus_auto(self, enabled: bool):
+        """Set camera autofocus state using v4l2-ctl."""
+        if shutil.which("v4l2-ctl") is None:
+            logger.warning("v4l2-ctl is not installed; cannot change camera focus_auto control.")
+            return False
+
+        control_name = self._get_autofocus_control_name()
+        if control_name is None:
+            logger.warning(
+                "No supported autofocus control found for %s (expected focus_auto or focus_automatic_continuous).",
+                self.device,
+            )
+            return False
+
+        value = "1" if enabled else "0"
+        try:
+            result = subprocess.run(
+                ["v4l2-ctl", "-d", self.device, f"--set-ctrl={control_name}={value}"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except Exception as e:
+            logger.error(f"Error setting focus_auto={value}: {e}")
+            return False
+
+        if result.returncode != 0:
+            stderr = (result.stderr or "").strip()
+            logger.warning(
+                "Unable to set %s=%s on %s. %s",
+                control_name,
+                value,
+                self.device,
+                stderr,
+            )
+            return False
+
+        return True
+
+    def _get_autofocus_control_name(self):
+        """Detect autofocus control name exposed by the camera."""
+        if self._autofocus_control_name is not None:
+            return self._autofocus_control_name
+
+        try:
+            result = subprocess.run(
+                ["v4l2-ctl", "-d", self.device, "--list-ctrls"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except Exception as e:
+            logger.warning(f"Unable to inspect camera controls on {self.device}: {e}")
+            return None
+
+        controls_text = result.stdout or ""
+        if "focus_automatic_continuous" in controls_text:
+            self._autofocus_control_name = "focus_automatic_continuous"
+        elif "focus_auto" in controls_text:
+            self._autofocus_control_name = "focus_auto"
+        else:
+            self._autofocus_control_name = None
+
+        if self._autofocus_control_name:
+            logger.debug(
+                "Using autofocus control '%s' for device %s",
+                self._autofocus_control_name,
+                self.device,
+            )
+
+        return self._autofocus_control_name
+
+    def disable_autofocus(self):
+        """Keep autofocus disabled so focus remains fixed during a session."""
+        if self._set_focus_auto(False):
+            logger.info("Camera autofocus disabled.")
+
+    def autofocus_once_and_lock(self, focus_seconds: float = 3.0):
+        """Briefly autofocus, then disable autofocus to lock focus for the session."""
+        def focus_routine():
+            if not self._set_focus_auto(True):
+                return
+            logger.info("Camera autofocus enabled for %.1f seconds...", focus_seconds)
+            time.sleep(max(0.0, float(focus_seconds)))
+            self.disable_autofocus()
+            logger.info("Camera focus locked for the remainder of the session.")
+
+        threading.Thread(target=focus_routine, daemon=True).start()
 
     def _is_stream_reachable(self):
         """Return True when a stream endpoint is already serving on localhost."""
@@ -154,18 +246,8 @@ class Camera:
             logger.warning("No recording in progress.")
 
     def lock_focus(self):
-        """Enable autofocus for a few seconds to focus, then disable it to lock focus."""
-        def focus_routine():
-            try:
-                logger.info("Camera autofocus enabled. Waiting 3 seconds for it to focus...")
-                subprocess.call(f"v4l2-ctl -d {self.device} --set-ctrl=focus_auto=1", shell=True)
-                time.sleep(3)
-                subprocess.call(f"v4l2-ctl -d {self.device} --set-ctrl=focus_auto=0", shell=True)
-                logger.info("Camera autofocus disabled (focus locked).")
-            except Exception as e:
-                logger.error(f"Error locking focus: {e}")
-
-        threading.Thread(target=focus_routine, daemon=True).start()
+        """Backward-compatible alias for one-shot autofocus then lock."""
+        self.autofocus_once_and_lock()
 
 if __name__ == "__main__":
     camera = Camera()

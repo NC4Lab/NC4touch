@@ -179,6 +179,8 @@ class WebUI:
                         # Reinitialize the camera
                         self.reinitialize_camera_button = ui.button("Reinitialize").on_click(self.session.chamber.camera.reinitialize)
                         self.reinitialize_camera_button.style('width: 200px; margin-top: 20px;')
+                        self.focus_camera_button = ui.button("Focus Camera").on_click(self.session.chamber.camera.lock_focus)
+                        self.focus_camera_button.style('width: 200px; margin-top: 20px;')
                         self.video_recording_toggle = ui.toggle({0: "Video Rec Off", 1: "Video Rec On"}, value=False, on_change=lambda e: self.session.start_video_recording() if e.value else self.session.stop_video_recording())
                     
                     with ui.row():
