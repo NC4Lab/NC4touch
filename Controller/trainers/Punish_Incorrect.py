@@ -71,6 +71,14 @@ class PunishIncorrect(Trainer):
         # Initialize trainer state
         self.state = PunishIncorrectState.IDLE
 
+    def _normalize_image_id(self, image_id):
+        """Normalize image IDs from CSV/config for reliable comparisons."""
+        return str(image_id).strip().upper()
+
+    def _is_correct_image(self, image_id):
+        """Return True if the touched image matches the configured correct image."""
+        return self._normalize_image_id(image_id) == self._normalize_image_id(self.config["correct_image"])
+
     def start_training(self):
         # Starting the training session
         logger.info("Starting Punish Incorrect training session...")
@@ -107,8 +115,8 @@ class PunishIncorrect(Trainer):
     def load_images(self, trial_num):
         """Load images for the current trial."""
         # Get image identifiers from the sequence file
-        self.left_image = self.trials[trial_num][0]
-        self.right_image = self.trials[trial_num][1]
+        self.left_image = str(self.trials[trial_num][0]).strip()
+        self.right_image = str(self.trials[trial_num][1]).strip()
 
         # Send commands to display zones to load images.
         # Treat BLACK as an explicit clear state (not a filename).
@@ -134,6 +142,12 @@ class PunishIncorrect(Trainer):
         # Blank both screens
         self.chamber.display_command("left", "BLACK")
         self.chamber.display_command("right", "BLACK")
+
+    def _prepare_touch_window(self):
+        """Clear any stale touches before starting a new touch response window."""
+        # Ensure queued display operations/events are processed first where supported.
+        self.chamber.display_flush()
+        self.chamber.display_clear_touches(drain_events=True)
 
     def run_training(self):
         """Main loop controlling the training state machine."""
@@ -183,6 +197,7 @@ class PunishIncorrect(Trainer):
             # Show images after free reward
             logger.debug("Current state: SHOW_FIRST")
             self.show_images()
+            self._prepare_touch_window()
             self.trial_start_time = current_time
             self.state = PunishIncorrectState.WAIT_FOR_TOUCH
 
@@ -229,6 +244,7 @@ class PunishIncorrect(Trainer):
             # Display images for the trial
             logger.debug("Current state: SHOW_IMAGES")
             self.show_images()
+            self._prepare_touch_window()
             self.trial_start_time = current_time
             self.state = PunishIncorrectState.WAIT_FOR_TOUCH
 
@@ -238,21 +254,37 @@ class PunishIncorrect(Trainer):
             # Waiting for screen touch
             logger.debug("Current state: WAIT_FOR_TOUCH")
             if current_time - self.trial_start_time <= self.config["touch_timeout"]:
+                touched_side = None
+                touched_image = None
+
                 if self.chamber.display_was_touched("left"):
                     self.write_event("LeftScreenTouched", self.current_trial)
-                    self.state = (
-                        PunishIncorrectState.CORRECT
-                        if self.left_image == self.config["correct_image"]
-                        else PunishIncorrectState.INCORRECT
-                    )
+                    touched_side = "left"
+                    touched_image = self.left_image
 
                 elif self.chamber.display_was_touched("right"):
                     self.write_event("RightScreenTouched", self.current_trial)
-                    self.state = (
-                        PunishIncorrectState.CORRECT
-                        if self.right_image == self.config["correct_image"]
-                        else PunishIncorrectState.INCORRECT
-                    )
+                    touched_side = "right"
+                    touched_image = self.right_image
+
+                if touched_side is not None:
+                    if self._is_correct_image(touched_image):
+                        self.state = PunishIncorrectState.CORRECT
+                        logger.info(
+                            "Trial %s %s touch (%s) -> CORRECT",
+                            self.current_trial,
+                            touched_side,
+                            touched_image,
+                        )
+                    else:
+                        self.state = PunishIncorrectState.INCORRECT
+                        logger.info(
+                            "Trial %s %s touch (%s) -> INCORRECT (correct=%s)",
+                            self.current_trial,
+                            touched_side,
+                            touched_image,
+                            self.config["correct_image"],
+                        )
             else:
                 # Touch timeout
                 self.write_event("TouchTimeout", self.current_trial)
