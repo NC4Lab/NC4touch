@@ -10,4 +10,5 @@ dependencies = [
     "pigpio>=1.78",
     "pygame>=2.6.1",
     "pyserial>=3.5",
+    "rpi-lgpio>=0.6",
 ]

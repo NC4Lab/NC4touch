@@ -3,10 +3,7 @@
 # Manu Madhav
 # 2025
 
-try:
-    import pigpio
-except ImportError:
-    pigpio = None
+from pigpio_compat import pigpio
 
 from LED import LED
 from Reward import Reward

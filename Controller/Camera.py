@@ -2,6 +2,9 @@ import os
 import subprocess
 import time
 import threading
+import shutil
+import urllib.request
+import urllib.error
 from helpers import get_ip_address
 
 import logging
@@ -19,10 +22,6 @@ class Camera:
         self.network_stream = None
         self.stream_port = stream_port
         self.video_recorder = None
-
-        # Kill any existing ustreamer or ffmpeg processes
-        self.kill_ustreamer()
-        self.kill_ffmpeg()
 
         # Start the video capture
         self.start_video_stream()
@@ -63,18 +62,64 @@ class Camera:
     
     def start_video_stream(self):
         """Start the video stream using ustreamer."""
-        from helpers import get_best_ip_address
-        best_ip = get_best_ip_address()
-        cmd = f"ustreamer --device={self.device} --host={best_ip if best_ip else '0.0.0.0'} --port={self.stream_port} --sink=demo::ustreamer::sink --sink-mode=660 --sink-rm"
-        logger.debug(f"Starting ustreamer with command: {cmd}")
-        
-        # Start the ustreamer process in the background
-        self.network_stream = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
-        
-        if self.network_stream:
-            logger.info(f"Network stream started on 0.0.0.0:{self.stream_port}")
-        else:
-            logger.error("Failed to start network stream.")
+        if self._is_stream_reachable():
+            logger.info(
+                "Detected existing camera stream on port %s; reusing it.",
+                self.stream_port,
+            )
+            self.network_stream = None
+            return
+
+        if shutil.which("ustreamer") is None:
+            logger.error("ustreamer is not installed. Install it with: sudo apt install ustreamer")
+            self.network_stream = None
+            return
+
+        cmd = [
+            "ustreamer",
+            f"--device={self.device}",
+            "--host=0.0.0.0",
+            f"--port={self.stream_port}",
+            "--sink=demo::ustreamer::sink",
+            "--sink-mode=660",
+            "--sink-rm",
+        ]
+        logger.debug("Starting ustreamer with command: %s", " ".join(cmd))
+
+        self.network_stream = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid,
+        )
+
+        # Give ustreamer a moment to fail fast (e.g., missing device/permissions).
+        time.sleep(0.4)
+        if self.network_stream.poll() is not None:
+            stderr = ""
+            try:
+                stderr = self.network_stream.stderr.read().decode("utf-8", errors="replace")
+            except Exception:
+                pass
+            logger.error(
+                "Failed to start ustreamer on %s:%s for device %s. Error: %s",
+                "0.0.0.0",
+                self.stream_port,
+                self.device,
+                stderr.strip()[:400],
+            )
+            self.network_stream = None
+            return
+
+        logger.info("Network stream started on 0.0.0.0:%s", self.stream_port)
+
+    def _is_stream_reachable(self):
+        """Return True when a stream endpoint is already serving on localhost."""
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{self.stream_port}/state", timeout=1.0) as response:
+                return response.status == 200
+        except (urllib.error.URLError, TimeoutError, OSError):
+            return False
     
     def stop_video_stream(self):
         """Stop the video stream and kill the ustreamer process."""

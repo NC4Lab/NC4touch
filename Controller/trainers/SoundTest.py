@@ -29,10 +29,31 @@ class SoundTest(Trainer):
         self.config.ensure_param("trainer_name", "SoundTest")
         self.config.ensure_param("num_loops", 1)
         self.config.ensure_param("step_duration", 10.0)
+        self.config.ensure_param("left_test_image", "x")
+        self.config.ensure_param("middle_test_image", "o")
+        self.config.ensure_param("right_test_image", "x")
 
         self.state_start_time = time.time()
         self.current_loop = 0
         self.state = SoundTestState.IDLE
+
+    def load_images(self):
+        """Load per-zone test images before SHOW commands."""
+        self.chamber.display_command("left", f"IMG:{self.config['left_test_image']}")
+        self.chamber.display_command("middle", f"IMG:{self.config['middle_test_image']}")
+        self.chamber.display_command("right", f"IMG:{self.config['right_test_image']}")
+
+    def show_images(self):
+        """Show loaded test images on all display zones."""
+        self.chamber.display_command("left", "SHOW")
+        self.chamber.display_command("middle", "SHOW")
+        self.chamber.display_command("right", "SHOW")
+
+    def clear_images(self):
+        """Clear test images from all display zones."""
+        self.chamber.display_command("left", "BLACK")
+        self.chamber.display_command("middle", "BLACK")
+        self.chamber.display_command("right", "BLACK")
 
     def start_training(self):
         logger.info("Starting sound test session...")
@@ -131,14 +152,15 @@ class SoundTest(Trainer):
             if not getattr(self, 'images_active', False):
                 logger.info("Images ON")
                 self.write_event("Images", "ON")
-                self.chamber.display_show("all")
+                self.load_images()
+                self.show_images()
                 self.images_active = True
                 self.state_start_time = current_time
 
             if self.check_duration(self.config["step_duration"]):
                 logger.info("Images OFF")
                 self.write_event("Images", "OFF")
-                self.chamber.display_clear("all")
+                self.clear_images()
                 self.images_active = False
                 self.state = SoundTestState.REWARD
 

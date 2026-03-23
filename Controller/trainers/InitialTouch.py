@@ -88,14 +88,14 @@ class InitialTouch(Trainer):
         self.left_image = self.trials[trial_num][0]
         self.right_image = self.trials[trial_num][1]
 
-        if not self.left_image == "BLACK":
+        if str(self.left_image).strip().upper() != "BLACK":
             logger.info(f"Loading left image: {self.left_image}")
             self.chamber.display_command("left", f"IMG:{self.left_image}")
         else:
             logger.info("Left image is BLACK, sending BLACK command")
             self.chamber.display_command("left", "BLACK")
 
-        if not self.right_image == "BLACK":
+        if str(self.right_image).strip().upper() != "BLACK":
             logger.info(f"Loading right image: {self.right_image}")
             self.chamber.display_command("right", f"IMG:{self.right_image}")
         else:
@@ -105,17 +105,17 @@ class InitialTouch(Trainer):
     def show_images(self):
         """Display images on the operant display zones."""
         # Send commands to display zones to show images
-        if not self.left_image == "BLACK":
+        if str(self.left_image).strip().upper() != "BLACK":
             self.chamber.display_command("left", "SHOW")
 
-        if not self.right_image == "BLACK":
+        if str(self.right_image).strip().upper() != "BLACK":
             self.chamber.display_command("right", "SHOW")
     
     def clear_images(self):
         """Clear images on the operant display zones."""
         # Send commands to display zones to blank images
-        self.chamber.display_command("left", "OFF")
-        self.chamber.display_command("right", "OFF")
+        self.chamber.display_command("left", "BLACK")
+        self.chamber.display_command("right", "BLACK")
     
     def run_training(self):
         """Main loop for running the training session."""
@@ -222,7 +222,7 @@ class InitialTouch(Trainer):
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial)
 
-                    if self.left_image == "BLACK":
+                    if str(self.left_image).strip().upper() == "BLACK":
                         self.state = InitialTouchState.ERROR
                     else:
                         self.state = InitialTouchState.CORRECT
@@ -230,7 +230,7 @@ class InitialTouch(Trainer):
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
 
-                    if self.right_image == "BLACK":
+                    if str(self.right_image).strip().upper() == "BLACK":
                         self.state = InitialTouchState.ERROR
                     else:
                         self.state = InitialTouchState.CORRECT

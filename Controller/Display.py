@@ -819,6 +819,7 @@ class DisplayZoneDevice:
             return
 
         if cmd in {"BLACK", "OFF", "CLEAR"}:
+            self._loaded_image = None
             self.display.clear(self.zone)
             return
 

@@ -1,7 +1,4 @@
-try:
-    import pigpio
-except ImportError:
-    pigpio = None
+from pigpio_compat import pigpio
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
