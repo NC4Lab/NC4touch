@@ -62,6 +62,14 @@ class PunishIncorrect(Trainer):
         # Initialize trainer state
         self.state = PunishIncorrectState.IDLE
 
+    def _normalize_image_id(self, image_id):
+        """Normalize image IDs from CSV/config for reliable comparisons."""
+        return str(image_id).strip().upper()
+
+    def _is_correct_image(self, image_id):
+        """Return True if the touched image matches the configured correct image."""
+        return self._normalize_image_id(image_id) == self._normalize_image_id(self.config["correct_image"])
+
     def start_training(self):
         # Starting the training session
         logger.info("Starting Punish Incorrect training session...")
@@ -154,6 +162,12 @@ class PunishIncorrect(Trainer):
         self.chamber.get_left_m0().send_command("BLACK")
         self.chamber.get_right_m0().send_command("BLACK")
 
+    def _prepare_touch_window(self):
+        """Clear any stale touches before starting a new touch response window."""
+        # Ensure queued display operations/events are processed first where supported.
+        self.chamber.display_flush()
+        self.chamber.display_clear_touches(drain_events=True)
+
     def run_training(self):
         """Main loop controlling the training state machine."""
         current_time = time.time()
@@ -186,6 +200,7 @@ class PunishIncorrect(Trainer):
                 self.write_event("StartTrial", trial_number)
                 self.load_images(self.current_trial - 1)
                 self.show_images()
+                self._prepare_touch_window()
                 self.trial_start_time = current_time
                 self.state = PunishIncorrectState.WAIT_FOR_TOUCH
             else:
