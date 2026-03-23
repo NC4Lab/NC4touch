@@ -208,6 +208,25 @@ class Trainer(ABC):
             return "RIGHT"
         return None
 
+    def prepare_touch_window(self, drain_events=True):
+        """Clear stale touch events before a new touch-response window starts."""
+        flush_fn = getattr(self.chamber, "display_flush", None)
+        if callable(flush_fn):
+            flush_fn()
+
+        clear_fn = getattr(self.chamber, "display_clear_touches", None)
+        if callable(clear_fn):
+            clear_fn(drain_events=drain_events)
+            return
+
+        # Fallback for older chamber APIs that only expose edge-latched touches.
+        left = getattr(self.chamber, "get_left_m0", lambda: None)()
+        right = getattr(self.chamber, "get_right_m0", lambda: None)()
+        if left is not None and hasattr(left, "was_touched"):
+            left.was_touched()
+        if right is not None and hasattr(right, "was_touched"):
+            right.was_touched()
+
     def write_trial_data(self, data):
         """Wrapper around write_event for trial data."""
         self.write_event("TrialData", data)

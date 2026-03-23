@@ -109,6 +109,7 @@ class ComplexDiscrimination(Trainer):
 
         elif self.state == SDState.SHOW_STIMULI:
             self.show_images()
+            self.prepare_touch_window()
             self.trial_start_time = now
             self.state = SDState.WAIT_FOR_TOUCH
 

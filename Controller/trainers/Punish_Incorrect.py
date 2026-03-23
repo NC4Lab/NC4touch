@@ -164,9 +164,7 @@ class PunishIncorrect(Trainer):
 
     def _prepare_touch_window(self):
         """Clear any stale touches before starting a new touch response window."""
-        # Ensure queued display operations/events are processed first where supported.
-        self.chamber.display_flush()
-        self.chamber.display_clear_touches(drain_events=True)
+        self.prepare_touch_window(drain_events=True)
 
     def run_training(self):
         """Main loop controlling the training state machine."""

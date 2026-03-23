@@ -180,6 +180,7 @@ class MustInitiate(Trainer):
             self.write_event("StartTrial", trial_number)
             self.load_images(self.current_trial)
             self.show_images()
+            self.prepare_touch_window()
             self.trial_start_time = current_time
             self.state = MustInitiateState.WAIT_FOR_TOUCH
 

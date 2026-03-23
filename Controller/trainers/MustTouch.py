@@ -147,6 +147,7 @@ class MustTouch(Trainer):
             self.default_start_trial()
             self.load_images(self.current_trial)
             self.show_images()
+            self.prepare_touch_window()
             self.trial_start_time = current_time
             self.state = MustTouchState.WAIT_FOR_TOUCH
 

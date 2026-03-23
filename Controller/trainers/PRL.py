@@ -214,6 +214,7 @@ class PRL(Trainer):
                 self.write_event("ImagesLoaded", self.current_trial)
                 self.write_event("RewardProbabilitiesSet", self.current_trial)
                 self.show_images()
+                self.prepare_touch_window()
                 self.state = PRLState.WAIT_FOR_TOUCH
             else:
                 # All trials completed, move to end training state
