@@ -1,5 +1,5 @@
+import os
 from enum import Enum, auto
-from random import random
 import time
 import logging
 from trainers.Trainer import Trainer
@@ -15,6 +15,8 @@ class SDState(Enum):
     WAIT_FOR_TOUCH = auto()
     CORRECT = auto()
     ERROR = auto()
+    DELIVERING_REWARD = auto()
+    DELIVERING_PUNISH = auto()
     ITI_START = auto()
     ITI = auto()
     END_TRIAL = auto()
@@ -22,45 +24,65 @@ class SDState(Enum):
 
 class SimpleDiscrimination(Trainer):
 
-    CORRECT_IMAGE = "A01"
-    INCORRECT_IMAGE = "C01"
-
     def __init__(self, chamber, trainer_config={}, trainer_config_file="~/trainer_SD_config.yaml"):
         super().__init__(chamber, trainer_config, trainer_config_file)
 
         self.config.ensure_param("trainer_name", "Simple Discrimination")
-        self.config.ensure_param("num_trials", 60)
-        self.config.ensure_param("reward_pump_secs", 3.5)
-        self.config.ensure_param("beam_break_wait_time", 10)
+        self.config.ensure_param("num_trials", 30)
+        self.config.ensure_param("reward_pump_secs", 0.5)
+        self.config.ensure_param("punish_duration", 5.0)
+        self.config.ensure_param("buzzer_duration", 0.5)
         self.config.ensure_param("iti_duration", 10)
-        self.config.ensure_param("max_corrections", 3)
         self.config.ensure_param("touch_timeout", 300)
+        self.config.ensure_param("session_timeout_minutes", 60)
+        self.config.ensure_param("trainer_seq_dir", "")
+        self.config.ensure_param("trainer_seq_file", "")
+        self.config.ensure_param("correct_image", "A01")
 
         self.state = SDState.IDLE
-        self.current_trial = 0
+        self.current_trial = 0  # successful trials completed
         self.correction_count = 0
 
-        self.left_image = None
-        self.right_image = None
+        self.left_image = ""
+        self.right_image = ""
+
+        self.trials = []
+        self.session_start_time = 0.0
+        self.trial_start_time = 0.0
+        self.reward_start_time = 0.0
+        self.punish_start_time = 0.0
+        self.iti_start_time = 0.0
+
+        self.trial_success = False
+        self.repeat_trial = False
 
     # ---------- helper methods ----------
 
-    def randomize_images(self):
-        """Randomly assign correct/incorrect images to left/right."""
-        if random() < 0.5:
-            self.left_image = self.CORRECT_IMAGE
-            self.right_image = self.INCORRECT_IMAGE
-        else:
-            self.left_image = self.INCORRECT_IMAGE
-            self.right_image = self.CORRECT_IMAGE
+    def _normalize_image_id(self, image_id):
+        return str(image_id).strip().upper()
 
-    def load_images(self):
-        self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
-        self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
+    def _is_correct_image(self, image_id):
+        return self._normalize_image_id(image_id) == self._normalize_image_id(self.config["correct_image"])
+
+    def load_images(self, trial_index):
+        self.left_image = str(self.trials[trial_index][0]).strip()
+        self.right_image = str(self.trials[trial_index][1]).strip()
+
+        if self._normalize_image_id(self.left_image) == "BLACK":
+            self.chamber.get_left_m0().send_command("BLACK")
+        else:
+            self.chamber.get_left_m0().send_command(f"IMG:{self.left_image}")
+
+        if self._normalize_image_id(self.right_image) == "BLACK":
+            self.chamber.get_right_m0().send_command("BLACK")
+        else:
+            self.chamber.get_right_m0().send_command(f"IMG:{self.right_image}")
 
     def show_images(self):
-        self.chamber.get_left_m0().send_command("SHOW")
-        self.chamber.get_right_m0().send_command("SHOW")
+        if self._normalize_image_id(self.left_image) != "BLACK":
+            self.chamber.get_left_m0().send_command("SHOW")
+        if self._normalize_image_id(self.right_image) != "BLACK":
+            self.chamber.get_right_m0().send_command("SHOW")
 
     def clear_images(self):
         self.chamber.get_left_m0().send_command("BLACK")
@@ -69,39 +91,77 @@ class SimpleDiscrimination(Trainer):
     # ---------- session control ----------
 
     def start_training(self):
-        logger.info("Starting Simple Discrimination (no punishment)")
+        logger.info("Starting Simple Discrimination training")
+        trainer_seq_dir = str(self.config["trainer_seq_dir"] or "")
+        trainer_seq_file_name = str(self.config["trainer_seq_file"] or "")
+        num_trials = int(self.config["num_trials"] or 0)
+
+        trainer_seq_file = os.path.join(trainer_seq_dir, trainer_seq_file_name)
+        self.trials = self.read_trainer_seq_file(trainer_seq_file, 2)
+        if not self.trials:
+            logger.error("Failed to read trainer sequence file: %s", trainer_seq_file)
+            return
+        if len(self.trials) < num_trials:
+            logger.error(
+                "Sequence file has fewer rows (%s) than num_trials (%s).",
+                len(self.trials),
+                num_trials,
+            )
+            return
+        if len(self.trials) > num_trials:
+            logger.warning(
+                "Sequence file has more rows (%s) than num_trials (%s); truncating.",
+                len(self.trials),
+                num_trials,
+            )
+            self.trials = self.trials[:num_trials]
+
         self.chamber.default_state()
         self.open_data_file()
+        self.session_start_time = time.time()
         self.state = SDState.START_TRAINING
 
     def run_training(self):
         now = time.time()
+        num_trials = int(self.config["num_trials"] or 0)
+        touch_timeout = float(self.config["touch_timeout"] or 0.0)
+        reward_pump_secs = float(self.config["reward_pump_secs"] or 0.0)
+        punish_duration = float(self.config["punish_duration"] or 0.0)
+        buzzer_duration = float(self.config["buzzer_duration"] or 0.0)
+        iti_duration = float(self.config["iti_duration"] or 0.0)
+        session_timeout_secs = float(self.config["session_timeout_minutes"] or 0.0) * 60.0
+
+        if (
+            self.state not in (SDState.IDLE, SDState.END_TRAINING)
+            and session_timeout_secs > 0
+            and (now - self.session_start_time) >= session_timeout_secs
+        ):
+            logger.info("Session timeout reached at %.1f minutes.", session_timeout_secs / 60.0)
+            self.write_event("SessionTimeout", self.current_trial)
+            self.state = SDState.END_TRAINING
 
         if self.state == SDState.START_TRAINING:
+            self.write_event("StartTraining", 1)
             self.current_trial = 0
+            self.correction_count = 0
+            self.repeat_trial = False
             self.state = SDState.START_TRIAL
 
         elif self.state == SDState.START_TRIAL:
-            self.current_trial += 1
-            self.correction_count = 0
-
-            if self.current_trial > self.config["num_trials"]:
+            if self.current_trial >= num_trials:
                 self.state = SDState.END_TRAINING
                 return
 
-            trial_number = self.current_trial
-            logger.info("Starting trial %s", trial_number)
+            trial_number = self.current_trial + 1
+            if not self.repeat_trial:
+                self.correction_count = 0
+                logger.info("Starting trial %s", trial_number)
+            else:
+                logger.info("Repeating trial %s (correction #%s)", trial_number, self.correction_count)
             self.write_event("StartTrial", trial_number)
 
-            # randomize ONLY on first attempt
-            self.randomize_images()
-            self.load_images()
-
-            if self.current_trial == 1:
-                self.free_reward()
-                self.state = SDState.SHOW_STIMULI
-            else:
-                self.state = SDState.INITIATION
+            self.load_images(self.current_trial)
+            self.state = SDState.INITIATION
 
         elif self.state == SDState.INITIATION:
             if self.wait_for_trial_initiation():
@@ -109,12 +169,15 @@ class SimpleDiscrimination(Trainer):
 
         elif self.state == SDState.SHOW_STIMULI:
             self.show_images()
-            self.prepare_touch_window()
+            self.prepare_touch_window(drain_events=True)
             self.trial_start_time = now
             self.state = SDState.WAIT_FOR_TOUCH
 
         elif self.state == SDState.WAIT_FOR_TOUCH:
-            if now - self.trial_start_time > self.config["touch_timeout"]:
+            if now - self.trial_start_time > touch_timeout:
+                self.write_event("TouchTimeout", self.current_trial + 1)
+                self.trial_success = False
+                self.clear_images()
                 self.state = SDState.ITI_START
                 return
 
@@ -123,65 +186,84 @@ class SimpleDiscrimination(Trainer):
                 return
 
             if side == "LEFT":
+                self.write_event("LeftScreenTouched", self.current_trial + 1)
                 touched_image = self.left_image
             elif side == "RIGHT":
+                self.write_event("RightScreenTouched", self.current_trial + 1)
                 touched_image = self.right_image
             else:
                 return
 
-            if touched_image == self.CORRECT_IMAGE:
+            if self._is_correct_image(touched_image):
                 self.state = SDState.CORRECT
             else:
                 self.state = SDState.ERROR
 
         elif self.state == SDState.CORRECT:
+            trial_number = self.current_trial + 1
+            self.write_event("CorrectTouch", trial_number)
             self.clear_images()
-            self.deliver_reward()
-
-            self.write_trial_data({
-                "trial": self.current_trial,
-                "outcome": "correct",
-                "corrections": self.correction_count,
-                "rt": now - self.trial_start_time
-            })
-
-            self.state = SDState.ITI_START
+            self.reward_start_time = now
+            self.write_event("RewardStart", trial_number)
+            self.chamber.reward.dispense()
+            self.chamber.reward_led.activate()
+            self.state = SDState.DELIVERING_REWARD
 
         elif self.state == SDState.ERROR:
+            trial_number = self.current_trial + 1
+            self.write_event("IncorrectTouch", trial_number)
             self.clear_images()
             self.correction_count += 1
+            self.punish_start_time = now
+            self.write_event("PunishStart", trial_number)
+            self.chamber.punishment_led.activate()
+            self.chamber.buzzer.activate()
+            self.state = SDState.DELIVERING_PUNISH
 
-            if self.correction_count < self.config["max_corrections"]:
-                # correction trial: DO NOT randomize again
-                self.load_images()
-                self.state = SDState.SHOW_STIMULI
-            else:
-                self.write_trial_data({
-                    "trial": self.current_trial,
-                    "outcome": "incorrect",
-                    "corrections": self.correction_count,
-                    "rt": None
-                })
+        elif self.state == SDState.DELIVERING_REWARD:
+            if now - self.reward_start_time >= reward_pump_secs:
+                self.chamber.reward.stop()
+                self.chamber.reward_led.deactivate()
+                self.trial_success = True
+                self.state = SDState.ITI_START
+
+        elif self.state == SDState.DELIVERING_PUNISH:
+            elapsed = now - self.punish_start_time
+            if elapsed >= buzzer_duration:
+                self.chamber.buzzer.deactivate()
+            if elapsed >= punish_duration:
+                self.chamber.punishment_led.deactivate()
+                self.trial_success = False
                 self.state = SDState.ITI_START
 
         elif self.state == SDState.ITI_START:
+            self.write_event("ITIStart", self.current_trial + 1)
             self.iti_start_time = now
             self.state = SDState.ITI
 
         elif self.state == SDState.ITI:
-            if now - self.iti_start_time >= self.config["iti_duration"]:
+            if now - self.iti_start_time >= iti_duration:
                 self.state = SDState.END_TRIAL
 
         elif self.state == SDState.END_TRIAL:
+            self.write_event("EndTrial", self.current_trial + 1)
+            if self.trial_success:
+                self.current_trial += 1
+                self.repeat_trial = False
+            else:
+                self.repeat_trial = True
             self.state = SDState.START_TRIAL
 
         elif self.state == SDState.END_TRAINING:
+            self.write_event("EndTraining", 1)
             self.stop_training()
 
     def stop_training(self):
         logger.info("Stopping Simple Discrimination...")
         self.chamber.reward.stop()
         self.chamber.reward_led.deactivate()
+        self.chamber.punishment_led.deactivate()
+        self.chamber.buzzer.deactivate()
         self.chamber.beambreak.deactivate()
         self.clear_images()
         self.close_data_file()
