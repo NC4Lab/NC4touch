@@ -25,8 +25,8 @@ class ComplexDiscrimination(Trainer):
     CORRECT_IMAGE = "E01"
     INCORRECT_IMAGE = "D01"
 
-    def __init__(self, chamber, trainer_config={}, trainer_config_file="~/trainer_CD_config.yaml"):
-        super().__init__(chamber, trainer_config, trainer_config_file)
+    def __init__(self, chamber, trainer_config={}):
+        super().__init__(chamber, trainer_config)
 
         self.config.ensure_param("trainer_name", "Complex Discrimination")
         self.config.ensure_param("num_trials", 60)

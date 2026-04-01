@@ -13,7 +13,7 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 class Trainer(ABC):
     # Base trainer class for running training sessions
 
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_config.yaml'):
+    def __init__(self, chamber, trainer_config = {}):
         # Accept both Chamber and VirtualChamber
         try:
             from Virtual.VirtualChamber import VirtualChamber
@@ -26,7 +26,7 @@ class Trainer(ABC):
             raise ValueError("chamber must be an instance of Chamber or VirtualChamber")
 
         self.chamber = chamber
-        self.config = Config(config = trainer_config, config_file = trainer_config_file)
+        self.config = Config(config = trainer_config)
 
         self.data_file = None
 

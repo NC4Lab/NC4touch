@@ -27,14 +27,10 @@ class InitialTouchState(Enum):
     END_TRAINING = auto()
 
 class InitialTouch(Trainer):
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_InitialTouch_config.yaml'):
-        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+    def __init__(self, chamber, trainer_config = {}):
+        super().__init__(chamber=chamber, trainer_config=trainer_config)
 
-        # Initialize the trainer configuration.
-        # All variables used by the trainer are recommended to be set in the config file.
-        # This allows for easy modification of the trainer parameters without changing the code.
-        # The trainer will also reinitialize with these parameters.
-        # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
+        # Initialize the trainer configuration in code.
         self.config.ensure_param("trainer_name", "InitialTouch")
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("large_reward_duration", 3.0)  # Duration of the large reward
@@ -43,7 +39,7 @@ class InitialTouch(Trainer):
         self.config.ensure_param("trainer_seq_file", "")  # Sequence file for the trainer
         self.config.ensure_param("touch_timeout", 120)  # Directory for saving data files
 
-        # Local variables used by the trainer during the training session and not set in the config file.
+        # Local variables used by the trainer during the training session and not set as trainer defaults.
         self.current_trial = 0
         self.reward_start_time = 0.0
         self.reward_collected = False

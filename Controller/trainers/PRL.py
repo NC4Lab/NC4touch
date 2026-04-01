@@ -48,35 +48,29 @@ class PRL(Trainer):
     State machine:
     IDLE -> START_TRAINING -> START_TRIAL -> WAIT_FOR_TOUCH -> CORRECT/ERROR -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
     """
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_PRL_config.yaml'):
-        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+    def __init__(self, chamber, trainer_config = {}):
+        super().__init__(chamber=chamber, trainer_config=trainer_config)
         explicit_runtime_keys = set(trainer_config.keys()) if isinstance(trainer_config, dict) else set()
 
-        # Initialize the trainer configuration.
-        # All variables used by the trainer are recommended to be set in the config file.
-        # This allows for easy modification of the trainer parameters without changing the code.
-        # The trainer will also reinitialize with these parameters.
-        # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
+        # Initialize the trainer configuration in code.
         self.ensure_trainer_params({
             "trainer_name": "ProbabilisticReversalLearning",
             "num_trials": 60,
             "high_reward_probability": 1,
             "low_reward_probability": 0,
-            "reward_pump_secs": 0.5,
+            "reward_pump_secs": 1,
             "beam_break_wait_time": 10,
             "iti_duration": 10,
         })
 
 
-        # Local variables used by the trainer during the training session and not set in the config file.
+        # Local variables used by the trainer during the training session.
         self.ensure_trainer_params({
             "touch_timeout": 30,
             "trial_to_reverse": 99,
         })
 
-        # Migrate legacy generic trainer defaults that may have been persisted in
-        # old PRL config files (from when Trainer seeded shared defaults).
-        # Runtime-provided trainer_config values always win.
+        # Preserve values explicitly provided at runtime while keeping local defaults.
         legacy_to_prl_defaults = {
             "num_trials": (30, 60),
             "touch_timeout": (120, 30),

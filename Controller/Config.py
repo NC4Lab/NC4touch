@@ -10,18 +10,19 @@ class Config:
     """
     This class manages the configuration of the session, chamber and trainer
     """
-    def __init__(self, config: dict = {}, config_file: str = '~/config.yaml'):
-        config_file = expanduser(config_file)
+    def __init__(self, config: dict = {}, config_file: str | None = None):
         self.explicit_keys = set()
         
         if not isinstance(config, dict):
             logger.error("config must be a dictionary")
             config = {}
         
-        # Construct config by loading parameters from config argument > config_file
+        # Construct config from the provided dictionary.
         self.config: dict[str, Any] = {}
         self.config_file = config_file
-        self.update_with_file(config_file)
+        if self.config_file:
+            self.config_file = expanduser(self.config_file)
+            self.update_with_file(self.config_file)
         self.config.update(config)
         self.explicit_keys.update(config.keys())
     
