@@ -205,8 +205,6 @@ class M0Device:
                         if line.startswith("TOUCH"):
                             self.is_touched = True
                             logger.debug(f"[{self.id}] Touch detected.")
-                        else:
-                            self.is_touched = False
 
                         if line.startswith("ID:"):
                             self.id = line.split("ID:")[1]

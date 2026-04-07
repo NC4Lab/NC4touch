@@ -70,28 +70,6 @@ class PRL(Trainer):
             "trial_to_reverse": 99,
         })
 
-        # Preserve values explicitly provided at runtime while keeping local defaults.
-        legacy_to_prl_defaults = {
-            "num_trials": (30, 60),
-            "touch_timeout": (120, 30),
-            "reward_pump_secs": (1.0, 0.5),
-        }
-        migrated_any = False
-        for param, (legacy_value, prl_default_value) in legacy_to_prl_defaults.items():
-            if param in explicit_runtime_keys:
-                continue
-            if self.config[param] == legacy_value:
-                self.config[param] = prl_default_value
-                migrated_any = True
-                logger.info(
-                    "Migrated legacy PRL config value for %s: %s -> %s",
-                    param,
-                    legacy_value,
-                    prl_default_value,
-                )
-        if migrated_any:
-            logger.info("PRL legacy config migration complete.")
-
         self.reward_start_time = time.time()
         self.reward_collected = False
         self.last_beam_break_time = time.time()
@@ -254,7 +232,6 @@ class PRL(Trainer):
             logger.debug("Current state: ERROR")
             logger.info("Incorrect touch detected.")
             self.write_event("IncorrectTouch", self.current_trial)
-
             self.clear_images()
             reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
             if random.random() <= reward_prob:
