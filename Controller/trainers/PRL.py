@@ -58,7 +58,7 @@ class PRL(Trainer):
             "num_trials": 60,
             "high_reward_probability": 1,
             "low_reward_probability": 0,
-            "reward_pump_secs": 1,
+            "reward_pump_secs": 1.5,
             "beam_break_wait_time": 10,
             "iti_duration": 10,
         })
