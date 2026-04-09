@@ -24,11 +24,11 @@ class SoundTest(Trainer):
     SoundTest trainer for hardware verification.
     Cycles through hardware activations for 10s each.
     """
-    def __init__(self, chamber, trainer_config={}):
-        super().__init__(chamber=chamber, trainer_config=trainer_config)
+    def __init__(self, chamber, trainer_config={}, trainer_config_file='~/trainer_SoundTest_config.yaml'):
+        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
 
         self.config.ensure_param("trainer_name", "SoundTest")
-        self.config.ensure_param("num_loops", 1)
+        self.config.ensure_param("num_loops", 5)
         self.config.ensure_param("step_duration", 10.0)
 
         self.state_start_time = time.time()
@@ -59,6 +59,13 @@ class SoundTest(Trainer):
             if self.current_loop <= self.config["num_loops"]:
                 logger.info(f"Starting loop {self.current_loop}")
                 self.write_event("StartLoop", self.current_loop)
+                self.baseline_active = False
+                self.house_light_active = False
+                self.reward_led_active = False
+                self.punishment_led_active = False
+                self.buzzer_60_active = False
+                self.images_active = False
+                self.reward_active = False
                 self.state = SoundTestState.BASELINE
             else:
                 self.state = SoundTestState.END_TRAINING
