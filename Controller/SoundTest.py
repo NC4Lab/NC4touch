@@ -68,8 +68,8 @@ class SoundTest(Trainer):
                 self.images_active = False
                 self.reward_active = False
                 self.state = SoundTestState.BASELINE
-        else:
-            self.state = SoundTestState.END_TRAINING
+            else:
+                self.state = SoundTestState.END_TRAINING
 
         elif self.state == SoundTestState.BASELINE:
             if not getattr(self, 'baseline_active', False):
