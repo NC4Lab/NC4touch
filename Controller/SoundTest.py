@@ -59,9 +59,17 @@ class SoundTest(Trainer):
             if self.current_loop <= self.config["num_loops"]:
                 logger.info(f"Starting loop {self.current_loop}")
                 self.write_event("StartLoop", self.current_loop)
+                # Reset all state flags for the new loop
+                self.baseline_active = False
+                self.house_light_active = False
+                self.reward_led_active = False
+                self.punishment_led_active = False
+                self.buzzer_60_active = False
+                self.images_active = False
+                self.reward_active = False
                 self.state = SoundTestState.BASELINE
-            else:
-                self.state = SoundTestState.END_TRAINING
+        else:
+            self.state = SoundTestState.END_TRAINING
 
         elif self.state == SoundTestState.BASELINE:
             if not getattr(self, 'baseline_active', False):
