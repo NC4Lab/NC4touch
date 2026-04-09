@@ -9,6 +9,7 @@ class SoundTestState(Enum):
     """Enum for different states in the sound test."""
     IDLE = auto()
     START_LOOP = auto()
+    BASELINE = auto()
     HOUSE_LIGHT = auto()
     REWARD_LED = auto()
     PUNISHMENT_LED = auto()
@@ -58,9 +59,22 @@ class SoundTest(Trainer):
             if self.current_loop <= self.config["num_loops"]:
                 logger.info(f"Starting loop {self.current_loop}")
                 self.write_event("StartLoop", self.current_loop)
-                self.state = SoundTestState.HOUSE_LIGHT
+                self.state = SoundTestState.BASELINE
             else:
                 self.state = SoundTestState.END_TRAINING
+
+        elif self.state == SoundTestState.BASELINE:
+            if not getattr(self, 'baseline_active', False):
+                logger.info("Baseline")
+                self.write_event("Baseline", "ON")
+                self.baseline_active = True
+                self.state_start_time = current_time
+            
+            if self.check_duration(self.config["step_duration"]):
+                logger.info("Baseline over")
+                self.write_event("Baseline", "OFF")
+                self.baseline_active = False
+                self.state = SoundTestState.HOUSE_LIGHT
 
         elif self.state == SoundTestState.HOUSE_LIGHT:
             if not getattr(self, 'house_light_active', False):
