@@ -4,10 +4,13 @@
 #include "DFRobot_Touch.h"
 #include "drawBMP.h"
 
+
 #define TFT_DC   7
 #define TFT_CS   5
 #define TFT_RST  6
 #define TFT_BLK  9  
+
+const char* VERSION = "0.2.2_20260305";
 
 
 const int pin0 = 10;
@@ -46,7 +49,7 @@ void setupDisplayAndSD();
 void processSerialCommand();
 void pickPicture(const char* imageID);
 void showPreloadedImage();
-void setBlackScreen(bool backlightOn = true);
+void setBlackScreen();
 void scanTouch();
 uint16_t numberTillComma(String &s);
 
@@ -60,10 +63,11 @@ void setup() {
 
   setupDisplayAndSD();
 
-  analogWrite(TFT_BLK, 0);
   screen.fillScreen(0x0000); 
+  setBlackScreen();
+  showActive = false;
 
-  Serial.print("M0 board #");
+  Serial.print("ID:M0_");
   Serial.print(boardID);
   Serial.println(" is ready.");
 }
@@ -76,15 +80,30 @@ void loop() {
 
 
 void setupPinsAndID() {
-  pinMode(pin0, INPUT_PULLUP);
-  pinMode(pin1, INPUT_PULLUP);
-  pinMode(pin2, INPUT_PULLUP);
+  pinMode(pin0, INPUT);
+  pinMode(pin1, INPUT);
+  pinMode(pin2, INPUT);
 
-  if (digitalRead(pin0) == LOW) boardID |= (1 << 0);
-  if (digitalRead(pin1) == LOW) boardID |= (1 << 1);
-  if (digitalRead(pin2) == LOW) boardID |= (1 << 2);
+  // Address is Pin0*4 + Pin1*2 + Pin2*1
+  // e.g. 0 0 0 => ID 0; 0 0 1 => ID 1; 0 1 0 => ID 2; ... 1 1 1 => ID 7
+  if (digitalRead(pin0) == HIGH) boardID |= (1 << 2);
+  if (digitalRead(pin1) == HIGH) boardID |= (1 << 1);
+  if (digitalRead(pin2) == HIGH) boardID |= (1 << 0);
 }
 
+void printSDFileList(File dir) {
+  while (true) {
+    File entry = dir.openNextFile();
+    if (!entry) {
+      // no more files
+      break;
+    }
+    Serial.print(entry.isDirectory() ? "DIR : " : "FILE: ");
+    Serial.println(entry.name());
+
+    entry.close();
+  }
+}
 
 void setupDisplayAndSD() {
   // Init GT911
@@ -94,12 +113,28 @@ void setupDisplayAndSD() {
   screen.begin();
   screen.setColorMode(COLOR_MODE_RGB565);
 
-  while (!SD.begin()) {
-    Serial.println("SD init failed, retrying...");
+  bool sdOk = false;
+  for (int attempt = 1; attempt <= 25; attempt++) {
+    Serial.print("Attempting SD init...");
+    if (SD.begin()) {
+      sdOk = true;
+      break;
+    }
+    Serial.println(" failed, retrying...");
     delay(1000);
   }
-  Serial.println("SD init success!");
 
+  if (sdOk) {
+    Serial.println("SD init success!");
+    // List SD contents for debugging
+    Serial.println("SD contents:");
+    File root = SD.open("/");
+    printSDFileList(root);
+    root.close();
+  } else {
+    Serial.println("SD init failed - continuing without SD card");
+    Serial.println("Image loading will not be available");
+  }
 }
 
 void processSerialCommand() {
@@ -110,24 +145,35 @@ void processSerialCommand() {
   if (cmd.length() == 0) return;
 
 
-  if (cmd.equalsIgnoreCase("WHOAREYOU?")) {
+  if (cmd.equalsIgnoreCase("WHOAREYOU?")) { // identify myself using the 3 pins
     Serial.print("ID:M0_");
     Serial.println(boardID);
     return;
-  }// BLACK => screen black, backlight off, no touch
-  else if (cmd.equalsIgnoreCase("BLACK")) {
-    setBlackScreen(false);
-    showActive = false;   // ignore touches
+  }
+  else if (cmd.equalsIgnoreCase("VERSION?")) { // report version
+    Serial.print("VERSION:");
+    Serial.println(VERSION);
+    return;
+  }
+  else if (cmd.equalsIgnoreCase("BLACK")) { // backlight off, show black screen, detect 1 touch
+    setBlackScreen();
+    showActive = true;   // detect 1 touch
+    Serial.println("ACK:BLACK");
     return;
   } // SHOW => backlight on, allow 1 touch
-  else if (cmd.equalsIgnoreCase("SHOW")) {
+  else if (cmd.equalsIgnoreCase("OFF")) { // backlight off, show black screen, ignore touches
+    setBlackScreen();
+    showActive = false;   // ignore touches
+    Serial.println("ACK:OFF");
+    return;
+  }
+  else if (cmd.equalsIgnoreCase("SHOW")) { // backlight on, detect 1 touch
     showPreloadedImage();
-    showActive = true;
+    showActive = true;  // detect 1 touch
     Serial.println("ACK:SHOW");
     return;
   }
-  // 4) IMG:/// => preload BMP while backlight is off
-  else if (cmd.startsWith("IMG:")) {
+  else if (cmd.startsWith("IMG:")) { // preload image with backlight off, wait for SHOW command to show it
     String imageID = cmd.substring(4);
     pickPicture(imageID.c_str());
     Serial.print("ACK:IMG ");
@@ -139,7 +185,6 @@ void processSerialCommand() {
     Serial.println(cmd);
     return;
   }
-
 }
 
 
@@ -147,33 +192,31 @@ void pickPicture(const char* imageID) {
   // Turn backlight off
   analogWrite(TFT_BLK, 0);
 
-  char filePath[16];
-  snprintf(filePath, sizeof(filePath), "/%s.BMP", imageID);
-  if (SD.exists(filePath)) {
-    drawBMP(&screen, filePath, 0, 0, 1);
+  char fileName[32];
+  snprintf(fileName, sizeof(fileName), "%s.BMP", imageID);
+  if (SD.exists(fileName)) {
+    drawBMP(&screen, fileName, 0, 0, 1);
     Serial.print("Preloaded image: ");
-    Serial.println(filePath);
+    Serial.println(fileName);
   } else {
     Serial.print("Failed to open: ");
-    Serial.println(filePath);
+    Serial.println(fileName);
   }
 }
 
 
 void showPreloadedImage() {
   analogWrite(TFT_BLK, 255);
-  Serial.println("Backlight on; image visible now.");
-  
-  Serial.print("Free RAM (after showing image): ");
-  Serial.println(freeRam());
+  // Serial.println("Backlight on; image visible now.");
+  // Serial.print("Free RAM (after showing image): ");
+  // Serial.println(freeRam());
 }
 
 
-void setBlackScreen(bool backlightOn) {
+void setBlackScreen() {
   analogWrite(TFT_BLK, 0);
-
-  Serial.print("Free RAM (after backlight off): ");
-  Serial.println(freeRam());
+  // Serial.print("Free RAM (after backlight off): ");
+  // Serial.println(freeRam());
 }
 
 

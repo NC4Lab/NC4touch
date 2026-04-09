@@ -15,3 +15,5 @@
 *.mp4
 *.log
 log/
+.claude
+data/.DS_Store

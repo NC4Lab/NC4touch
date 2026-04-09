@@ -2,16 +2,16 @@ import os
 import sys
 import time
 import yaml
-import importlib
 import threading
 
 # Local modules
 from Chamber import Chamber
-from Trainer import Trainer
+from trainers import Trainer, get_trainer_class
 from Config import Config
 from Virtual.VirtualChamber import VirtualChamber
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
 session_logger = logging.getLogger('session_logger')
 session_logger.setLevel(logging.DEBUG)
 
@@ -71,10 +71,12 @@ class Session:
         )
 
         for handler in list(session_logger.handlers):
-            if isinstance(handler, logging.FileHandler):
+            if isinstance(handler, (logging.FileHandler, TimedRotatingFileHandler)):
                 session_logger.removeHandler(handler)
 
-        file_handler = logging.FileHandler(self.session_log_file)
+        file_handler = TimedRotatingFileHandler(
+            self.session_log_file, when="midnight", interval=1, backupCount=30
+        )
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         session_logger.addHandler(file_handler)
@@ -95,7 +97,6 @@ class Session:
         
         self.set_trainer_name(self.config["trainer_name"])
         self.session_timer = threading.Timer(0.1, self.trainer.run_training)
-
         self.priming_timer = threading.Timer(0.1, self.run_priming)
         self.priming_start_time = time.time()
 
@@ -178,7 +179,7 @@ class Session:
             rodent_name = self.config["rodent_name"]
             video_dir = self.config["video_dir"]
                         
-            video_file = os.path.join(video_dir, f"{datetime_str}_{chamber_name}_{rodent_name}.mp4")
+            video_file = os.path.join(video_dir, f"{datetime_str}_{chamber_name}_{rodent_name}.ts")
 
             self.chamber.camera.start_recording(video_file)
             self.is_video_recording = True
@@ -232,8 +233,7 @@ class Session:
     
     def set_trainer_name(self, trainer_name):
         try:
-            module = importlib.import_module(f"{trainer_name}")
-            trainer_class = getattr(module, trainer_name)
+            trainer_class = get_trainer_class(trainer_name)
             self.trainer = trainer_class(self.chamber, {})
             logger.debug(f"Trainer class loaded: {self.trainer}")
             self.config["trainer_name"] = trainer_name

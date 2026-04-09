@@ -24,8 +24,8 @@ Your trainer code will work automatically:
 
 ```python
 # This works exactly like physical chamber
-chamber.left_m0.send_command("IMG:A01")   # Loads A01.bmp
-chamber.left_m0.send_command("SHOW")       # Displays it
+chamber.get_left_m0().send_command("IMG:A01")   # Loads A01.bmp
+chamber.get_left_m0().send_command("SHOW")       # Displays it
 ```
 
 ## Custom Image Directory
@@ -85,10 +85,10 @@ Check:
 Example:
 ```python
 # ✓ Correct
-chamber.left_m0.send_command("IMG:A01")   # Looks for A01.bmp
+chamber.get_left_m0().send_command("IMG:A01")   # Looks for A01.bmp
 
 # ✗ Wrong
-chamber.left_m0.send_command("IMG:A01.bmp")  # Looks for A01.bmp.bmp
+chamber.get_left_m0().send_command("IMG:A01.bmp")  # Looks for A01.bmp.bmp
 ```
 
 **Can't find images in logs?**

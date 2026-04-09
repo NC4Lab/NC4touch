@@ -24,10 +24,10 @@ chamber.initialize_m0s()
 # Use exactly like physical chamber
 chamber.reward_led.on()
 chamber.reward.dispense()
-chamber.left_m0.send_command("DISPLAY:image.bmp")
+chamber.get_left_m0().send_command("DISPLAY:image.bmp")
 
 # Simulate user interactions
-chamber.left_m0.simulate_touch(160, 240)
+chamber.get_left_m0().simulate_touch(160, 240)
 chamber.beambreak.simulate_break()
 ```
 
@@ -167,7 +167,7 @@ def test_must_touch_logic():
     # ...
     
     # Simulate animal behavior
-    chamber.left_m0.simulate_touch(160, 240)
+    chamber.get_left_m0().simulate_touch(160, 240)
     time.sleep(0.1)
     
     # Verify expected outcome
@@ -209,9 +209,9 @@ The virtual M0 devices mimic how physical M0 controllers store BMP files in loca
 
 ```python
 # Trainer code (works for both physical and virtual)
-chamber.left_m0.send_command("IMG:A01")   # Load A01.bmp
-chamber.left_m0.send_command("SHOW")       # Display it
-chamber.left_m0.send_command("BLACK")      # Clear screen
+chamber.get_left_m0().send_command("IMG:A01")   # Load A01.bmp
+chamber.get_left_m0().send_command("SHOW")       # Display it
+chamber.get_left_m0().send_command("BLACK")      # Clear screen
 ```
 
 **Default Image Directory**: `<project_root>/data/images/`
@@ -277,12 +277,12 @@ import time
 def simulate_correct_trial(chamber):
     """Simulate an animal completing a correct trial."""
     # Stimuli presented
-    chamber.left_m0.send_command("DISPLAY:plus.bmp")
-    chamber.right_m0.send_command("DISPLAY:minus.bmp")
+    chamber.get_left_m0().send_command("DISPLAY:plus.bmp")
+    chamber.get_right_m0().send_command("DISPLAY:minus.bmp")
     
     # Animal chooses left (correct)
     time.sleep(1)
-    chamber.left_m0.simulate_touch(160, 240, duration=0.2)
+    chamber.get_left_m0().simulate_touch(160, 240, duration=0.2)
     
     # Reward delivered
     chamber.reward_led.on()
@@ -296,8 +296,8 @@ def simulate_correct_trial(chamber):
     
     # Cleanup
     chamber.reward_led.off()
-    chamber.left_m0.send_command("CLEAR")
-    chamber.right_m0.send_command("CLEAR")
+    chamber.get_left_m0().send_command("CLEAR")
+    chamber.get_right_m0().send_command("CLEAR")
 ```
 
 ### Integration with Existing Code
@@ -308,10 +308,10 @@ def simulate_correct_trial(chamber):
 # This code works with BOTH physical and virtual chambers:
 def run_trial(chamber):
     chamber.reward_led.on()
-    chamber.left_m0.send_command("DISPLAY:stim.bmp")
+    chamber.get_left_m0().send_command("DISPLAY:stim.bmp")
     
     # Wait for touch...
-    while not chamber.left_m0.is_touched:
+    while not chamber.get_left_m0().is_touched:
         time.sleep(0.1)
     
     chamber.reward.dispense()
@@ -346,7 +346,7 @@ You can test completely headless:
 ```python
 chamber = VirtualChamber()
 # No GUI needed - just simulate interactions programmatically
-chamber.left_m0.simulate_touch(160, 240)
+chamber.get_left_m0().simulate_touch(160, 240)
 ```
 
 ## Example Test Scripts

@@ -7,7 +7,8 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 
 class LED:
     """Class to control an LED using PWM on a Raspberry Pi."""
-    def __init__(self, pi=None, pin=21, rgb_pins = None, frequency=5000, range=255, brightness=140, color=(255, 255, 255)):
+    def __init__(self, pi: pigpio.pi = None, pin: int = 21, rgb_pins: list = None, 
+                 frequency: int = 5000, range: int = 255, brightness: int = 140, color: tuple = (255, 255, 255)):
         if pi is None and pigpio is not None:
             pi = pigpio.pi()
         if pigpio is not None and not isinstance(pi, pigpio.pi):
@@ -39,7 +40,7 @@ class LED:
         else:
             self.setup_pin(self.pin)
 
-    def setup_pin(self, pin):
+    def setup_pin(self, pin: int):
         """Set up the pin for PWM output."""
         # If pigpio isn't available or wasn't initialized, skip hardware calls
         if self.pi is None:
@@ -55,7 +56,7 @@ class LED:
         """Clean up the LED by stopping the PWM."""
         self.deactivate()
     
-    def set_color(self, color):
+    def set_color(self, color: tuple):
         """Set the color of the LED."""
         self.color = color
         logger.debug(f"LED color set to {self.color}")
@@ -63,7 +64,7 @@ class LED:
         if self.active:
             self.activate()
 
-    def set_brightness(self, brightness):
+    def set_brightness(self, brightness: int):
         """Set the brightness of the LED."""
         self.brightness = brightness
         logger.debug(f"LED brightness set to {self.brightness}")

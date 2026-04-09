@@ -1,6 +1,7 @@
 import os
 import yaml
 from os.path import expanduser
+from typing import Any
 
 import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
@@ -9,33 +10,38 @@ class Config:
     """
     This class manages the configuration of the session, chamber and trainer
     """
-    def __init__(self, config = {}, config_file = '~/config.yaml'):
-        config_file = expanduser(config_file)
+    def __init__(self, config: dict = {}, config_file: str | None = None):
+        self.explicit_keys = set()
         
         if not isinstance(config, dict):
             logger.error("config must be a dictionary")
             config = {}
         
-        # Construct config by loading parameters from config argument > config_file
-        self.config = {}
+        # Construct config from the provided dictionary.
+        self.config: dict[str, Any] = {}
         self.config_file = config_file
-        self.update_with_file(config_file)
+        if self.config_file:
+            self.config_file = expanduser(self.config_file)
+            self.update_with_file(self.config_file)
         self.config.update(config)
+        self.explicit_keys.update(config.keys())
     
-    def __getitem__(self, key):
-        return self.config.get(key, None)
+    def __getitem__(self, key: str) -> Any:
+        return self.config.get(key)
     
     def __setitem__(self, key, value):
         self.config[key] = value
+        self.explicit_keys.add(key)
         logger.debug(f"Config updated: {key} = {value}")
         self.save_config_file()
 
-    def update_with_dict(self, config):
+    def update_with_dict(self, config: dict):
         if not isinstance(config, dict):
             logger.error("config must be a dictionary")
             return
         
         self.config.update(config)
+        self.explicit_keys.update(config.keys())
         logger.debug(f"Config updated: {config}")
         self.save_config_file()
     
@@ -43,8 +49,12 @@ class Config:
         if os.path.isfile(config_file):
             try:
                 with open(config_file, "r") as f:
-                    loaded_config = yaml.safe_load(f)
+                    loaded_config = yaml.safe_load(f) or {}
+                    if not isinstance(loaded_config, dict):
+                        logger.error(f"Config file {config_file} must contain a dictionary at the top level.")
+                        loaded_config = {}
                     self.config.update(loaded_config)
+                    self.explicit_keys.update(loaded_config.keys())
                     self.config_file = config_file
                     self.save_config_file()
             except Exception as e:
@@ -53,13 +63,16 @@ class Config:
         else:
             logger.warning(f"Config file {config_file} does not exist.")
     
-    def ensure_param(self, param, default_value):
+    def ensure_param(self, param: str, default_value):
         if param not in self.config:
             self.config[param] = default_value
             logger.debug(f"Config parameter {param} not found. Setting to default value: {default_value}")
             self.save_config_file()
         # else:
             # logger.debug(f"Config parameter {param} already exists with value: {self.config[param]}")
+
+    def has_explicit_param(self, param: str):
+        return param in self.explicit_keys
         
     def save_config_file(self):
         if self.config_file:
