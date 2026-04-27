@@ -63,7 +63,7 @@ chamber.reward.dispense()
 ```python
 # Get complete chamber state at any time
 state = chamber.get_state()
-# Includes LEDs, beam break, buzzer, reward pump
+# Includes all M0s, LEDs, beam break, buzzer, reward pump
 ```
 
 ### 5. **Session Integration**
@@ -128,7 +128,7 @@ assert state['reward']['total_dispensed'] == 1
 ## 🎨 Virtual Hardware Components
 
 ### VirtualDisplayDevice
-- **Purpose**: Simulates single Raspberry Pi touchscreen display zone
+- **Purpose**: Simulates Arduino display-controller touchscreen controllers
 - **Methods**: `initialize()`, `send_command()`, `is_touched()`, `simulate_touch()`
 - **State**: Tracks current image, touch status, coordinates
 
@@ -154,7 +154,7 @@ assert state['reward']['total_dispensed'] == 1
 
 ### VirtualChamber
 - **Purpose**: Complete virtual chamber matching Chamber class
-- **Contains**: Single display, reward pump, beam break, 2x LEDs, buzzer
+- **Contains**: 3x M0s, reward pump, beam break, 2x LEDs, buzzer
 - **Methods**: Same as Chamber + `get_state()`, `log_state()`
 
 ## 💡 Use Cases

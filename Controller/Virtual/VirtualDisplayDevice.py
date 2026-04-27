@@ -6,7 +6,6 @@ Provides a legacy-compatible touchscreen interface without requiring physical ha
 
 import time
 import threading
-import queue
 from enum import Enum
 import os
 
@@ -31,142 +30,75 @@ class VirtualDisplayDevice:
     def __init__(self, pi=None, id=None, reset_pin=None,
                  port=None, baudrate=115200, location=None, image_dir=None):
         self.id = id
-        self.reset_pin = reset_pin
-        self.port = port or f"VIRTUAL_{id}"
-        self.baudrate = baudrate
         self.location = location
         self.image_dir = image_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'images')
 
-        self.ser = None
-        self.ud_mount_loc = None
-
-        self.stop_flag = threading.Event()
-        self.message_queue = queue.Queue()
-        self.write_lock = threading.Lock()
-        self.read_loop_interval = 0.1
-
         # Virtual touchscreen state
-        self._is_touched = False  # Internal attribute
+        self._is_touched = False
         self._touch_coordinates = (0, 0)
-        self._current_image = None  # Stores image name (e.g., "A01")
-        self._current_image_path = None  # Stores full path to BMP file
+        self._current_image = None
+        self._current_image_path = None
         self._display_enabled = True
-        self._loaded_image = None  # Image loaded but not yet shown
-
-        self.code_dir = os.path.dirname(os.path.abspath(__file__))
-        self.mode = DisplayDeviceMode.UNINITIALIZED
-
-        # Virtual read thread
-        self._virtual_read_thread = None
+        self._loaded_image = None
 
         logger.info(f"[{self.id}] Virtual display device initialized")
 
     def __del__(self):
-        self.stop()
+        pass
 
     def stop(self):
-        """Stops the virtual device."""
-        self.stop_flag.set()
-        if self._virtual_read_thread and self._virtual_read_thread.is_alive():
-            self._virtual_read_thread.join(timeout=1.0)
-        logger.info(f"[{self.id}] Virtual device stopped.")
-        self.mode = DisplayDeviceMode.UNINITIALIZED
+        """Virtual stop (no-op for single-display)."""
+        pass
 
     def initialize(self):
-        """Initialize the virtual device."""
-        logger.info(f"[{self.id}] Initializing virtual display device...")
-        self.mode = DisplayDeviceMode.PORT_OPEN
-        time.sleep(0.1)
-        self.mode = DisplayDeviceMode.SERIAL_COMM
-        self.start_read_thread()
-        time.sleep(0.1)
-        self.message_queue.put((self.id, f"ID:{self.id}"))
-        logger.info(f"[{self.id}] Virtual device initialized")
-
-    def start_read_thread(self):
-        """Start the virtual read thread."""
-        self.stop_flag.clear()
-        self._virtual_read_thread = threading.Thread(
-            target=self._virtual_read_loop,
-            daemon=True
-        )
-        self._virtual_read_thread.start()
-        logger.debug(f"[{self.id}] Virtual read thread started")
-
-    def _virtual_read_loop(self):
-        """Virtual read loop that simulates serial communication."""
-        while not self.stop_flag.is_set():
-            time.sleep(self.read_loop_interval)
-            # Touch events are injected via simulate_touch()
+        """Virtual initialize (no-op for single-display)."""
+        logger.debug(f"[{self.id}] Virtual device initialized")
 
     def send_command(self, command):
         """
         Send a command to the virtual device.
-        Simulates the serial write operation.
         """
-        with self.write_lock:
-            logger.debug(f"[{self.id}] Virtual command sent: {command}")
-            
-            # Simulate responses for known commands
-            if command == "WHOAREYOU?":
-                self.message_queue.put((self.id, f"ID:{self.id}"))
-            elif command.startswith("IMG:"):
-                # Load image (IMG:A01 resolves to A01.bmp)
-                image_name = command.split(":", 1)[1]
-                image_path = self._resolve_image_path(image_name)
-                if image_path:
-                    self._loaded_image = image_name
-                    logger.debug(f"[{self.id}] Loaded image: {image_name} from {image_path}")
-                else:
-                    logger.warning(f"[{self.id}] Image not found: {image_name}")
-            elif command == "SHOW":
-                # Display the loaded image
-                if self._loaded_image:
-                    self._current_image = self._loaded_image
-                    self._current_image_path = self._resolve_image_path(self._loaded_image)
-                    logger.debug(f"[{self.id}] Showing image: {self._current_image}")
-                else:
-                    logger.warning(f"[{self.id}] SHOW called but no image loaded")
-            elif command == "BLACK":
-                # Clear display to black
-                self._current_image = None
-                self._current_image_path = None
-                self._loaded_image = None
-                logger.debug(f"[{self.id}] Display cleared (BLACK)")
-            elif command.startswith("DISPLAY:"):
-                # Legacy support: DISPLAY:path displays directly
-                image_path = command.split(":", 1)[1]
-                self._current_image = image_path
-                self._current_image_path = image_path
-                logger.debug(f"[{self.id}] Displaying image: {image_path}")
-            elif command == "CLEAR":
-                # Legacy support
-                self._current_image = None
-                self._current_image_path = None
-                logger.debug(f"[{self.id}] Display cleared")
-            elif command == "SCREENSHARE":
-                logger.debug(f"[{self.id}] Screenshare mode activated")
-
-    def get_messages(self):
-        """
-        Retrieve all messages from the message queue.
-        Returns a list of (id, message) tuples.
-        """
-        messages = []
-        while not self.message_queue.empty():
-            try:
-                messages.append(self.message_queue.get_nowait())
-            except queue.Empty:
-                break
-        return messages
-
-    def clear_messages(self):
-        """Clear all messages from the queue."""
-        while not self.message_queue.empty():
-            try:
-                self.message_queue.get_nowait()
-            except queue.Empty:
-                break
+        logger.debug(f"[{self.id}] Virtual command sent: {command}")
+        
+        # Simulate responses for known commands
+        if command == "WHOAREYOU?":
+            logger.info(f"[{self.id}] ID:{self.id}")
+        elif command.startswith("IMG:"):
+            # Load image (IMG:A01 resolves to A01.bmp)
+            image_name = command.split(":", 1)[1]
+            image_path = self._resolve_image_path(image_name)
+            if image_path:
+                self._loaded_image = image_name
+                logger.debug(f"[{self.id}] Loaded image: {image_name} from {image_path}")
+            else:
+                logger.warning(f"[{self.id}] Image not found: {image_name}")
+        elif command == "SHOW":
+            # Display the loaded image
+            if self._loaded_image:
+                self._current_image = self._loaded_image
+                self._current_image_path = self._resolve_image_path(self._loaded_image)
+                logger.debug(f"[{self.id}] Showing image: {self._current_image}")
+            else:
+                logger.warning(f"[{self.id}] SHOW called but no image loaded")
+        elif command == "BLACK":
+            # Clear display to black
+            self._current_image = None
+            self._current_image_path = None
+            self._loaded_image = None
+            logger.debug(f"[{self.id}] Display cleared (BLACK)")
+        elif command.startswith("DISPLAY:"):
+            # Legacy support: DISPLAY:path displays directly
+            image_path = command.split(":", 1)[1]
+            self._current_image = image_path
+            self._current_image_path = image_path
+            logger.debug(f"[{self.id}] Displaying image: {image_path}")
+        elif command == "CLEAR":
+            # Legacy support
+            self._current_image = None
+            self._current_image_path = None
+            logger.debug(f"[{self.id}] Display cleared")
+        elif command == "SCREENSHARE":
+            logger.debug(f"[{self.id}] Screenshare mode activated")
 
     def is_touched(self):
         """
@@ -199,14 +131,12 @@ class VirtualDisplayDevice:
             
         self._touch_coordinates = (x, y)
         self._is_touched = True
-        self.message_queue.put((self.id, f"TOUCH:{x},{y}"))
         logger.info(f"[{self.id}] Virtual touch at ({x}, {y})")
 
         # Auto-release after duration
         def release_touch():
             time.sleep(duration)
             self._is_touched = False
-            self.message_queue.put((self.id, "RELEASE"))
             logger.debug(f"[{self.id}] Touch released")
 
         threading.Thread(target=release_touch, daemon=True).start()

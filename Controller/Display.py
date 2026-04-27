@@ -22,16 +22,6 @@ class DisplayZone:
     ALL = "all"
 
 
-class DisplayMode(Enum):
-    """Mode values kept stable so existing UI code can read `mode.name`."""
-
-    UNINITIALIZED = 0
-    PORT_OPEN = 1
-    SERIAL_COMM = 2
-    PORT_CLOSED = 3
-    UD = 4
-
-
 class DisplayManager:
     """Manages one wide display split into left/middle/right operant zones."""
 
@@ -782,13 +772,6 @@ class DisplayZoneDevice:
         self.display = display_manager
         self.zone = zone
         self.id = device_id
-
-        self.port = f"PI_DISPLAY_{zone.upper()}"
-        self.baudrate = 0
-        self.firmware_version = "pi-display"
-        self.mode = DisplayMode.SERIAL_COMM
-        self.reset_pin = None
-
         self._loaded_image = None
 
     def send_command(self, command):
@@ -806,7 +789,7 @@ class DisplayZoneDevice:
             return
 
         if cmd == "VERSION?":
-            logger.info(f"[{self.id}] VERSION:{self.firmware_version}")
+            logger.info(f"[{self.id}] VERSION:pi-display")
             return
 
         if cmd.startswith("IMG:"):
@@ -844,27 +827,5 @@ class DisplayZoneDevice:
         self.display.process_events()
         return self.display.touch_states.get(self.zone, False)
 
-    # No-op lifecycle methods to keep Chamber/WebUI compatibility.
-    def reset(self):
-        self.display.clear(self.zone)
-
-    def open_port(self):
-        self.mode = DisplayMode.PORT_OPEN
-
-    def close_port(self):
-        self.mode = DisplayMode.PORT_CLOSED
-
-    def start_serial_comm(self):
-        self.mode = DisplayMode.SERIAL_COMM
-
-    def stop_serial_comm(self):
-        self.mode = DisplayMode.PORT_OPEN
-
-    def sync_image_folder(self):
-        logger.info(f"[{self.id}] sync_image_folder not required for pi display backend")
-
-    def upload_sketch(self):
-        logger.info(f"[{self.id}] upload_sketch not required for pi display backend")
-
     def stop(self):
-        self.mode = DisplayMode.UNINITIALIZED
+        pass
