@@ -14,6 +14,7 @@ class PRLState(Enum):
     START_TRIAL = auto()
     CORRECT = auto()
     ERROR = auto()
+    INCORRECT_LED = auto()
     WAIT_FOR_TOUCH = auto()
     DELIVER_REWARD_START = auto()
     DELIVERING_REWARD = auto()
@@ -64,6 +65,7 @@ class PRL(Trainer):
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("display_refresh_interval", 1.0) # Re-show images while waiting for touch
+        self.config.ensure_param("incorrect_led_secs", 3.0) # Duration to show incorrect LED
 
 
         # Local variables used by the trainer during the training session and not set in the config file.
@@ -84,7 +86,29 @@ class PRL(Trainer):
         self.current_trial_iti = self.config["iti_duration"]
         self.touched_side = None  # track which side was touched for reward prob lookup
         self.last_image_show_time = 0.0
+        self.incorrect_led_start_time = 0.0
         self.state = PRLState.IDLE
+
+    def _set_house_light_active(self):
+        """Use full house light brightness outside ITI."""
+        self.chamber.house_led.set_brightness(255)
+        self.chamber.house_led.activate()
+
+    def _set_house_light_iti(self):
+        """Use 50% house light brightness during ITI."""
+        self.chamber.house_led.set_brightness(127)
+        self.chamber.house_led.activate()
+
+    def _is_last_trial(self):
+        return self.current_trial >= int(self.config["num_trials"] or 0)
+
+    def _advance_after_trial(self):
+        """Advance to ITI, or end training immediately if this was the final trial."""
+        if self._is_last_trial():
+            logger.info("Final trial complete; skipping ITI and ending training")
+            self.state = PRLState.END_TRAINING
+        else:
+            self.state = PRLState.ITI_START
 
 
     def load_images(self):
@@ -126,6 +150,8 @@ class PRL(Trainer):
         # Start recording data
         self.open_data_file()
 
+        self._set_house_light_active()
+
         # Initialize the training session
         self.state = PRLState.START_TRAINING
 
@@ -143,6 +169,7 @@ class PRL(Trainer):
             logger.debug("Current state: START_TRAINING")
             logger.info("Starting training session...")
             self.write_event("StartTraining ", 1)
+            self._set_house_light_active()
             ##randomly assign the reward probability to the touch screens
             if random.random() < 0.5:
                 self.left_reward_probability=(self.config["high_reward_probability"])
@@ -157,6 +184,7 @@ class PRL(Trainer):
             # START_TRIAL state, preparing for the next trial
             logger.debug("Current state: START_TRIAL")
             self.current_trial += 1
+            self._set_house_light_active()
             num_trials = int(self.config["num_trials"] or 0)
             if self.current_trial <= num_trials:
                 trial_number = self.current_trial
@@ -217,7 +245,7 @@ class PRL(Trainer):
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
                 self.write_event("TouchTimeout ", self.current_trial)
-                self.state = PRLState.ITI_START
+                self._advance_after_trial()
         
         elif self.state == PRLState.CORRECT:
             # CORRECT state, handling correct touch
@@ -233,7 +261,7 @@ class PRL(Trainer):
                 logger.info("Delivering reward...")
                 self.write_event("DeliverRewardStart", self.current_trial)
             else:
-                self.state = PRLState.ITI_START
+                self._advance_after_trial()
                 logger.info("No reward delivered, moving to ITI...")
                 self.write_event("NoReward", self.current_trial)
         
@@ -242,22 +270,33 @@ class PRL(Trainer):
             logger.debug("Current state: ERROR")
             logger.info("Incorrect touch detected.")
             self.write_event("IncorrectTouch", self.current_trial)
+            self.incorrect_led_start_time = current_time
+            self.chamber.punishment_led.activate()
+            self.write_event("IncorrectLEDOn", self.current_trial)
+            self.state = PRLState.INCORRECT_LED
 
-            logger.debug("Clearing trial images after incorrect touch")
-            self.clear_images()
-            reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
-            if random.random() <= float(reward_prob or 0.0):
-                self.state = PRLState.DELIVER_REWARD_START
-                logger.info("Delivering reward...")
-                self.write_event("DeliverRewardStart", self.current_trial)
+        elif self.state == PRLState.INCORRECT_LED:
+            logger.debug("Current state: INCORRECT_LED")
+            incorrect_led_secs = float(self.config["incorrect_led_secs"] or 0.0)
+            if current_time - self.incorrect_led_start_time < incorrect_led_secs:
+                pass
             else:
-                self.state = PRLState.ITI_START
-                logger.info("No reward delivered, moving to ITI...")
-                self.write_event("NoReward", self.current_trial)
+                self.chamber.punishment_led.deactivate()
+                self.write_event("IncorrectLEDOff", self.current_trial)
+                reward_prob = self.left_reward_probability if self.touched_side == "LEFT" else self.right_reward_probability
+                if random.random() <= float(reward_prob or 0.0):
+                    self.state = PRLState.DELIVER_REWARD_START
+                    logger.info("Delivering reward...")
+                    self.write_event("DeliverRewardStart", self.current_trial)
+                else:
+                    self._advance_after_trial()
+                    logger.info("No reward delivered, moving to ITI...")
+                    self.write_event("NoReward", self.current_trial)
 
         elif self.state == PRLState.DELIVER_REWARD_START:
             # DELIVER_REWARD_START state, preparing to deliver the reward
             logger.debug("Current state: DELIVER_REWARD_START")
+            self.chamber.punishment_led.deactivate()
             self.reward_start_time = current_time
             logger.info(f"Preparing to deliver reward for trial {self.current_trial}...")
             self.write_event("DeliverRewardStart", self.current_trial)
@@ -296,39 +335,33 @@ class PRL(Trainer):
                     logger.info("Beam broken after reward dispense")
                     self.write_event("BeamBreakAfterReward", self.current_trial)
                     self.chamber.reward_led.deactivate()
-                    self.state = PRLState.ITI_START
+                    self._advance_after_trial()
             else:
                     logger.info(f"Beam break timeout")
                     self.write_event("BeamBreakTimeout", self.current_trial)
                     self.chamber.reward_led.deactivate()
-                    self.state = PRLState.ITI_START
-        
+                    self._advance_after_trial()
+
         elif self.state == PRLState.ITI_START:
             # ITI_START state, preparing for the ITI period
             logger.debug("Current state: ITI_START")
             self.write_event("ITIStart", self.current_trial)
-            #self.chamber.beambreak.activate()
+            self._set_house_light_iti()
             self.chamber.reward_led.deactivate()
-            # Turn off house lights during ITI
-            # self.chamber.house_lights.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
             self.iti_start_time = current_time
             self.state = PRLState.ITI
-        
+
         elif self.state == PRLState.ITI:
             # ITI state, waiting for the ITI duration
             logger.debug("Current state: ITI")
             current_trial_iti = float(self.current_trial_iti or 0.0)
             if current_time - self.iti_start_time < current_trial_iti:
-                # Check if beam break is detected during ITI
-                # if self.chamber.beambreak.state==False:
-                #     logger.info("Beam broken during ITI. Adding 1 second to ITI duration.")
-                #     self.write_event("BeamBreakDuringITI", self.current_trial)
                 pass
             else:
                 logger.info(f"ITI duration of {current_trial_iti} seconds completed")
                 self.state = PRLState.END_TRIAL
-        
+
         elif self.state == PRLState.END_TRIAL:
             # END_TRIAL state, finalizing the trial
             logger.debug("Current state: END_TRIAL")
@@ -343,6 +376,8 @@ class PRL(Trainer):
             self.write_event("EndTraining", 1)
             self.state = PRLState.IDLE
             self.stop_training()
+            self.state = PRLState.IDLE
+            self.stop_training()
 
     def stop_training(self):
         # Stop the training session
@@ -350,6 +385,7 @@ class PRL(Trainer):
         self.chamber.reward.stop()
         self.chamber.reward_led.deactivate()
         self.chamber.punishment_led.deactivate()
+        self.chamber.house_led.deactivate()
         self.chamber.beambreak.deactivate()
         self.close_data_file()
         self.state = PRLState.IDLE
