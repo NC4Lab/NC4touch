@@ -104,87 +104,6 @@ Save this as `/usr/local/bin/goodix-sensitivity.py`:
 ```python
 #!/usr/bin/env python3
 # goodix-sensitivity.py
-# Sets GT9271 touch sensitivity for mouse paw detection.
-import smbus2
-import time
-
-bus = smbus2.SMBus(11)
-addr = 0x5d
-
-# --- Tune these values ---
-NEW_TOUCH_THRESHOLD = 20   # 0x8053 — lower = more sensitive (default: 80)
-NEW_LEAVE_THRESHOLD = 10   # 0x8054 — should be ~half of touch threshold
-NEW_NOISE_REDUCTION = 2    # 0x8052 — lower = picks up weaker signals (default: 5)
-NEW_LARGE_TOUCH     = 5    # 0x8051 — lower = accepts smaller contact areas (default: 25)
-
-def write_regs(start, data):
-    """Write in 31-byte chunks to respect SMBus 32-byte limit."""
-    data = list(data)
-    offset = 0
-    while offset < len(data):
-        chunk = data[offset:offset + 31]
-        reg = start + offset
-        payload = [reg & 0xFF] + chunk
-        bus.write_i2c_block_data(addr, (reg >> 8) & 0xFF, payload)
-        time.sleep(0.01)
-        offset += 31
-
-def read_regs(start, count):
-    bus.write_i2c_block_data(addr, (start >> 8) & 0xFF, [start & 0xFF])
-    time.sleep(0.01)
-    return [bus.read_byte(addr) for _ in range(count)]
-
-print("Step 1: Unbinding Goodix driver...")
-with open('/sys/bus/i2c/drivers/Goodix-TS/unbind', 'w') as f:
-    f.write('11-005d')
-time.sleep(0.5)
-
-print("Step 2: Reading current config...")
-config = read_regs(0x8047, 0xB9)
-print(f"  Current touch threshold : {config[0x8053 - 0x8047]}")
-print(f"  Current leave threshold : {config[0x8054 - 0x8047]}")
-print(f"  Current noise reduction : {config[0x8052 - 0x8047]}")
-print(f"  Current large touch     : {config[0x8051 - 0x8047]}")
-
-print("Step 3: Applying new values...")
-config[0x8051 - 0x8047] = NEW_LARGE_TOUCH
-config[0x8052 - 0x8047] = NEW_NOISE_REDUCTION
-config[0x8053 - 0x8047] = NEW_TOUCH_THRESHOLD
-config[0x8054 - 0x8047] = NEW_LEAVE_THRESHOLD
-
-checksum = (~sum(config) + 1) & 0xFF
-print(f"  New checksum: 0x{checksum:02X}")
-
-write_regs(0x8047, config)
-write_regs(0x80FF, [checksum])
-write_regs(0x8100, [0x01])
-time.sleep(0.1)
-
-print("Step 4: Verifying...")
-verify = read_regs(0x8051, 4)
-print(f"  0x8051 large touch  : {verify[0]} (expected {NEW_LARGE_TOUCH})")
-print(f"  0x8052 noise        : {verify[1]} (expected {NEW_NOISE_REDUCTION})")
-print(f"  0x8053 touch level  : {verify[2]} (expected {NEW_TOUCH_THRESHOLD})")
-print(f"  0x8054 leave level  : {verify[3]} (expected {NEW_LEAVE_THRESHOLD})")
-
-print("Step 5: Rebinding Goodix driver...")
-with open('/sys/bus/i2c/drivers/Goodix-TS/bind', 'w') as f:
-    f.write('11-005d')
-time.sleep(1)
-
-print("\nDone!")
-```
-
-```bash
-sudo cp goodix-sensitivity.py /usr/local/bin/goodix-sensitivity.py
-sudo python3 /usr/local/bin/goodix-sensitivity.py
-```
-
-
-
-```python
-#!/usr/bin/env python3
-# goodix-sensitivity-aggressive.py
 # Aggressive tuning for small animal paw/nose detection on GT9271.
 import smbus2
 import time
@@ -276,7 +195,10 @@ time.sleep(1)
 print("\nDone! Please ensure the screen surface is clear for the initial baseline calibration.")
 ```
 
-
+```bash
+sudo cp goodix-sensitivity.py /usr/local/bin/goodix-sensitivity.py
+sudo python3 /usr/local/bin/goodix-sensitivity.py
+```
 
 
 ---
