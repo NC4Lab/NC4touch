@@ -184,7 +184,7 @@ sudo python3 /usr/local/bin/goodix-sensitivity.py
 
 ```python
 #!/usr/bin/env python3
-# goodix-sensitivity-v2.py
+# goodix-sensitivity-aggressive.py
 # Aggressive tuning for small animal paw/nose detection on GT9271.
 import smbus2
 import time
@@ -193,16 +193,16 @@ bus = smbus2.SMBus(11)
 addr = 0x5d
 
 # --- Aggressive Sensitivity Tuning ---
-NEW_TOUCH_THRESHOLD = 2    # 0x8053 (User requested)
-NEW_LEAVE_THRESHOLD = 1    # 0x8054 (User requested)
-NEW_NOISE_REDUCTION = 0    # 0x8052 (User requested)
-NEW_LARGE_TOUCH     = 0    # 0x8051 (User requested)
+NEW_TOUCH_THRESHOLD = 10    # 0x8053 (User requested)
+NEW_LEAVE_THRESHOLD = 6    # 0x8054 (User requested)
+NEW_NOISE_REDUCTION = 3    # 0x8052 (User requested)
+NEW_LARGE_TOUCH     = 5    # 0x8051 (User requested)
 
 # --- Hardware Gain & Integration Time ---
 NEW_REFRESH_RATE    = 10   # 0x8056 (10ms; allows more integration time for weak signals)
 NEW_DAC_GAIN        = 0x00 # 0x806A (Set to 0 for maximum DAC range)
-NEW_PGA_GAIN        = 0x07 # 0x806C (Bits 0-2: Set PGA to max gear)
-NEW_DUMP_SHIFT      = 0x02 # 0x806D (Digital multiplier: 0x02 = 4x signal boost)
+NEW_PGA_GAIN        = 0x05 # 0x806C (Bits 0-2: Set PGA to max gear)
+NEW_DUMP_SHIFT      = 0x01 # 0x806D (Digital multiplier: 0x02 = 4x signal boost)
 
 def write_regs(start, data):
     """Write in 31-byte chunks to respect SMBus 32-byte limit."""
