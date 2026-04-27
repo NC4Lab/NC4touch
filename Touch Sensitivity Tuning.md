@@ -247,7 +247,7 @@ sudo systemctl status goodix-sensitivity.service
 sudo apt install evtest
 
 # Watch raw touch events
-sudo evtest /dev/input/event5
+sudo evtest /dev/input/event3 #check sudo evtest for the correct event number
 ```
 
 Touch the screen with a mouse paw. You should see `EV_ABS` events including `ABS_MT_POSITION_X` and `ABS_MT_POSITION_Y`. If nothing appears, the threshold may need to go lower.
