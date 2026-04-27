@@ -48,8 +48,8 @@ class PRL(Trainer):
     State machine:
     IDLE -> START_TRAINING -> START_TRIAL -> WAIT_FOR_TOUCH -> CORRECT/ERROR -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
     """
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_PRL_config.yaml'):
-        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+    def __init__(self, chamber, trainer_config = {}):
+        super().__init__(chamber=chamber, trainer_config=trainer_config)
 
         # Initialize the trainer configuration.
         # All variables used by the trainer are recommended to be set in the config file.
@@ -60,10 +60,9 @@ class PRL(Trainer):
         self.config.ensure_param("num_trials", 60)  # Number of trials to run
         self.config.ensure_param("high_reward_probability", 1)  # Probability of high reward
         self.config.ensure_param("low_reward_probability", 0)
-        self.config.ensure_param("reward_pump_secs", 0.5)  # Duration for which the reward pump is activated
+        self.config.ensure_param("reward_pump_secs", 1.5)  # Duration for which the reward pump is activated
         self.config.ensure_param("beam_break_wait_time", 10) # Time to wait for beam break after reward delivery
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
-        self.config.ensure_param("max_iti_duration", 30) # Maximum ITI duration
         self.config.ensure_param("display_refresh_interval", 1.0) # Re-show images while waiting for touch
 
 
@@ -325,8 +324,6 @@ class PRL(Trainer):
                 # if self.chamber.beambreak.state==False:
                 #     logger.info("Beam broken during ITI. Adding 1 second to ITI duration.")
                 #     self.write_event("BeamBreakDuringITI", self.current_trial)
-                #     if self.current_trial_iti < self.config["max_iti_duration"]:
-                #         self.current_trial_iti += 1
                 pass
             else:
                 logger.info(f"ITI duration of {current_trial_iti} seconds completed")

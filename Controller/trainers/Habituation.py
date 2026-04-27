@@ -41,8 +41,8 @@ class Habituation(Trainer):
     State machine:
     IDLE -> START_TRAINING -> START_TRIAL -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
     """
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_Habituation_config.yaml'):
-        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+    def __init__(self, chamber, trainer_config = {}):
+        super().__init__(chamber=chamber, trainer_config=trainer_config)
 
         # Initialize the trainer configuration.
         # All variables used by the trainer are recommended to be set in the config file.

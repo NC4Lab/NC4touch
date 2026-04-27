@@ -27,8 +27,8 @@ class InitialTouchState(Enum):
     END_TRAINING = auto()
 
 class InitialTouch(Trainer):
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_InitialTouch_config.yaml'):
-        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+    def __init__(self, chamber, trainer_config = {}):
+        super().__init__(chamber=chamber, trainer_config=trainer_config)
 
         # Initialize the trainer configuration.
         # All variables used by the trainer are recommended to be set in the config file.

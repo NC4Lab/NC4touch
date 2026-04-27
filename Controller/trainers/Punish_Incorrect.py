@@ -39,8 +39,8 @@ class PunishIncorrectState(Enum):
 
 
 class PunishIncorrect(Trainer):
-    def __init__(self, chamber, trainer_config = {}, trainer_config_file = '~/trainer_PunishIncorrect_config.yaml'):
-        super().__init__(chamber=chamber, trainer_config=trainer_config, trainer_config_file=trainer_config_file)
+    def __init__(self, chamber, trainer_config = {}):
+        super().__init__(chamber=chamber, trainer_config=trainer_config)
 
         # Initialize the trainer configuration.
         # All configurable parameters should be set here to allow easy modification.
