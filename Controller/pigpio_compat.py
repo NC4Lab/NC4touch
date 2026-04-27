@@ -111,6 +111,18 @@ class _LocalPi:
 
         self._pwms[pin].ChangeDutyCycle(duty_pct)
 
+    def stop(self):
+        """Match pigpio.pi.stop() for cleanup compatibility."""
+        if not self.connected:
+            return
+
+        for pwm in list(self._pwms.values()):
+            try:
+                pwm.stop()
+            except RuntimeError:
+                pass
+        self._pwms.clear()
+
 
 class _PigpioCompat:
     # Match common pigpio constant values so existing code behavior stays intact.
