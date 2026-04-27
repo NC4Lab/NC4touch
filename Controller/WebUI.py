@@ -64,51 +64,12 @@ class WebUI:
     
     def update_state(self):
         """Periodically update the state of the UI elements based on the session state."""
-        # Update display-zone status labels
-        left_display = self.session.chamber.get_display_device("left")
-        if left_display is not None:
-            self.left_display_port_label.set_text(f"Port: {left_display.port}")
-            self.left_display_mode_label.set_text(f"Mode: {left_display.mode.name}")
-            self.left_display_version_label.set_text(f"Firmware: {left_display.firmware_version}")
-        else:
-            self.left_display_port_label.set_text("Port: N/A")
-            self.left_display_mode_label.set_text("Mode: N/A")
-            self.left_display_version_label.set_text("Firmware: N/A")
-
-        middle_display = self.session.chamber.get_display_device("middle")
-        if middle_display is not None:
-            self.middle_display_port_label.set_text(f"Port: {middle_display.port}")
-            self.middle_display_mode_label.set_text(f"Mode: {middle_display.mode.name}")
-            self.middle_display_version_label.set_text(f"Firmware: {middle_display.firmware_version}")
-        else:
-            self.middle_display_port_label.set_text("Port: N/A")
-            self.middle_display_mode_label.set_text("Mode: N/A")
-            self.middle_display_version_label.set_text("Firmware: N/A")
-
-        right_display = self.session.chamber.get_display_device("right")
-        if right_display is not None:
-            self.right_display_port_label.set_text(f"Port: {right_display.port}")
-            self.right_display_mode_label.set_text(f"Mode: {right_display.mode.name}")
-            self.right_display_version_label.set_text(f"Firmware: {right_display.firmware_version}")
-        else:
-            self.right_display_port_label.set_text("Port: N/A")
-            self.right_display_mode_label.set_text("Mode: N/A")
-            self.right_display_version_label.set_text("Firmware: N/A")
-
+        # Update peripheral states
         self.house_led_brightness_slider.set_value(100.0 * self.session.chamber.house_led.brightness / 255.0)
         self.pump_test_button.set_value(self.session.chamber.reward.state)
         self.reward_led_test_button.set_value(self.session.chamber.reward_led.active)
-        # self.reward_color_input.set_value(self.rgb_to_hex(self.session.chamber.reward_led.color))
         self.punishment_led_test_button.set_value(self.session.chamber.punishment_led.active)
-        # self.punishment_color_input.set_value(self.rgb_to_hex(self.session.chamber.punishment_led.color))
 
-    async def refresh_display_status(self):
-        self.refresh_display_button.props('color=red')
-        self.refresh_display_spinner.visible = True
-        await asyncio.sleep(0.1)
-        self.update_state()
-        self.refresh_display_button.props('color=blue')
-        self.refresh_display_spinner.visible = False
 
     def init_ui(self):
         ui.timer(1, self.update_state)  # Start a timer to update display status labels every second
@@ -190,32 +151,6 @@ class WebUI:
                                                                     on_change=lambda e: self.adjust_house_led_brightness(e.value)).style('width: 400px;')
             
             with ui.column():
-                with ui.card():
-                    ui.label('Display Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                    self.refresh_display_button = ui.button(text="Refresh Status", color="blue").on_click(self.refresh_display_status)
-                    with self.refresh_display_button:
-                        self.refresh_display_spinner = ui.spinner(color='white').style('margin-left: 10px;')
-                        self.refresh_display_spinner.visible = False
-                    
-                with ui.card():
-                        ui.label('Left Display Zone').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                        left_display = self.session.chamber.get_display_device("left")
-                        self.left_display_port_label = ui.label(f"Port: {left_display.port if left_display else 'N/A'}")
-                        self.left_display_mode_label = ui.label(f"Mode: {left_display.mode.name if left_display else 'N/A'}")
-                        self.left_display_version_label = ui.label(f"Firmware Version: {left_display.firmware_version if left_display else 'N/A'}")
-
-                        ui.label('Middle Display Zone').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                        middle_display = self.session.chamber.get_display_device("middle")
-                        self.middle_display_port_label = ui.label(f"Port: {middle_display.port if middle_display else 'N/A'}")
-                        self.middle_display_mode_label = ui.label(f"Mode: {middle_display.mode.name if middle_display else 'N/A'}")
-                        self.middle_display_version_label = ui.label(f"Firmware Version: {middle_display.firmware_version if middle_display else 'N/A'}")
-
-                        ui.label('Right Display Zone').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
-                        right_display = self.session.chamber.get_display_device("right")
-                        self.right_display_port_label = ui.label(f"Port: {right_display.port if right_display else 'N/A'}")
-                        self.right_display_mode_label = ui.label(f"Mode: {right_display.mode.name if right_display else 'N/A'}")
-                        self.right_display_version_label = ui.label(f"Firmware Version: {right_display.firmware_version if right_display else 'N/A'}")
-
                 with ui.card():
                     ui.label('Training Control').style('font-size: 18px; font-weight: bold; text-align: center; margin-top: 20px;')
                     # Buttons to control training session

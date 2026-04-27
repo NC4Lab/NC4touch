@@ -198,52 +198,7 @@ class Chamber:
             center_layout=self.config["display_center_layout"],
         )
 
-    # ---- Retained methods used by current UI/tests ----
 
-    def get_left_display_device(self):
-        return self.left_display_device
-
-    def get_middle_display_device(self):
-        return self.middle_display_device
-
-    def get_right_display_device(self):
-        return self.right_display_device
-
-    # Legacy board-control methods are no-ops in single-display mode.
-    def compile_sketch(self, sketch_path=None):
-        logger.info("Skipping sketch compile in single-display mode.")
-
-    def arduino_cli_discover(self):
-        logger.info("Skipping board discovery in single-display mode.")
-
-    def display_discover(self):
-        logger.info("Skipping board discovery in single-display mode.")
-        return {
-            "DISPLAY_LEFT": self.left_display_device.port,
-            "DISPLAY_MIDDLE": self.middle_display_device.port,
-            "DISPLAY_RIGHT": self.right_display_device.port,
-        }
-
-    def display_reset(self):
-        logger.info("Skipping display reset in single-display mode.")
-
-    def display_initialize(self):
-        logger.info("Skipping display initialize in single-display mode.")
-
-    def display_reopen_serial(self):
-        logger.info("Skipping serial reopen in single-display mode.")
-
-    def display_close_serial(self):
-        logger.info("Skipping serial close in single-display mode.")
-
-    def display_open_serial(self):
-        logger.info("Skipping serial open in single-display mode.")
-
-    def display_sync_images(self):
-        logger.info("Skipping image sync in single-display mode.")
-
-    def display_upload_assets(self):
-        logger.info("Skipping sketch upload in single-display mode.")
 
     def send_display_command(self, command):
         self.display_command("all", command)

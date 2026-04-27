@@ -49,7 +49,6 @@ class VirtualChamber:
         self.config.ensure_param("punishment_LED_pin", 17)
         self.config.ensure_param("house_LED_pin", 20)
         self.config.ensure_param("buzzer_pin", 16)
-        self.config.ensure_param("reset_pins", [25, 5, 6])
         self.config.ensure_param("camera_device", "/dev/video0")
         self.config.ensure_param("display_width", 1920)
         self.config.ensure_param("display_height", 480)
@@ -70,21 +69,18 @@ class VirtualChamber:
         self.left_display_device = VirtualDisplayDevice(
             pi=self.pi,
             id="DISPLAY_LEFT",
-            reset_pin=self.config["reset_pins"][0],
             location="left",
             image_dir=self.config["image_dir"]
         )
         self.middle_display_device = VirtualDisplayDevice(
             pi=self.pi,
             id="DISPLAY_MIDDLE",
-            reset_pin=self.config["reset_pins"][1],
             location="middle",
             image_dir=self.config["image_dir"]
         )
         self.right_display_device = VirtualDisplayDevice(
             pi=self.pi,
             id="DISPLAY_RIGHT",
-            reset_pin=self.config["reset_pins"][2],
             location="right",
             image_dir=self.config["image_dir"]
         )
@@ -135,14 +131,7 @@ class VirtualChamber:
         logger.info(f"  - Virtual Buzzer")
         logger.info("="*60)
 
-    def get_left_display_device(self):
-        return self.left_display_device
 
-    def get_middle_display_device(self):
-        return self.middle_display_device
-
-    def get_right_display_device(self):
-        return self.right_display_device
 
     def _normalize_zone(self, zone):
         zone_name = str(zone).strip().lower()
@@ -252,27 +241,7 @@ class VirtualChamber:
                 display_device.stop()
         logger.info("Virtual Chamber cleaned up")
 
-    def compile_sketch(self, sketch_path=None):
-        """Virtual method - no compilation needed."""
-        logger.info("Virtual Chamber: Sketch compilation skipped (virtual mode)")
 
-    def arduino_cli_discover(self):
-        """Virtual method - simulates board discovery."""
-        logger.info("Virtual Chamber: Board discovery skipped (virtual mode)")
-        self.discovered_boards = [f"VIRTUAL_PORT_{i}" for i in range(3)]
-
-    def display_discover(self):
-        """Virtual method - simulates display-controller discovery."""
-        logger.info("Virtual Chamber: display-controller discovery completed (virtual mode)")
-        return {
-            "DISPLAY_LEFT": "VIRTUAL_PORT_0",
-            "DISPLAY_MIDDLE": "VIRTUAL_PORT_1",
-            "DISPLAY_RIGHT": "VIRTUAL_PORT_2"
-        }
-
-    def display_reset(self):
-        """Virtual method - simulates display-controller reset."""
-        logger.info("Virtual Chamber: display controllers reset (virtual mode)")
 
     def initialize_display_devices(self):
         """Initialize all display-zone devices."""
