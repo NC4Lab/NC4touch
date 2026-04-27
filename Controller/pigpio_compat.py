@@ -57,21 +57,23 @@ class _LocalPi:
 
     def set_mode(self, pin, mode):
         if not self.connected:
-            return
+            return -1
         if mode == pigpio.OUTPUT:
             _gpio.setup(pin, _gpio.OUT, initial=_gpio.LOW)
         else:
             _gpio.setup(pin, _gpio.IN)
+        return 0
 
     def set_pull_up_down(self, pin, pud):
         if not self.connected:
-            return
+            return -1
         pull = _gpio.PUD_OFF
         if pud == pigpio.PUD_UP:
             pull = _gpio.PUD_UP
         elif pud == pigpio.PUD_DOWN:
             pull = _gpio.PUD_DOWN
         _gpio.setup(pin, _gpio.IN, pull_up_down=pull)
+        return 0
 
     def read(self, pin):
         if not self.connected:
@@ -80,8 +82,9 @@ class _LocalPi:
 
     def write(self, pin, value):
         if not self.connected:
-            return
+            return -1
         _gpio.output(pin, _gpio.HIGH if value else _gpio.LOW)
+        return 0
 
     def set_PWM_range(self, pin, pwm_range):
         self._pwm_ranges[pin] = max(int(pwm_range), 1)
@@ -96,7 +99,7 @@ class _LocalPi:
 
     def set_PWM_dutycycle(self, pin, dutycycle):
         if not self.connected:
-            return
+            return -1
 
         pwm_range = self._pwm_ranges.get(pin, 255)
         duty = max(0, min(int(dutycycle), pwm_range))
@@ -110,6 +113,7 @@ class _LocalPi:
             self._pwms[pin].start(0)
 
         self._pwms[pin].ChangeDutyCycle(duty_pct)
+        return 0
 
     def stop(self):
         """Match pigpio.pi.stop() for cleanup compatibility."""
