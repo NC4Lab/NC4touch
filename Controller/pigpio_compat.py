@@ -87,7 +87,10 @@ class _LocalPi:
         return 0
 
     def set_PWM_range(self, pin, pwm_range):
+        if not self.connected:
+            return -1
         self._pwm_ranges[pin] = max(int(pwm_range), 1)
+        return 0
 
     def set_PWM_frequency(self, pin, frequency):
         freq = max(int(frequency), 1)
