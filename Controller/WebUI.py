@@ -175,61 +175,61 @@ class WebUI:
                 }
                 .page-shell {
                     min-height: 100vh;
-                    padding: 28px;
+                    padding: 12px 16px;
+                    max-width: 100%;
                 }
                 .hero-panel {
                     background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.88));
                     border: 1px solid var(--panel-border);
                     box-shadow: var(--panel-shadow);
-                    border-radius: 24px;
-                    padding: 24px 28px;
-                    margin-bottom: 24px;
+                    border-radius: 16px;
+                    padding: 12px 16px;
+                    margin-bottom: 12px;
                     backdrop-filter: blur(18px);
                 }
                 .hero-title {
-                    font-size: 2rem;
+                    font-size: 1.5rem;
                     font-weight: 800;
                     color: var(--text-main);
                     letter-spacing: 0.02em;
                 }
                 .hero-subtitle {
                     color: var(--text-muted);
-                    margin-top: 6px;
+                    margin-top: 2px;
+                    font-size: 0.85rem;
                 }
                 .glass-card {
                     background: var(--panel-bg);
                     border: 1px solid var(--panel-border);
                     box-shadow: var(--panel-shadow);
-                    border-radius: 22px;
+                    border-radius: 14px;
                     backdrop-filter: blur(14px);
+                    padding: 0 !important;
                 }
                 .card-title {
-                    font-size: 1.05rem;
+                    font-size: 0.95rem;
                     font-weight: 700;
                     color: var(--text-main);
-                    margin-bottom: 12px;
+                    margin-bottom: 8px;
                     letter-spacing: 0.02em;
+                    padding: 12px 16px 0 16px;
                 }
                 .field-label {
                     color: var(--text-muted);
-                    font-size: 0.92rem;
-                    margin-top: 6px;
+                    font-size: 0.8rem;
+                    margin-top: 3px;
+                    margin-bottom: 3px;
                 }
                 .status-chip {
                     display: inline-flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 4px;
                     border-radius: 999px;
-                    padding: 8px 12px;
+                    padding: 4px 8px;
                     background: rgba(59, 130, 246, 0.12);
                     border: 1px solid rgba(59, 130, 246, 0.24);
                     color: var(--text-main);
-                    font-size: 0.85rem;
-                }
-                .soft-divider {
-                    height: 1px;
-                    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.35), transparent);
-                    margin: 14px 0 18px 0;
+                    font-size: 0.75rem;
                 }
                 .w-control {
                     width: 100%;
@@ -238,13 +238,82 @@ class WebUI:
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    min-height: 320px;
-                    border-radius: 16px;
+                    min-height: 160px;
+                    border-radius: 10px;
                     border: 1px dashed rgba(148, 163, 184, 0.35);
                     background: rgba(15, 23, 42, 0.55);
                     color: var(--text-muted);
                     text-align: center;
-                    padding: 24px;
+                    padding: 12px;
+                    font-size: 0.85rem;
+                }
+                .camera-main {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 420px;
+                    border-radius: 10px;
+                    border: 1px dashed rgba(148, 163, 184, 0.35);
+                    background: rgba(15, 23, 42, 0.55);
+                    color: var(--text-muted);
+                    text-align: center;
+                    padding: 20px;
+                    font-size: 0.9rem;
+                    width: 100%;
+                    aspect-ratio: 16 / 9;
+                }
+                /* Expansion panels */
+                .nicegui-expansion {
+                    padding: 0 !important;
+                }
+                .nicegui-expansion-header {
+                    padding: 10px 16px !important;
+                    font-weight: 600;
+                    color: var(--text-main);
+                    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+                    font-size: 0.9rem;
+                }
+                .nicegui-expansion-content {
+                    padding: 10px 16px !important;
+                }
+                /* Input and select styling */
+                .nicegui-input input,
+                .nicegui-select select {
+                    background: rgba(15, 23, 42, 0.4) !important;
+                    border-color: rgba(148, 163, 184, 0.24) !important;
+                    color: var(--text-main) !important;
+                    font-size: 0.8rem;
+                    padding: 4px 6px !important;
+                }
+                /* Button styling */
+                .nicegui-button {
+                    padding: 6px 10px !important;
+                    font-size: 0.8rem !important;
+                }
+                /* Log view */
+                .nicegui-log {
+                    background: rgba(15, 23, 42, 0.5) !important;
+                    font-size: 0.75rem !important;
+                }
+                /* Slider styling */
+                .nicegui-slider {
+                    margin: 3px 0 !important;
+                }
+                /* Toggle styling */
+                .nicegui-toggle {
+                    margin: 3px 0 !important;
+                }
+                /* 16:9 widescreen optimizations */
+                @media (min-width: 1920px) {
+                    .page-shell {
+                        padding: 16px 24px;
+                    }
+                    .hero-title {
+                        font-size: 1.75rem;
+                    }
+                    .camera-main {
+                        min-height: 500px;
+                    }
                 }
             </style>
             """
@@ -260,93 +329,96 @@ class WebUI:
                 with ui.row().classes('items-center justify-between w-full'):
                     with ui.column().classes('gap-1'):
                         ui.label(f"{self.chamber_name} Control Panel").classes('hero-title')
-                        ui.label('Single-display chamber control with live logs, camera, and training controls.').classes('hero-subtitle')
+                        ui.label('Single-display chamber control optimized for 1080p widescreen.').classes('hero-subtitle')
                     with ui.column().classes('items-end gap-2'):
                         if self.virtual_mode:
-                            ui.label('Virtual Mode Enabled').classes('status-chip')
+                            ui.label('Virtual Mode').classes('status-chip')
                         self.log_level_badge = ui.label('Visible logs: DEBUG').classes('status-chip')
 
             with ui.row().classes('w-full q-gutter-md items-stretch'):
-                with ui.column().classes('col-12 col-lg-4'):
-                    with ui.card().classes('glass-card w-full'):
-                        ui.label('Session Configuration').classes('card-title')
-                        ui.label('Chamber Name').classes('field-label')
-                        self.chamber_name_input = ui.input(self.session.config["chamber_name"], on_change=lambda e: self.session.set_chamber_name(e.value)).classes('w-control')
+                # Left column: Configuration (sidebar)
+                with ui.column().classes('col-12 col-md-12 col-lg-3'):
+                    with ui.card().classes('glass-card w-full').style('padding: 0;'):
+                        with ui.expansion('Session Configuration', value=False).classes('w-full').style('font-weight: 600;'):
+                            ui.label('Chamber Name').classes('field-label')
+                            self.chamber_name_input = ui.input(self.session.config["chamber_name"], on_change=lambda e: self.session.set_chamber_name(e.value)).classes('w-control')
 
-                        ui.label('Rodent Name').classes('field-label')
-                        self.rodent_name_input = ui.input(self.session.config["rodent_name"], on_change=lambda e: self.session.set_rodent_name(e.value)).classes('w-control')
+                            ui.label('Rodent Name').classes('field-label')
+                            self.rodent_name_input = ui.input(self.session.config["rodent_name"], on_change=lambda e: self.session.set_rodent_name(e.value)).classes('w-control')
 
-                        ui.label('ITI Duration (s)').classes('field-label')
-                        self.iti_duration_input = ui.input(str(self.session.config["iti_duration"]), on_change=lambda e: self.session.set_iti_duration(int(e.value))).classes('w-control')
+                            ui.label('ITI Duration (s)').classes('field-label')
+                            self.iti_duration_input = ui.input(str(self.session.config["iti_duration"]), on_change=lambda e: self.session.set_iti_duration(int(e.value))).classes('w-control')
 
-                        ui.label('Trainer Sequence Directory').classes('field-label')
-                        self.trainer_seq_dir_input = ui.input(self.session.config["trainer_seq_dir"], on_change=lambda e: self.session.set_trainer_seq_dir(e.value)).classes('w-control')
+                            ui.label('Trainer').classes('field-label')
+                            self.trainer_select = ui.select(get_trainers(), value=self.session.config["trainer_name"], on_change=lambda e: self.session.set_trainer_name(e.value)).classes('w-control')
 
-                        ui.label('Trainer Sequence File').classes('field-label')
-                        self.trainer_seq_file_button = ui.button('Select File', on_click=self.pick_trainer_seq_file).classes('w-control')
-                        self.trainer_seq_file_input = ui.input(self.session.config["trainer_seq_file"], on_change=lambda e: self.session.set_trainer_seq_file(e.value)).classes('w-control')
+                        with ui.expansion('Paths & Files', value=False).classes('w-full').style('font-weight: 600;'):
+                            ui.label('Trainer Sequence Directory').classes('field-label')
+                            self.trainer_seq_dir_input = ui.input(self.session.config["trainer_seq_dir"], on_change=lambda e: self.session.set_trainer_seq_dir(e.value)).classes('w-control').style('font-size: 0.8rem;')
 
-                        ui.label('Data Directory').classes('field-label')
-                        self.data_dir_input = ui.input(self.session.config["data_dir"], on_change=lambda e: self.session.set_data_dir(e.value)).classes('w-control')
+                            ui.label('Trainer Sequence File').classes('field-label')
+                            self.trainer_seq_file_button = ui.button('Select File', on_click=self.pick_trainer_seq_file).classes('w-control')
+                            self.trainer_seq_file_input = ui.input(self.session.config["trainer_seq_file"], on_change=lambda e: self.session.set_trainer_seq_file(e.value)).classes('w-control').style('font-size: 0.8rem;')
 
-                        ui.label('Video Directory').classes('field-label')
-                        self.video_dir_input = ui.input(self.session.config["video_dir"], on_change=lambda e: self.session.set_video_dir(e.value)).classes('w-control')
+                            ui.label('Data Directory').classes('field-label')
+                            self.data_dir_input = ui.input(self.session.config["data_dir"], on_change=lambda e: self.session.set_data_dir(e.value)).classes('w-control').style('font-size: 0.8rem;')
 
-                        ui.label('Trainer').classes('field-label')
-                        self.trainer_select = ui.select(get_trainers(), value=self.session.config["trainer_name"], on_change=lambda e: self.session.set_trainer_name(e.value)).classes('w-control')
+                            ui.label('Video Directory').classes('field-label')
+                            self.video_dir_input = ui.input(self.session.config["video_dir"], on_change=lambda e: self.session.set_video_dir(e.value)).classes('w-control').style('font-size: 0.8rem;')
 
-                with ui.column().classes('col-12 col-lg-4'):
-                    with ui.card().classes('glass-card w-full'):
-                        ui.label('Log').classes('card-title')
-                        self.log_view = ui.log(max_lines=250).classes('w-full').style('height: 320px;')
-                        self.log_handler = LogElementHandler(self.log_view)
-                        formatter = logging.Formatter('[%(asctime)s:%(name)s:%(levelname)s] %(message)s')
-                        self.log_handler.setFormatter(formatter)
-                        session_logger.addHandler(self.log_handler)
-                        ui.context.client.on_disconnect(lambda: session_logger.removeHandler(self.log_handler))
-
-                        ui.label('Log Level').classes('field-label')
-                        self.log_level_input = ui.select(
-                            ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                            value='DEBUG',
-                            on_change=lambda e: self.set_log_level(e.value),
-                        ).classes('w-control')
-
-                        ui.separator().classes('soft-divider')
-                        ui.label('The log view filters by severity and re-renders when the level changes.').classes('field-label')
-
-                with ui.column().classes('col-12 col-lg-4'):
-                    with ui.card().classes('glass-card w-full'):
-                        ui.label('Camera Control').classes('card-title')
-                        ui.label('Camera Stream').classes('field-label')
+                # Center column: Camera (MAIN FOCUS)
+                with ui.column().classes('col-12 col-md-12 col-lg-5'):
+                    with ui.card().classes('glass-card w-full').style('display: flex; flex-direction: column; height: 100%;'):
+                        ui.label('Live Camera Feed').classes('card-title')
                         if self.virtual_mode:
                             ui.html(
-                                '<div class="camera-placeholder">'
+                                '<div class="camera-main">'
                                 '<div>'
-                                '<div style="font-size: 1.2rem; font-weight: 700; color: #e5e7eb; margin-bottom: 8px;">Virtual Camera Active</div>'
-                                '<div>The UI is connected to a virtual chamber, so no physical Pi camera stream is required.</div>'
+                                '<div style="font-size: 1.1rem; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">Virtual Camera Active</div>'
+                                '<div style="font-size: 0.9rem; color: #94a3b8;">No physical camera stream required</div>'
                                 '</div>'
                                 '</div>'
                             )
                         else:
-                            ui.image(source=f"http://{self.ip}:{self.video_port}/stream").style('width: 100%; max-width: 640px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px;')
+                            ui.image(source=f"http://{self.ip}:{self.video_port}/stream").style('width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px;')
 
-                        with ui.row().classes('w-full q-gutter-sm'):
-                            self.reinitialize_camera_button = ui.button('Reinitialize', on_click=self.reinitialize_camera).classes('col')
-                            self.focus_camera_button = ui.button('Focus Camera', on_click=self.lock_camera_focus).classes('col')
-                            self.video_recording_toggle = ui.toggle({0: 'Video Rec Off', 1: 'Video Rec On'}, value=False, on_change=lambda e: self.toggle_video_recording(bool(e.value))).classes('col')
-
-                        ui.label('House LED Brightness').classes('field-label')
-                        self.house_led_brightness_slider = ui.slider(min=0, max=100, value=0, on_change=lambda e: self.adjust_house_led_brightness(e.value)).classes('w-control')
-
-                    with ui.card().classes('glass-card w-full q-mt-md'):
-                        ui.label('Training Control').classes('card-title')
-                        with ui.row().classes('w-full q-gutter-sm'):
-                            self.start_training_button = ui.button('Start Training', on_click=self.start_training).classes('col')
-                            self.stop_training_button = ui.button('Stop Training', on_click=self.stop_training).classes('col')
                         with ui.row().classes('w-full q-gutter-sm q-mt-sm'):
-                            self.start_priming_button = ui.button('Start Priming', on_click=self.start_priming).classes('col')
-                            self.stop_priming_button = ui.button('Stop Priming', on_click=self.stop_priming).classes('col')
+                            self.reinitialize_camera_button = ui.button('Reinit', on_click=self.reinitialize_camera).classes('col-4')
+                            self.focus_camera_button = ui.button('Focus', on_click=self.lock_camera_focus).classes('col-4')
+                            self.video_recording_toggle = ui.toggle({0: 'Rec Off', 1: 'Rec On'}, value=False, on_change=lambda e: self.toggle_video_recording(bool(e.value))).classes('col-4')
+
+                        ui.label('House LED (0-100%)').classes('field-label')
+                        self.house_led_brightness_slider = ui.slider(min=0, max=100, value=0, on_change=lambda e: self.adjust_house_led_brightness(e.value)).classes('w-control').style('margin-top: 8px;')
+
+                # Right column: Logs & Training Controls
+                with ui.column().classes('col-12 col-md-12 col-lg-4'):
+                    # Training controls (expanded by default)
+                    with ui.card().classes('glass-card w-full'):
+                        with ui.expansion('Training Control', value=True).classes('w-full').style('font-weight: 600;'):
+                            with ui.row().classes('w-full q-gutter-sm'):
+                                self.start_training_button = ui.button('Start', on_click=self.start_training).classes('col')
+                                self.stop_training_button = ui.button('Stop', on_click=self.stop_training).classes('col')
+                            with ui.row().classes('w-full q-gutter-sm q-mt-sm'):
+                                self.start_priming_button = ui.button('Prime', on_click=self.start_priming).classes('col')
+                                self.stop_priming_button = ui.button('Stop Prime', on_click=self.stop_priming).classes('col')
+
+                    # Logs section
+                    with ui.card().classes('glass-card w-full q-mt-md'):
+                        ui.label('Session Log').classes('card-title')
+                        self.log_view = ui.log(max_lines=250).classes('w-full').style('height: 340px;')
+                        self.log_handler = LogElementHandler(self.log_view)
+                        formatter = logging.Formatter('[%(levelname)s] %(message)s')
+                        self.log_handler.setFormatter(formatter)
+                        session_logger.addHandler(self.log_handler)
+                        ui.context.client.on_disconnect(lambda: session_logger.removeHandler(self.log_handler))
+
+                        with ui.row().classes('w-full q-gutter-sm items-center q-mt-sm'):
+                            ui.label('Level:').classes('text-sm')
+                            self.log_level_input = ui.select(
+                                ['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                                value='DEBUG',
+                                on_change=lambda e: self.set_log_level(e.value),
+                            ).classes('col').style('max-width: 150px;')
 
     async def pick_trainer_seq_file(self) -> None:
         result = await file_picker(directory=self.session.config["trainer_seq_dir"], multiple=False)
