@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import yaml
 import threading
 
 # Local modules
@@ -33,22 +32,23 @@ class Session:
     This class manages the session configuration, hardware initialization, and training phases.
     It uses the Chamber class to manage the hardware components and the Trainer class to manage the training phases.
     """
-    def __init__(self, session_config = {}, session_config_file='~/session_config.yaml'):
+    def __init__(self, session_config = {}):
         """
         Initializes the session with the given configuration.
         """
         logger.info("Initializing session...")
         code_dir = os.path.dirname(os.path.abspath(__file__))
-        self.config = Config(config=session_config, config_file=session_config_file)
+        self.config = Config(config=session_config)
         
-        # Construct session config by loading parameters from session_config argument > session_config_file > default values
+        # Construct session config from the provided runtime dictionary and defaults.
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
         self.config.ensure_param("rodent_name", "TestRodent")
         self.config.ensure_param("iti_duration", 10)
         self.config.ensure_param("trainer_seq_dir", os.path.join(code_dir, "sequences"))
         self.config.ensure_param("trainer_seq_file", "sequences.csv")
-        self.config.ensure_param("data_dir", "/mnt/shared/data")
-        self.config.ensure_param("video_dir", "/mnt/shared/videos")
+        # Use env vars for data_dir and video_dir (for virtual mode testing), otherwise use defaults
+        self.config.ensure_param("data_dir", os.environ.get("NC4TOUCH_DATA_DIR", "/mnt/shared/data"))
+        self.config.ensure_param("video_dir", os.environ.get("NC4TOUCH_VIDEO_DIR", "/mnt/shared/videos"))
         self.config.ensure_param("run_interval", 0.1)
         self.config.ensure_param("priming_duration", 20)
         self.config.ensure_param("chamber_name", "Chamber0")
@@ -187,15 +187,6 @@ class Session:
         else:
             logger.warning("Recording is already in progress.")
     
-    def load_config(self, config_file):
-        if os.path.isfile(config_file):
-            with open(config_file, 'r') as file:
-                config = yaml.safe_load(file)
-            return config
-        else:
-            logger.error(f"Config file {config_file} not found.")
-            return {}
-
     def set_iti_duration(self, iti_duration):
         if isinstance(iti_duration, int) and iti_duration > 0:
             self.config["iti_duration"] = iti_duration

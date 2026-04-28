@@ -1,18 +1,33 @@
 # Virtual Chamber Requirements
-# Minimal dependencies for running virtual chamber (no hardware needed)
+# For running virtual chamber WebUI without hardware
 
-# Core dependencies
-pyyaml>=5.1  # For configuration files
+# Web framework
+nicegui==2.17.0
+fastapi==0.115.12
+uvicorn==0.34.2
+uvloop==0.21.0
+aiofiles==24.1.0
+python-multipart==0.0.20
+python-socketio==5.13.0
+python-engineio==4.12.1
 
-# GUI dependencies (optional - only needed if using VirtualChamberGUI)
-# pillow - For displaying BMP images in GUI
+# HTTP and async
+aiohttp==3.11.18
+httpx==0.28.1
+requests==2.32.3
+
+# Data processing
+pygame==2.6.1
 pillow>=9.0.0
+pydantic==2.11.4
+PyYAML>=5.1
+pscript==0.7.7
 
-# tkinter - Usually included with Python, but if not:
-# - Ubuntu/Debian: sudo apt-get install python3-tk
-# - Fedora: sudo dnf install python3-tkinter  
-# - macOS: brew install python-tk@3.11 (or appropriate Python version)
-# - Windows: Included with Python installer
+# Utilities
+click==8.2.0
+netifaces==0.11.0
+python-dotenv==1.1.0
+Pygments==2.19.1
 
 # Note: Virtual chamber has NO hardware dependencies!
-# No pigpio, no serial, no GPIO required.
+# No pigpio, no rpi-lgpio, no serial, no GPIO required.

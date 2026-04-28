@@ -26,9 +26,8 @@ class Trainer(ABC):
             raise ValueError("chamber must be an instance of Chamber or VirtualChamber")
 
         self.chamber = chamber
-        # Trainers are runtime-configured via Session/WebUI; avoid inheriting stale
-        # values from the default ~/config.yaml.
-        self.config = Config(config=trainer_config, config_file=None)
+        # Trainers are runtime-configured via Session/WebUI.
+        self.config = Config(config=trainer_config)
 
         # Ensure required parameters are set in the config
         self.config.ensure_param("trainer_name", "DoNothingTrainer")

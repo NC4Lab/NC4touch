@@ -20,9 +20,9 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 class Chamber:
     """Single-display chamber for NC4Touch."""
 
-    def __init__(self, chamber_config={}, chamber_config_file='~/chamber_config.yaml'):
+    def __init__(self, chamber_config={}):
         logger.info("Initializing Chamber...")
-        self.config = Config(config=chamber_config, config_file=chamber_config_file)
+        self.config = Config(config=chamber_config)
         self.config.ensure_param("chamber_name", "Chamber0")
         self.config.ensure_param("reward_LED_pins", [13, 21, 26])
         self.config.ensure_param("reward_pump_pin", 27)

@@ -22,6 +22,12 @@ class VirtualCamera:
         self.device = "VIRTUAL_CAMERA"
         logger.info(f"Virtual Camera initialized")
 
+    def reinitialize(self):
+        logger.info("Virtual Camera: reinitialize requested (no-op)")
+
+    def lock_focus(self):
+        logger.info("Virtual Camera: focus lock requested (no-op)")
+
     def start_recording(self, filename):
         logger.info(f"Virtual Camera: recording to {filename}")
 
@@ -35,12 +41,12 @@ class VirtualChamber:
     Maintains the same API as the real Chamber class.
     """
 
-    def __init__(self, chamber_config={}, chamber_config_file='~/chamber_config.yaml'):
+    def __init__(self, chamber_config={}):
         logger.info("="*60)
         logger.info("Initializing VIRTUAL Chamber")
         logger.info("="*60)
 
-        self.config = Config(config=chamber_config, config_file=chamber_config_file)
+        self.config = Config(config=chamber_config)
         self.config.ensure_param("chamber_name", "VirtualChamber")
         self.config.ensure_param("name", "VirtualChamber")  # Alias for compatibility with Trainer
         self.config.ensure_param("reward_LED_pin", 21)
