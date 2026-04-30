@@ -441,3 +441,7 @@ def setup_webui():
     
     return web_ui
 
+
+if __name__ in {"__main__", "__mp_main__"}:
+    setup_webui()
+
