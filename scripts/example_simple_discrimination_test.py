@@ -47,7 +47,7 @@ def main():
     chamber.beambreak.activate()
     
     print(f"Image directory: {chamber.config['image_dir']}")
-    print(f"Expected images: A01.bmp (correct), C01.bmp (incorrect)\n")
+    print(f"Expected images: A01.bmp (correct), A02.bmp (incorrect)\n")
     
     # 3. Create trainer
     print("Initializing Simple Discrimination trainer...")
@@ -68,7 +68,7 @@ def main():
     print("\n" + "="*70)
     print("  INSTRUCTIONS:")
     print("="*70)
-    print("• The trainer will randomly place A01 (correct) and C01 (incorrect)")
+    print("• The trainer will randomly place A01 (correct) and A02 (incorrect)")
     print("• Click the touchscreen with the CORRECT image (A01)")
     print("• When reward is given, click 'Break Beam' to simulate eating")
     print("• Watch console for trial feedback")

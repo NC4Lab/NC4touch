@@ -75,10 +75,14 @@ class ComplexDiscrimination(Trainer):
         self.chamber.display_command("left", "BLACK")
         self.chamber.display_command("right", "BLACK")
 
+    def _prepare_touch_window(self):
+        self.chamber.display_flush()
+        self.chamber.display_clear_touches(drain_events=True)
+
     # ---------- session control ----------
 
     def start_training(self):
-        logger.info("Starting Simple Discrimination (no punishment)")
+        logger.info("Starting Complex Discrimination")
         self.chamber.default_state()
         self.open_data_file()
         self.state = SDState.START_TRAINING
@@ -118,6 +122,7 @@ class ComplexDiscrimination(Trainer):
 
         elif self.state == SDState.SHOW_STIMULI:
             self.show_images()
+            self._prepare_touch_window()
             self.trial_start_time = now
             self.state = SDState.WAIT_FOR_TOUCH
 
