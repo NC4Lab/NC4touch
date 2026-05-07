@@ -245,6 +245,7 @@ class PRL(Trainer):
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
                 self.write_event("TouchTimeout ", self.current_trial)
+                self.clear_images()
                 self._advance_after_trial()
         
         elif self.state == PRLState.CORRECT:
@@ -269,6 +270,7 @@ class PRL(Trainer):
             # ERROR state, handling incorrect touch
             logger.debug("Current state: ERROR")
             logger.info("Incorrect touch detected.")
+            self.clear_images()
             self.write_event("IncorrectTouch", self.current_trial)
             self.incorrect_led_start_time = current_time
             self.chamber.punishment_led.activate()
