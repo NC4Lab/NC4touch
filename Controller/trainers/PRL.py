@@ -11,6 +11,8 @@ class PRLState(Enum):
     """Enum for different states in the PRL trainer."""
     IDLE = auto()
     START_TRAINING = auto()
+    INITIATION_READY = auto()
+    WAIT_FOR_TRIAL_INITIATION = auto()
     START_TRIAL = auto()
     CORRECT = auto()
     ERROR = auto()
@@ -43,11 +45,14 @@ class PRL(Trainer):
 
     The trainer will repeat this process for a set number of trials.
 
-    At a set trial number, the trainer will switch the probability of the reward to 20%/80% (adjust in config) until the end of the training session.
+    The trial stimuli are randomly assigned left/right on every trial so reward
+    probability is cued by the image identity rather than screen side. After a
+    configurable streak of correct responses to the high-probability image, the
+    high/low image mapping reverses for subsequent trials.
 
 
     State machine:
-    IDLE -> START_TRAINING -> START_TRIAL -> WAIT_FOR_TOUCH -> CORRECT/ERROR -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
+    IDLE -> START_TRAINING -> INITIATION_READY -> WAIT_FOR_TRIAL_INITIATION -> START_TRIAL -> WAIT_FOR_TOUCH -> CORRECT/ERROR -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
     """
     def __init__(self, chamber, trainer_config = {}):
         super().__init__(chamber=chamber, trainer_config=trainer_config)
@@ -66,6 +71,7 @@ class PRL(Trainer):
         self.config.ensure_param("iti_duration", 10) # Duration of the inter-trial interval (ITI)
         self.config.ensure_param("display_refresh_interval", 1.0) # Re-show images while waiting for touch
         self.config.ensure_param("incorrect_led_secs", 3.0) # Duration to show incorrect LED
+        self.config.ensure_param("reversal_consecutive_corrects", 5) # Consecutive correct trials required to reverse
 
 
         # Local variables used by the trainer during the training session and not set in the config file.
@@ -76,15 +82,19 @@ class PRL(Trainer):
         self.last_beam_break_time = time.time()
         self.iti_start_time = time.time()
 
-        self.left_image = "x"   # X always on left screen (not tied to reward)
-        self.right_image = "o"  # O always on right screen (not tied to reward)
+        self.high_reward_image = "x"  # Image identity that currently maps to high reward probability
+        self.low_reward_image = "o"   # Image identity that currently maps to low reward probability
+        self.left_image = self.high_reward_image
+        self.right_image = self.low_reward_image
 
-        #Initialize reward probabilities to 0, will be set at the start of training
+        # Initialize reward probabilities to 0, will be set at the start of each trial.
         self.left_reward_probability = 0
         self.right_reward_probability = 0
         self.current_trial = 0
         self.current_trial_iti = self.config["iti_duration"]
         self.touched_side = None  # track which side was touched for reward prob lookup
+        self.consecutive_correct = 0
+        self.pending_reversal = False
         self.last_image_show_time = 0.0
         self.incorrect_led_start_time = 0.0
         self.state = PRLState.IDLE
@@ -109,6 +119,39 @@ class PRL(Trainer):
             self.state = PRLState.END_TRAINING
         else:
             self.state = PRLState.ITI_START
+
+    def _reverse_image_mapping(self):
+        """Swap the high- and low-probability image identities."""
+        self.high_reward_image, self.low_reward_image = (
+            self.low_reward_image,
+            self.high_reward_image,
+        )
+        logger.info(
+            "Reversed reward cue mapping: high=%s low=%s",
+            self.high_reward_image,
+            self.low_reward_image,
+        )
+
+    def _assign_trial_images(self):
+        """Randomly place the high- and low-probability images on left/right."""
+        if random.random() < 0.5:
+            self.left_image = self.high_reward_image
+            self.right_image = self.low_reward_image
+            self.left_reward_probability = self.config["high_reward_probability"]
+            self.right_reward_probability = self.config["low_reward_probability"]
+        else:
+            self.left_image = self.low_reward_image
+            self.right_image = self.high_reward_image
+            self.left_reward_probability = self.config["low_reward_probability"]
+            self.right_reward_probability = self.config["high_reward_probability"]
+
+    def _touch_is_high_reward(self, side):
+        """Return True when the touched side contains the high-probability cue."""
+        if side == "LEFT":
+            return self.left_image == self.high_reward_image
+        if side == "RIGHT":
+            return self.right_image == self.high_reward_image
+        return False
 
 
     def load_images(self):
@@ -170,15 +213,34 @@ class PRL(Trainer):
             logger.info("Starting training session...")
             self.write_event("StartTraining ", 1)
             self._set_house_light_active()
-            ##randomly assign the reward probability to the touch screens
-            if random.random() < 0.5:
-                self.left_reward_probability=(self.config["high_reward_probability"])
-                self.right_reward_probability=(self.config["low_reward_probability"])
-            else:
-                self.left_reward_probability=(self.config["low_reward_probability"])
-                self.right_reward_probability=(self.config["high_reward_probability"])
             self.current_trial = 0
-            self.state = PRLState.START_TRIAL
+            self.consecutive_correct = 0
+            self.pending_reversal = False
+            self.state = PRLState.INITIATION_READY
+
+        elif self.state == PRLState.INITIATION_READY:
+            # INITIATION_READY state, waiting for trial initiation beam break.
+            logger.debug("Current state: INITIATION_READY")
+            if self._is_last_trial():
+                logger.info("All trials completed.")
+                self.state = PRLState.END_TRAINING
+            else:
+                trial_number = self.current_trial + 1
+                self.write_event("TrialInitiationReady", trial_number)
+                self._set_house_light_active()
+                self.clear_images()
+                self.chamber.display_clear_touches(drain_events=True)
+                self.chamber.beambreak.activate()
+                self.state = PRLState.WAIT_FOR_TRIAL_INITIATION
+
+        elif self.state == PRLState.WAIT_FOR_TRIAL_INITIATION:
+            # WAIT_FOR_TRIAL_INITIATION state, waiting for beam break to begin the trial.
+            logger.debug("Current state: WAIT_FOR_TRIAL_INITIATION")
+            if self.chamber.beambreak.state == False:
+                trial_number = self.current_trial + 1
+                logger.info("Trial initiation detected for trial %s", trial_number)
+                self.write_event("TrialInitiated", trial_number)
+                self.state = PRLState.START_TRIAL
 
         elif self.state == PRLState.START_TRIAL:
             # START_TRIAL state, preparing for the next trial
@@ -190,15 +252,7 @@ class PRL(Trainer):
                 trial_number = self.current_trial
                 logger.info("Starting trial %s", trial_number)
                 self.write_event("StartTrial", trial_number)
-                if self.current_trial == self.config["trial_to_reverse"]:
-                    # Reverse the reward probabilities
-                    logger.info("Reversing reward probabilities...")
-                    if self.left_reward_probability == self.config["high_reward_probability"]:
-                        self.left_reward_probability = self.config["low_reward_probability"]
-                        self.right_reward_probability = self.config["high_reward_probability"]
-                    else:
-                        self.left_reward_probability = self.config["high_reward_probability"]
-                        self.right_reward_probability = self.config["low_reward_probability"]
+                self._assign_trial_images()
                 # Load images for the current trial
                 self.chamber.display_clear_touches(drain_events=True)
                 self.load_images()
@@ -235,17 +289,18 @@ class PRL(Trainer):
                     logger.info("Left screen touched")
                     self.write_event("LeftScreenTouched", self.current_trial)
                     self.touched_side = "LEFT"
-                    self.state = PRLState.CORRECT if self.left_reward_probability == self.config["high_reward_probability"] else PRLState.ERROR
+                    self.state = PRLState.CORRECT if self._touch_is_high_reward("LEFT") else PRLState.ERROR
                 elif side == "RIGHT":
                     logger.info("Right screen touched")
                     self.write_event("RightScreenTouched", self.current_trial)
                     self.touched_side = "RIGHT"
-                    self.state = PRLState.CORRECT if self.right_reward_probability == self.config["high_reward_probability"] else PRLState.ERROR
+                    self.state = PRLState.CORRECT if self._touch_is_high_reward("RIGHT") else PRLState.ERROR
             else:
                 # Timeout occurred, move to ITI state
                 logger.info("Touch timeout occurred.")
                 self.write_event("TouchTimeout ", self.current_trial)
                 self.clear_images()
+                self.consecutive_correct = 0
                 self._advance_after_trial()
         
         elif self.state == PRLState.CORRECT:
@@ -253,6 +308,10 @@ class PRL(Trainer):
             logger.debug("Current state: CORRECT")
             logger.info("Correct touch detected.")
             self.write_event("CorrectTouch ", self.current_trial)
+            self.consecutive_correct += 1
+            reversal_threshold = int(self.config["reversal_consecutive_corrects"] or 5)
+            if self.consecutive_correct >= reversal_threshold:
+                self.pending_reversal = True
 
             logger.debug("Clearing trial images after correct touch")
             self.clear_images()
@@ -272,6 +331,7 @@ class PRL(Trainer):
             logger.info("Incorrect touch detected.")
             self.clear_images()
             self.write_event("IncorrectTouch", self.current_trial)
+            self.consecutive_correct = 0
             self.incorrect_led_start_time = current_time
             self.chamber.front_led.activate()
             self.write_event("IncorrectLEDOn", self.current_trial)
@@ -369,7 +429,16 @@ class PRL(Trainer):
             logger.debug("Current state: END_TRIAL")
             logger.info(f"Ending trial {self.current_trial}...")
             self.write_event("EndTrial", self.current_trial)
-            self.state = PRLState.START_TRIAL
+            if self.pending_reversal:
+                logger.info(
+                    "Applying reversal after %s consecutive correct responses",
+                    self.consecutive_correct,
+                )
+                self.write_event("RewardCueReversal", self.current_trial)
+                self._reverse_image_mapping()
+                self.pending_reversal = False
+                self.consecutive_correct = 0
+            self.state = PRLState.INITIATION_READY
 
         elif self.state == PRLState.END_TRAINING:
             # End the training session
