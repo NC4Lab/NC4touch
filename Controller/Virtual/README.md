@@ -21,7 +21,7 @@ from Virtual.VirtualChamber import VirtualChamber
 chamber = VirtualChamber()
 
 # Use exactly like physical chamber
-chamber.reward_led.on()
+chamber.back_led.on()
 chamber.reward.dispense()
 chamber.display_command("left", "DISPLAY:image.bmp")
 
@@ -117,8 +117,8 @@ chamber.get_display_device("middle")  # VirtualDisplayDevice
 chamber.get_display_device("right")   # VirtualDisplayDevice
 chamber.reward       # VirtualReward
 chamber.beambreak    # VirtualBeamBreak
-chamber.reward_led   # VirtualLED
-chamber.punishment_led # VirtualLED
+chamber.back_led     # VirtualLED
+chamber.front_led    # VirtualLED
 chamber.buzzer       # VirtualBuzzer
 ```
 
@@ -283,7 +283,7 @@ def simulate_correct_trial(chamber):
     chamber.get_display_device("left").simulate_touch(160, 240, duration=0.2)
     
     # Reward delivered
-    chamber.reward_led.on()
+    chamber.back_led.on()
     chamber.reward.dispense()
     time.sleep(0.5)
     chamber.reward.stop()
@@ -293,7 +293,7 @@ def simulate_correct_trial(chamber):
     time.sleep(2)
     
     # Cleanup
-    chamber.reward_led.off()
+    chamber.back_led.off()
     chamber.display_command("left", "CLEAR")
     chamber.display_command("right", "CLEAR")
 ```
@@ -305,7 +305,7 @@ def simulate_correct_trial(chamber):
 ```python
 # This code works with BOTH physical and virtual chambers:
 def run_trial(chamber):
-    chamber.reward_led.on()
+    chamber.back_led.on()
     chamber.display_command("left", "DISPLAY:stim.bmp")
     
     # Wait for touch...

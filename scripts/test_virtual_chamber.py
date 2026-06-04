@@ -41,13 +41,13 @@ def test_basic_operations():
 
     # Test LED control
     print("\n--- Testing LEDs ---")
-    chamber.reward_led.on(brightness=200)
+    chamber.back_led.on(brightness=200)
     time.sleep(1)
-    chamber.reward_led.off()
+    chamber.back_led.off()
 
-    chamber.punishment_led.on(brightness=255)
+    chamber.front_led.on(brightness=255)
     time.sleep(1)
-    chamber.punishment_led.off()
+    chamber.front_led.off()
 
     # Test buzzer
     print("\n--- Testing Buzzer ---")
@@ -121,9 +121,9 @@ def test_with_gui():
         time.sleep(1)
         
         # Reward LED on
-        chamber.reward_led.on()
+        chamber.back_led.on()
         time.sleep(2)
-        chamber.reward_led.off()
+        chamber.back_led.off()
         
         logger.info("Demo complete - now you can interact with the GUI")
 
@@ -162,9 +162,9 @@ def test_session_integration():
 
         # Test that trainer can interact with virtual chamber
         print("\nTesting trainer-chamber interaction...")
-        session.chamber.reward_led.on()
+        session.chamber.back_led.on()
         time.sleep(0.5)
-        session.chamber.reward_led.off()
+        session.chamber.back_led.off()
 
         print("\n✓ Session integration test completed!")
 

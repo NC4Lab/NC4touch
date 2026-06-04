@@ -39,7 +39,7 @@ Added virtual mode support:
 All virtual components implement the exact same interface as physical hardware:
 ```python
 # Works with both physical and virtual chambers
-chamber.reward_led.on()
+chamber.back_led.on()
 chamber.get_left_display_device().send_command("DISPLAY:image.bmp")
 chamber.reward.dispense()
 ```

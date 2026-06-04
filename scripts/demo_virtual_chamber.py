@@ -33,11 +33,11 @@ def simple_demo():
 
     # Test each component
     print("\n1. Testing LEDs...")
-    print("   - Reward LED ON")
-    chamber.reward_led.on(brightness=200)
+    print("   - Back LED ON")
+    chamber.back_led.on(brightness=200)
     time.sleep(1)
-    print("   - Reward LED OFF")
-    chamber.reward_led.off()
+    print("   - Back LED OFF")
+    chamber.back_led.off()
     time.sleep(0.5)
 
     print("\n2. Testing Buzzer...")
@@ -132,7 +132,7 @@ def automated_trial_demo():
     print("[TRIAL START] Presenting stimuli")
     chamber.get_left_display_device().send_command("DISPLAY:plus.bmp")
     chamber.get_right_display_device().send_command("DISPLAY:minus.bmp")
-    chamber.reward_led.on(brightness=100)  # House light
+    chamber.back_led.on(brightness=100)  # House light
     time.sleep(1)
 
     # Animal makes choice (left = correct)
@@ -142,7 +142,7 @@ def automated_trial_demo():
 
     # Deliver reward
     print("[REWARD] Delivering reward")
-    chamber.reward_led.on(brightness=255)  # Bright reward light
+    chamber.back_led.on(brightness=255)  # Bright back light
     chamber.reward.dispense()
     time.sleep(0.5)
     chamber.reward.stop()
@@ -159,7 +159,7 @@ def automated_trial_demo():
     print("[CLEANUP] Clearing screens")
     chamber.get_left_display_device().send_command("CLEAR")
     chamber.get_right_display_device().send_command("CLEAR")
-    chamber.reward_led.off()
+    chamber.back_led.off()
 
     # Show results
     state = chamber.get_state()
