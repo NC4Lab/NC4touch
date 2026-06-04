@@ -49,11 +49,11 @@ class VirtualChamber:
         self.config = Config(config=chamber_config)
         self.config.ensure_param("chamber_name", "VirtualChamber")
         self.config.ensure_param("name", "VirtualChamber")  # Alias for compatibility with Trainer
-        self.config.ensure_param("reward_LED_pin", 21)
+        self.config.ensure_param("back_led_pin", 21)
         self.config.ensure_param("reward_pump_pin", 27)
         self.config.ensure_param("beambreak_pin", 4)
-        self.config.ensure_param("punishment_LED_pin", 17)
-        self.config.ensure_param("house_LED_pin", 20)
+        self.config.ensure_param("front_led_pin", 17)
+        self.config.ensure_param("house_led_pin", 20)
         self.config.ensure_param("buzzer_pin", 16)
         self.config.ensure_param("camera_device", "/dev/video0")
         self.config.ensure_param("display_width", 1920)
@@ -94,19 +94,19 @@ class VirtualChamber:
         self.display_devices_all = [self.left_display_device, self.middle_display_device, self.right_display_device]
 
         # Initialize virtual peripherals
-        self.reward_led = VirtualLED(
+        self.back_led = VirtualLED(
             pi=self.pi,
-            pin=self.config["reward_LED_pin"],
+            pin=self.config["back_led_pin"],
             brightness=140
         )
-        self.punishment_led = VirtualLED(
+        self.front_led = VirtualLED(
             pi=self.pi,
-            pin=self.config["punishment_LED_pin"],
+            pin=self.config["front_led_pin"],
             brightness=255
         )
         self.house_led = VirtualLED(
             pi=self.pi,
-            pin=self.config["house_LED_pin"],
+            pin=self.config["house_led_pin"],
             brightness=255
         )
         self.beambreak = VirtualBeamBreak(
@@ -132,7 +132,7 @@ class VirtualChamber:
         logger.info(f"  - 3 Virtual display zones (L/M/R)")
         logger.info(f"  - Virtual Reward Pump")
         logger.info(f"  - Virtual Beam Break Sensor")
-        logger.info(f"  - 2 Virtual LEDs (reward/punishment)")
+        logger.info(f"  - 2 Virtual LEDs (back/front)")
         logger.info(f"  - Virtual House LED")
         logger.info(f"  - Virtual Buzzer")
         logger.info("="*60)
@@ -275,8 +275,8 @@ class VirtualChamber:
         Reset chamber to default state (all hardware off/clear).
         """
         self.send_display_command("CLEAR")
-        self.reward_led.deactivate()
-        self.punishment_led.deactivate()
+        self.back_led.deactivate()
+        self.front_led.deactivate()
         self.house_led.deactivate()
         self.buzzer.deactivate()
         self.reward.stop()
@@ -315,8 +315,8 @@ class VirtualChamber:
             'left_display_device': left_state,
             'middle_display_device': middle_state,
             'right_display_device': right_state,
-            'reward_led': self.reward_led.get_state(),
-            'punishment_led': self.punishment_led.get_state(),
+            'back_led': self.back_led.get_state(),
+            'front_led': self.front_led.get_state(),
             'house_led': self.house_led.get_state(),
             'beambreak': {
                 'state': self.beambreak.state,

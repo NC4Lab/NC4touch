@@ -47,8 +47,8 @@ class Trainer(ABC):
         self.config.ensure_param("reward_pump_secs", 3.0)
 
         # LED colors
-        self.config.ensure_param("reward_led_color", (0, 255, 0))
-        self.config.ensure_param("punishment_led_color", (255, 0, 0))
+        self.config.ensure_param("back_led_color", (0, 255, 0))
+        self.config.ensure_param("front_led_color", (255, 0, 0))
 
         # Punishment
         self.config.ensure_param("punish_duration", 5.0)
@@ -137,9 +137,9 @@ class Trainer(ABC):
         self.chamber.house_led.activate()
 
     def default_iti_start(self):
-        """Dim house LED, deactivate reward LED, activate beambreak. Returns current time."""
+        """Dim house LED, deactivate back LED, activate beambreak. Returns current time."""
         self.chamber.house_led.set_brightness(self.config["house_led_brightness_iti"])
-        self.chamber.reward_led.deactivate()
+        self.chamber.back_led.deactivate()
         self.chamber.beambreak.activate()
         return time.time()
 
@@ -152,33 +152,33 @@ class Trainer(ABC):
         return current_iti_duration
 
     def default_deliver_reward(self, duration=None):
-        """Dispense reward, activate reward LED and beambreak. Returns start time."""
+        """Dispense reward, activate back LED and beambreak. Returns start time."""
         self.chamber.reward.dispense()
-        self.chamber.reward_led.activate()
+        self.chamber.back_led.activate()
         self.chamber.beambreak.activate()
         return time.time()
 
     def default_stop_reward(self):
-        """Stop pump, deactivate reward LED and beambreak."""
+        """Stop pump, deactivate back LED and beambreak."""
         self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
+        self.chamber.back_led.deactivate()
         self.chamber.beambreak.deactivate()
 
     def default_punishment(self):
-        """Activate punishment LED and buzzer. Returns start time."""
-        self.chamber.punishment_led.activate()
+        """Activate front LED and buzzer. Returns start time."""
+        self.chamber.front_led.activate()
         self.chamber.buzzer.activate()
         return time.time()
 
     def default_stop_punishment(self):
-        """Deactivate punishment LED and buzzer."""
-        self.chamber.punishment_led.deactivate()
+        """Deactivate front LED and buzzer."""
+        self.chamber.front_led.deactivate()
         self.chamber.buzzer.deactivate()
 
     def default_setup_led_colors(self):
-        """Set reward/punishment LED colors from config."""
-        self.chamber.reward_led.set_color(self.config["reward_led_color"])
-        self.chamber.punishment_led.set_color(self.config["punishment_led_color"])
+        """Set back/front LED colors from config."""
+        self.chamber.back_led.set_color(self.config["back_led_color"])
+        self.chamber.front_led.set_color(self.config["front_led_color"])
 
     def default_end_trial(self):
         """Clear operant display zones at the end of a trial."""
@@ -194,8 +194,8 @@ class Trainer(ABC):
     def default_stop_training(self):
         """Stop all hardware and close data file."""
         self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
+        self.chamber.back_led.deactivate()
+        self.chamber.front_led.deactivate()
         self.chamber.house_led.deactivate()
         self.chamber.buzzer.deactivate()
         self.chamber.beambreak.deactivate()
@@ -216,9 +216,9 @@ class Trainer(ABC):
         self.write_event("TrialData", data)
 
     def free_reward(self, duration=None):
-        """Dispense reward and turn on reward LED. Caller manages timing via state machine."""
+        """Dispense reward and turn on back LED. Caller manages timing via state machine."""
         self.chamber.reward.dispense()
-        self.chamber.reward_led.activate()
+        self.chamber.back_led.activate()
 
     def wait_for_trial_initiation(self):
         """Check if beambreak was triggered for trial initiation."""

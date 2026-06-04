@@ -150,13 +150,13 @@ class VirtualChamberGUI:
         led_frame = ttk.LabelFrame(parent, text="LEDs", padding="10")
         led_frame.grid(row=2, column=1, sticky="nsew", pady=5, padx=5)
 
-        ttk.Label(led_frame, text="Reward LED:").pack()
-        self.reward_led_label = ttk.Label(led_frame, text="OFF", foreground="gray")
-        self.reward_led_label.pack()
+        ttk.Label(led_frame, text="Back LED:").pack()
+        self.back_led_label = ttk.Label(led_frame, text="OFF", foreground="gray")
+        self.back_led_label.pack()
 
-        ttk.Label(led_frame, text="Punishment LED:").pack(pady=(10, 0))
-        self.punishment_led_label = ttk.Label(led_frame, text="OFF", foreground="gray")
-        self.punishment_led_label.pack()
+        ttk.Label(led_frame, text="Front LED:").pack(pady=(10, 0))
+        self.front_led_label = ttk.Label(led_frame, text="OFF", foreground="gray")
+        self.front_led_label.pack()
 
         misc_frame = ttk.LabelFrame(parent, text="Buzzer and Reward", padding="10")
         misc_frame.grid(row=2, column=2, sticky="nsew", pady=5, padx=5)
@@ -239,8 +239,8 @@ class VirtualChamberGUI:
         self._log(f"  Right Display: {'TOUCHED' if state['right_display']['is_touched'] else 'not touched'}")
         self._log(f"    Image: {state['right_display']['current_image'] or 'none'}")
         self._log(f"  Beam: {'BROKEN' if state['beambreak']['state'] == 0 else 'intact'}")
-        self._log(f"  Reward LED: {'ON' if state['reward_led']['is_on'] else 'OFF'}")
-        self._log(f"  Punishment LED: {'ON' if state['punishment_led']['is_on'] else 'OFF'}")
+        self._log(f"  Back LED: {'ON' if state['back_led']['is_on'] else 'OFF'}")
+        self._log(f"  Front LED: {'ON' if state['front_led']['is_on'] else 'OFF'}")
         self._log(f"  Buzzer: {'ACTIVE' if state['buzzer']['is_active'] else 'silent'}")
         self._log(f"  Reward: {'DISPENSING' if state['reward']['is_dispensing'] else 'stopped'}")
         self._log(f"  Total rewards: {state['reward']['total_dispensed']}")
@@ -392,21 +392,21 @@ class VirtualChamberGUI:
         else:
             self.bb_status_label.config(text="Not Broken", foreground="green")
 
-        if state["reward_led"]["is_on"]:
-            self.reward_led_label.config(
-                text=f"ON (brightness: {state['reward_led']['brightness']})",
+        if state["back_led"]["is_on"]:
+            self.back_led_label.config(
+                text=f"ON (brightness: {state['back_led']['brightness']})",
                 foreground="yellow",
             )
         else:
-            self.reward_led_label.config(text="OFF", foreground="gray")
+            self.back_led_label.config(text="OFF", foreground="gray")
 
-        if state["punishment_led"]["is_on"]:
-            self.punishment_led_label.config(
-                text=f"ON (brightness: {state['punishment_led']['brightness']})",
+        if state["front_led"]["is_on"]:
+            self.front_led_label.config(
+                text=f"ON (brightness: {state['front_led']['brightness']})",
                 foreground="red",
             )
         else:
-            self.punishment_led_label.config(text="OFF", foreground="gray")
+            self.front_led_label.config(text="OFF", foreground="gray")
 
         if state["buzzer"]["is_active"]:
             self.buzzer_label.config(

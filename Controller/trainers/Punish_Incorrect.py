@@ -182,7 +182,7 @@ class PunishIncorrect(Trainer):
             logger.info("Dispensing free reward")
             self.write_event("FreeRewardStart", 1)
             self.chamber.reward.dispense()
-            self.chamber.reward_led.activate()
+            self.chamber.back_led.activate()
             self.state = PunishIncorrectState.DELIVERING_FREE_REWARD
 
         elif self.state == PunishIncorrectState.DELIVERING_FREE_REWARD:
@@ -190,7 +190,7 @@ class PunishIncorrect(Trainer):
             logger.debug("Current state: DELIVERING_FREE_REWARD")
             if current_time - self.reward_start_time >= self.config["free_reward_duration"]:
                 self.chamber.reward.stop()
-                self.chamber.reward_led.deactivate()
+                self.chamber.back_led.deactivate()
                 self.state = PunishIncorrectState.SHOW_FIRST
 
         elif self.state == PunishIncorrectState.SHOW_FIRST:
@@ -316,7 +316,7 @@ class PunishIncorrect(Trainer):
             self.reward_start_time = current_time
             self.write_event("RewardStart", self.current_trial)
             self.chamber.reward.dispense()
-            self.chamber.reward_led.activate()
+            self.chamber.back_led.activate()
             self.state = PunishIncorrectState.DELIVERING_REWARD
 
         elif self.state == PunishIncorrectState.DELIVERING_REWARD:
@@ -324,7 +324,7 @@ class PunishIncorrect(Trainer):
             logger.debug("Current state: DELIVERING_REWARD")
             if current_time - self.reward_start_time >= self.config["reward_duration"]:
                 self.chamber.reward.stop()
-                self.chamber.reward_led.deactivate()
+                self.chamber.back_led.deactivate()
                 self.state = PunishIncorrectState.END_TRIAL
 
         elif self.state == PunishIncorrectState.PUNISH_START:
@@ -332,7 +332,7 @@ class PunishIncorrect(Trainer):
             logger.debug("Current state: PUNISH_START")
             self.punish_start_time = current_time
             self.write_event("PunishStart", self.current_trial)
-            self.chamber.punishment_led.activate()
+            self.chamber.front_led.activate()
             self.chamber.buzzer.activate()
             self.state = PunishIncorrectState.DELIVERING_PUNISH
 
@@ -345,7 +345,7 @@ class PunishIncorrect(Trainer):
                 self.chamber.buzzer.deactivate()
 
             if elapsed >= self.config["punish_duration"]:
-                self.chamber.punishment_led.deactivate()
+                self.chamber.front_led.deactivate()
                 self.state = PunishIncorrectState.END_TRIAL
 
         elif self.state == PunishIncorrectState.END_TRIAL:
@@ -371,8 +371,8 @@ class PunishIncorrect(Trainer):
         # Stop the training session and reset hardware
         logger.info("Stopping Punish Incorrect training session...")
         self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
+        self.chamber.back_led.deactivate()
+        self.chamber.front_led.deactivate()
         self.chamber.buzzer.deactivate()
         self.close_data_file()
         self.state = PunishIncorrectState.IDLE

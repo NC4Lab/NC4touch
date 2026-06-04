@@ -24,15 +24,15 @@ class Chamber:
         logger.info("Initializing Chamber...")
         self.config = Config(config=chamber_config)
         self.config.ensure_param("chamber_name", "Chamber0")
-        self.config.ensure_param("reward_LED_pins", [13, 21, 26])
+        self.config.ensure_param("back_led_pins", [13, 21, 26])
         self.config.ensure_param("reward_pump_pin", 27)
         self.config.ensure_param("beambreak_pin", 4)
-        self.config.ensure_param("punishment_LED_pins", [18, 19, 17])
-        self.config.ensure_param("house_LED_pin", 20)
+        self.config.ensure_param("front_led_pins", [18, 19, 17])
+        self.config.ensure_param("house_led_pin", 20)
         self.config.ensure_param("buzzer_pin", 16)
         self.config.ensure_param("camera_device", "/dev/video0")
-        self.config.ensure_param("reward_led_brightness", 140)
-        self.config.ensure_param("punishment_led_brightness", 255)
+        self.config.ensure_param("back_led_brightness", 140)
+        self.config.ensure_param("front_led_brightness", 255)
         self.config.ensure_param("house_led_brightness", 100)
         self.config.ensure_param("buzzer_volume", 60)
         self.config.ensure_param("buzzer_frequency", 6000)
@@ -56,8 +56,8 @@ class Chamber:
         self.config.ensure_param("display_image_border_width", 1)
 
         # LED colors
-        self.config.ensure_param("reward_led_color", [0, 255, 0])
-        self.config.ensure_param("punishment_led_color", [255, 0, 0])
+        self.config.ensure_param("back_led_color", [0, 255, 0])
+        self.config.ensure_param("front_led_color", [255, 0, 0])
 
         self.pi = None
         if pigpio is not None:
@@ -99,21 +99,21 @@ class Chamber:
         }
         self.display_devices_all = [self.left_display_device, self.middle_display_device, self.right_display_device]
 
-        self.reward_led = LED(
+        self.back_led = LED(
             pi=self.pi,
-            rgb_pins=self.config["reward_LED_pins"],
-            brightness=self.config["reward_led_brightness"],
-            color=self.config["reward_led_color"],
+            rgb_pins=self.config["back_led_pins"],
+            brightness=self.config["back_led_brightness"],
+            color=self.config["back_led_color"],
         )
-        self.punishment_led = LED(
+        self.front_led = LED(
             pi=self.pi,
-            rgb_pins=self.config["punishment_LED_pins"],
-            brightness=self.config["punishment_led_brightness"],
-            color=self.config["punishment_led_color"],
+            rgb_pins=self.config["front_led_pins"],
+            brightness=self.config["front_led_brightness"],
+            color=self.config["front_led_color"],
         )
         self.house_led = LED(
             pi=self.pi,
-            pin=self.config["house_LED_pin"],
+            pin=self.config["house_led_pin"],
             brightness=self.config["house_led_brightness"],
         )
         self.beambreak = BeamBreak(
@@ -212,8 +212,8 @@ class Chamber:
     def default_state(self):
         """Set the default state for the chamber."""
         self.display_clear("all")
-        self.reward_led.deactivate()
-        self.punishment_led.deactivate()
+        self.back_led.deactivate()
+        self.front_led.deactivate()
         self.buzzer.deactivate()
         self.reward.stop()
 

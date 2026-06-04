@@ -194,7 +194,7 @@ class ComplexDiscrimination(Trainer):
     def stop_training(self):
         logger.info("Stopping Complex Discrimination...")
         self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
+        self.chamber.back_led.deactivate()
         self.chamber.beambreak.deactivate()
         self.clear_images()
         self.close_data_file()

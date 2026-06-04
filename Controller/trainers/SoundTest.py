@@ -10,8 +10,8 @@ class SoundTestState(Enum):
     IDLE = auto()
     START_LOOP = auto()
     HOUSE_LIGHT = auto()
-    REWARD_LED = auto()
-    PUNISHMENT_LED = auto()
+    BACK_LED = auto()
+    FRONT_LED = auto()
     BUZZER_60 = auto()
     IMAGES = auto()
     REWARD = auto()
@@ -97,36 +97,36 @@ class SoundTest(Trainer):
                 self.write_event("HouseLight", "OFF")
                 self.chamber.house_led.deactivate()
                 self.house_light_active = False
-                self.state = SoundTestState.REWARD_LED
+                self.state = SoundTestState.BACK_LED
 
-        elif self.state == SoundTestState.REWARD_LED:
-            if not getattr(self, 'reward_led_active', False):
-                logger.info("Reward LED ON")
-                self.write_event("RewardLED", "ON")
-                self.chamber.reward_led.activate()
-                self.reward_led_active = True
+        elif self.state == SoundTestState.BACK_LED:
+            if not getattr(self, 'back_led_active', False):
+                logger.info("Back LED ON")
+                self.write_event("BackLED", "ON")
+                self.chamber.back_led.activate()
+                self.back_led_active = True
                 self.state_start_time = current_time
 
             if self.check_duration(self.config["step_duration"]):
-                logger.info("Reward LED OFF")
-                self.write_event("RewardLED", "OFF")
-                self.chamber.reward_led.deactivate()
-                self.reward_led_active = False
-                self.state = SoundTestState.PUNISHMENT_LED
+                logger.info("Back LED OFF")
+                self.write_event("BackLED", "OFF")
+                self.chamber.back_led.deactivate()
+                self.back_led_active = False
+                self.state = SoundTestState.FRONT_LED
 
-        elif self.state == SoundTestState.PUNISHMENT_LED:
-            if not getattr(self, 'punishment_led_active', False):
-                logger.info("Punishment LED ON")
-                self.write_event("PunishmentLED", "ON")
-                self.chamber.punishment_led.activate()
-                self.punishment_led_active = True
+        elif self.state == SoundTestState.FRONT_LED:
+            if not getattr(self, 'front_led_active', False):
+                logger.info("Front LED ON")
+                self.write_event("FrontLED", "ON")
+                self.chamber.front_led.activate()
+                self.front_led_active = True
                 self.state_start_time = current_time
 
             if self.check_duration(self.config["step_duration"]):
-                logger.info("Punishment LED OFF")
-                self.write_event("PunishmentLED", "OFF")
-                self.chamber.punishment_led.deactivate()
-                self.punishment_led_active = False
+                logger.info("Front LED OFF")
+                self.write_event("FrontLED", "OFF")
+                self.chamber.front_led.deactivate()
+                self.front_led_active = False
                 self.state = SoundTestState.BUZZER_60
 
 

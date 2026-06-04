@@ -119,7 +119,7 @@ class Habituation(Trainer):
             logger.info(f"Preparing to deliver reward for trial {self.current_trial}...")
             self.write_event("DeliverRewardStart", self.current_trial)
             self.chamber.reward.dispense()
-            self.chamber.reward_led.activate()
+            self.chamber.back_led.activate()
             self.chamber.beambreak.activate()
             self.state = HabituationState.DELIVERING_REWARD
 
@@ -133,7 +133,7 @@ class Habituation(Trainer):
                     logger.info("Beam broken during reward dispense")
                     self.write_event("BeamBreakDuringReward", self.current_trial)
                     self.chamber.beambreak.deactivate()
-                    self.chamber.reward_led.deactivate()
+                    self.chamber.back_led.deactivate()
             else:
                 # Reward finished dispensing
                 logger.info(f"Reward dispense completed")
@@ -150,12 +150,12 @@ class Habituation(Trainer):
                     self.reward_collected = True
                     logger.info("Beam broken after reward dispense")
                     self.write_event("BeamBreakAfterReward", self.current_trial)
-                    self.chamber.reward_led.deactivate()
+                    self.chamber.back_led.deactivate()
                     self.state = HabituationState.ITI_START
             else:
                     logger.info(f"Beam break timeout")
                     self.write_event("BeamBreakTimeout", self.current_trial)
-                    self.chamber.reward_led.deactivate()
+                    self.chamber.back_led.deactivate()
                     self.state = HabituationState.ITI_START
         
         elif self.state == HabituationState.ITI_START:
@@ -164,7 +164,7 @@ class Habituation(Trainer):
             self.chamber.house_led.set_brightness(50)
             self.write_event("ITIStart", self.current_trial)
             self.chamber.beambreak.activate()
-            self.chamber.reward_led.deactivate()
+            self.chamber.back_led.deactivate()
             self.current_trial_iti = self.config["iti_duration"]
             self.iti_start_time = current_time
             self.state = HabituationState.ITI
@@ -202,8 +202,8 @@ class Habituation(Trainer):
         # Stop the training session
         logger.info("Stopping training session...")
         self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
+        self.chamber.back_led.deactivate()
+        self.chamber.front_led.deactivate()
         self.chamber.house_led.deactivate()
         self.chamber.beambreak.deactivate()
         self.close_data_file()

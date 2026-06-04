@@ -212,7 +212,7 @@ class SimpleDiscrimination(Trainer):
             self.reward_start_time = now
             self.write_event("RewardStart", trial_number)
             self.chamber.reward.dispense()
-            self.chamber.reward_led.activate()
+            self.chamber.back_led.activate()
             self.state = SDState.DELIVERING_REWARD
 
         elif self.state == SDState.ERROR:
@@ -222,14 +222,14 @@ class SimpleDiscrimination(Trainer):
             self.correction_count += 1
             self.punish_start_time = now
             self.write_event("PunishStart", trial_number)
-            self.chamber.punishment_led.activate()
+            self.chamber.front_led.activate()
             self.chamber.buzzer.activate()
             self.state = SDState.DELIVERING_PUNISH
 
         elif self.state == SDState.DELIVERING_REWARD:
             if now - self.reward_start_time >= reward_pump_secs:
                 self.chamber.reward.stop()
-                self.chamber.reward_led.deactivate()
+                self.chamber.back_led.deactivate()
                 self.trial_success = True
                 self.state = SDState.ITI_START
 
@@ -238,7 +238,7 @@ class SimpleDiscrimination(Trainer):
             if elapsed >= buzzer_duration:
                 self.chamber.buzzer.deactivate()
             if elapsed >= punish_duration:
-                self.chamber.punishment_led.deactivate()
+                self.chamber.front_led.deactivate()
                 self.trial_success = False
                 self.state = SDState.ITI_START
 
@@ -267,8 +267,8 @@ class SimpleDiscrimination(Trainer):
     def stop_training(self):
         logger.info("Stopping Simple Discrimination...")
         self.chamber.reward.stop()
-        self.chamber.reward_led.deactivate()
-        self.chamber.punishment_led.deactivate()
+        self.chamber.back_led.deactivate()
+        self.chamber.front_led.deactivate()
         self.chamber.buzzer.deactivate()
         self.chamber.beambreak.deactivate()
         self.clear_images()

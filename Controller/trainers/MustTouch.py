@@ -192,7 +192,7 @@ class MustTouch(Trainer):
                 if self.chamber.beambreak.state is False and not self.reward_collected:
                     self.reward_collected = True
                     self.write_event("BeamBreakDuringReward", self.current_trial + 1)
-                    self.chamber.reward_led.deactivate()
+                    self.chamber.back_led.deactivate()
             else:
                 self.default_stop_reward()
                 self.write_event("RewardDispenseComplete", self.current_trial + 1)
