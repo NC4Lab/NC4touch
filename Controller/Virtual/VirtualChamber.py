@@ -167,6 +167,18 @@ class VirtualChamber:
             time.sleep(0.1)
         logger.info("All virtual M0 devices initialized")
 
+    def get_left_m0(self):
+        """Return the left virtual M0 device."""
+        return self.left_m0
+
+    def get_middle_m0(self):
+        """Return the middle virtual M0 device."""
+        return self.middle_m0
+
+    def get_right_m0(self):
+        """Return the right virtual M0 device."""
+        return self.right_m0
+
     def m0_send_command(self, command):
         """
         Sends a command to all M0 boards.
