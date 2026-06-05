@@ -29,7 +29,7 @@ class SimpleDiscrimination(Trainer):
 
         self.config.ensure_param("trainer_name", "Simple Discrimination")
         self.config.ensure_param("num_trials", 30)
-        self.config.ensure_param("reward_pump_secs", 0.5)
+        self.config.ensure_param("reward_pump_secs", 1.5)
         self.config.ensure_param("punish_duration", 5.0)
         self.config.ensure_param("buzzer_duration", 0.5)
         self.config.ensure_param("iti_duration", 10)
