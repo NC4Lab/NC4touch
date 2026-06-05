@@ -25,7 +25,8 @@ class BeamBreak:
         self.beam_break_memory = beam_break_memory  # 200 ms
         self.read_interval = 0.05  # 50 ms
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
-        self.state = False  # False = beam broken, True = beam not broken
+        self.state = True  # False = beam broken, True = beam not broken
+        self.active = False
 
         self.pi.set_mode(self.pin, pigpio.INPUT)
         self.pi.set_pull_up_down(self.pin, pigpio.PUD_UP)
@@ -41,18 +42,21 @@ class BeamBreak:
             self.state = False
         elif current_time - self.last_break_time > self.beam_break_memory:
             self.state = True
-
+            
         self.read_timer = threading.Timer(self.read_interval, self._read_loop)
         self.read_timer.start()
 
     def activate(self):
         """Start the beam break sensor reading loop."""
-        self.read_timer.cancel()
-        self.read_timer = threading.Timer(self.read_interval, self._read_loop)
-        self.read_timer.start()
+        # self.read_timer.cancel()
+        # self.read_timer = threading.Timer(self.read_interval, self._read_loop)
+        # self.read_timer.start()
+        self._read_loop()  # Start the loop immediately
+        self.active = True
         logger.debug("BeamBreak activated.")
 
     def deactivate(self):
         """Stop the beam break sensor reading loop."""
         self.read_timer.cancel()
+        self.active = False
         logger.debug("BeamBreak deactivated.")

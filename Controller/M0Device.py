@@ -267,14 +267,26 @@ class M0Device:
         try:
             self.reset()
             time.sleep(0.1)
-            self.reset()
+            self.reset()            
             
-            wait_for_dmesg("FireBeetle-UDisk")
+            # wait_for_dmesg("FireBeetle-UDisk")
             
             
-            # Find the mount location from lsblk
-            waiting = True
-            while waiting:
+            # # Find the mount location from lsblk
+            # waiting = True
+            # while waiting:
+            #     time.sleep(0.5)
+            #     lsblk = subprocess.check_output("lsblk --output MOUNTPOINTS", shell=True).decode("utf-8")
+            #     if lsblk:
+            #         lsblk = [line for line in lsblk.split("\n") if line.startswith("/media")]
+            #         if lsblk:
+            #             self.ud_mount_loc = lsblk[0]
+            #             logger.info(f"[{self.id}] Found mount location: {self.ud_mount_loc}")
+            #             waiting = False
+
+            # Find mount location using lsblk
+            timeout = time.time() + 10  # 10 second timeout
+            while time.time() < timeout:
                 time.sleep(0.5)
                 lsblk = subprocess.check_output("lsblk --output MOUNTPOINTS", shell=True).decode("utf-8")
                 if lsblk:
@@ -282,7 +294,10 @@ class M0Device:
                     if lsblk:
                         self.ud_mount_loc = lsblk[0]
                         logger.info(f"[{self.id}] Found mount location: {self.ud_mount_loc}")
-                        waiting = False
+                        break
+            else:
+                logger.error(f"[{self.id}] Timeout waiting for UD drive to mount.")
+                return
             
             self.mode = M0Mode.UD
         
@@ -348,7 +363,8 @@ class M0Device:
 
         # Sync the image folder
         try:
-            subprocess.run(f"cp -r {image_folder}/* {self.ud_mount_loc}", shell=True, stderr=subprocess.STDOUT)
+            # subprocess.run(f"cp -r {image_folder}/* {self.ud_mount_loc}", shell=True, stderr=subprocess.STDOUT)
+            subprocess.run(f"rsync -av --progress --delete {image_folder}/ {self.ud_mount_loc}/", shell=True, stderr=subprocess.STDOUT)
             logger.info(f"[{self.id}] Synced image folder to {self.ud_mount_loc}.")
         except subprocess.CalledProcessError as e:
             logger.error(f"[{self.id}] Error syncing image folder: {e.output.decode('utf-8')}")

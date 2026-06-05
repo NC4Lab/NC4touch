@@ -10,7 +10,7 @@
 #define TFT_RST  6
 #define TFT_BLK  9  
 
-const char* VERSION = "0.2.2_20260305";
+const char* VERSION = "0.2.3_20260514";
 
 
 const int pin0 = 10;
@@ -55,18 +55,17 @@ uint16_t numberTillComma(String &s);
 
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) {
-    // Wait for native USB on SAMD21
-  }
   setupPinsAndID();
-
   setupDisplayAndSD();
 
   screen.fillScreen(0x0000); 
   setBlackScreen();
   showActive = false;
 
+  Serial.begin(115200);
+  while (!Serial) {
+    // Wait for native USB on SAMD21
+  }
   Serial.print("ID:M0_");
   Serial.print(boardID);
   Serial.println(" is ready.");
@@ -190,7 +189,7 @@ void processSerialCommand() {
 
 void pickPicture(const char* imageID) {
   // Turn backlight off
-  analogWrite(TFT_BLK, 0);
+  setBlackScreen();
 
   char fileName[32];
   snprintf(fileName, sizeof(fileName), "%s.BMP", imageID);
@@ -248,7 +247,7 @@ void scanTouch() {
   showActive = false;
 
   // Immediately turn screens black
-  analogWrite(TFT_BLK, 0);
+  setBlackScreen();
 }
 
 

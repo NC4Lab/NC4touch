@@ -238,6 +238,9 @@ class Trainer(ABC):
 
     def wait_for_trial_initiation(self):
         """Check if beambreak was triggered for trial initiation."""
+        if self.chamber.beambreak.active == False:
+            logger.info("Activating beambreak for trial initiation check.")
+            self.chamber.beambreak.activate()
         return self.chamber.beambreak.state == False
 
     def deliver_reward(self, duration=None):

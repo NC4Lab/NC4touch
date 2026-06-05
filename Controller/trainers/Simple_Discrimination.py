@@ -28,7 +28,7 @@ class SimpleDiscrimination(Trainer):
         super().__init__(chamber, trainer_config)
 
         self.config.ensure_param("trainer_name", "Simple Discrimination")
-        self.config.ensure_param("num_trials", 30)
+        self.config.ensure_param("num_trials", 40 )
         self.config.ensure_param("reward_pump_secs", 1.5)
         self.config.ensure_param("punish_duration", 5.0)
         self.config.ensure_param("buzzer_duration", 0.5)
@@ -164,10 +164,12 @@ class SimpleDiscrimination(Trainer):
             self.state = SDState.INITIATION
 
         elif self.state == SDState.INITIATION:
+            # logger.info("Waiting for trial initiation (test)")
             if self.wait_for_trial_initiation():
                 self.state = SDState.SHOW_STIMULI
 
         elif self.state == SDState.SHOW_STIMULI:
+            logger.info("Showing stimuli")
             self.show_images()
             self.prepare_touch_window(drain_events=True)
             self.trial_start_time = now
