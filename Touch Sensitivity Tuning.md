@@ -3,6 +3,8 @@
 
 Tuning guide for increasing touchscreen sensitivity for small contact areas (e.g. mouse paws in behavioural chambers).
 
+Add ```dtoverlay=vc4-kms-dsi-waveshare-panel-v2,8_8_inch_a``` to /boot/firmware/config.txt 
+
 ---
 
 ## Hardware & Software Context
