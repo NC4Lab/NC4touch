@@ -9,10 +9,11 @@ import time
 ADDR = 0x5D
 
 # --- Aggressive Sensitivity Tuning ---
-NEW_TOUCH_THRESHOLD = 10    # 0x8053 (User requested)
-NEW_LEAVE_THRESHOLD = 6    # 0x8054 (User requested)
-NEW_NOISE_REDUCTION = 3    # 0x8052 (User requested)
+NEW_TOUCH_THRESHOLD = 14    # 0x8053 (User requested)
+NEW_LEAVE_THRESHOLD = 8    # 0x8054 (User requested)
+NEW_NOISE_REDUCTION = 4    # 0x8052 (User requested)
 NEW_LARGE_TOUCH     = 5    # 0x8051 (User requested)
+NEW_NORMAL_FILTER   = 5    # 0x8050
 
 # --- Hardware Gain & Integration Time ---
 NEW_REFRESH_RATE    = 10   # 0x8056 (10ms; allows more integration time for weak signals)
@@ -123,6 +124,7 @@ def main():
             config[0x8052 - 0x8047] = NEW_NOISE_REDUCTION
             config[0x8053 - 0x8047] = NEW_TOUCH_THRESHOLD
             config[0x8054 - 0x8047] = NEW_LEAVE_THRESHOLD
+            config[0x8050 - 0x8047] = NEW_NORMAL_FILTER
 
             # Integration & Filtering
             config[0x804D - 0x8047] &= ~(1 << 3) # Disable Large Object Rejection Bit
