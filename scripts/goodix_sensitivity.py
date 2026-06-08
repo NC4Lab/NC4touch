@@ -12,12 +12,12 @@ ADDR = 0x5D
 NEW_TOUCH_THRESHOLD = 14    # 0x8053 (User requested)
 NEW_LEAVE_THRESHOLD = 8    # 0x8054 (User requested)
 NEW_NOISE_REDUCTION = 4    # 0x8052 (User requested)
-NEW_LARGE_TOUCH     = 5    # 0x8051 (User requested)
-NEW_NORMAL_FILTER   = 5    # 0x8050
+# NEW_LARGE_TOUCH     = 5    # 0x8051 (User requested)
+NEW_NORMAL_FILTER   = 3    # 0x8050
 
 # --- Hardware Gain & Integration Time ---
 NEW_REFRESH_RATE    = 10   # 0x8056 (10ms; allows more integration time for weak signals)
-NEW_DAC_GAIN        = 0x00 # 0x806A (Set to 0 for maximum DAC range)
+# NEW_DAC_GAIN        = 0x00 # 0x806A (Set to 0 for maximum DAC range)
 NEW_PGA_GAIN        = 0x05 # 0x806C (Bits 0-2: Set PGA to max gear)
 NEW_DUMP_SHIFT      = 0x01 # 0x806D (Digital multiplier: 0x02 = 4x signal boost)
 
@@ -120,7 +120,7 @@ def main():
 
             print("Step 3: Applying aggressive gain and threshold values...")
             # User Thresholds
-            config[0x8051 - 0x8047] = NEW_LARGE_TOUCH
+            # config[0x8051 - 0x8047] = NEW_LARGE_TOUCH
             config[0x8052 - 0x8047] = NEW_NOISE_REDUCTION
             config[0x8053 - 0x8047] = NEW_TOUCH_THRESHOLD
             config[0x8054 - 0x8047] = NEW_LEAVE_THRESHOLD
@@ -131,7 +131,7 @@ def main():
             config[0x8056 - 0x8047] = NEW_REFRESH_RATE
 
             # Analog/Digital Gain Stages
-            config[0x806A - 0x8047] = NEW_DAC_GAIN
+            # config[0x806A - 0x8047] = NEW_DAC_GAIN
             config[0x806C - 0x8047] = (config[0x806C - 0x8047] & 0xF8) | NEW_PGA_GAIN
             config[0x806D - 0x8047] = NEW_DUMP_SHIFT
 
@@ -149,7 +149,7 @@ def main():
 
             print("Step 4: Verifying Hardware Gains...")
             verify = read_regs(bus, args.addr, 0x806A, 4) # Read 806A, 806B, 806C, 806D
-            print(f"  0x806A DAC Gain     : {verify[0]} (expected {NEW_DAC_GAIN})")
+            # print(f"  0x806A DAC Gain     : {verify[0]} (expected {NEW_DAC_GAIN})")
             print(f"  0x806C PGA Gain     : {verify[2] & 0x07} (expected {NEW_PGA_GAIN})")
             print(f"  0x806D Dump Shift   : {verify[3]} (expected {NEW_DUMP_SHIFT})")
     finally:
