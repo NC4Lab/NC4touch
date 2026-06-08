@@ -172,6 +172,7 @@ class WebUI:
                         radial-gradient(circle at top right, rgba(139, 92, 246, 0.16), transparent 32%),
                         linear-gradient(180deg, #020617 0%, #0f172a 55%, #111827 100%);
                     color: var(--text-main);
+                    -webkit-touch-callout: none;
                 }
                 .page-shell {
                     min-height: 100vh;
@@ -316,6 +317,9 @@ class WebUI:
                     }
                 }
             </style>
+            <script>
+                document.addEventListener('contextmenu', event => event.preventDefault());
+            </script>
             """
         )
 

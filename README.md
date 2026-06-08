@@ -305,14 +305,16 @@ dpkg -l | grep -E "build-essential|git|bc|bison|flex|libssl-dev|raspberrypi-kern
    systemd.unit=multi-user.target autologin-user=nc4 nosplash
    ```
 
-4. You can also setup the debugging stuff
+4. On the physical chamber, the WebUI launcher also wakes the touchscreen displays when it starts and blanks them again when it exits. That keeps the Raspberry Pi desktop hidden unless a task is actually running.
+
+5. You can also setup the debugging stuff
    ```
    drm.debug=0x1f log_buf_len=16M
    ```
 
-5. Save the file and close the editor.
+6. Save the file and close the editor.
 
-6. Or just run this:
+7. Or just run this:
 ```
 echo "your_desired_cmdline_content" | sudo tee /boot/firmware/cmdline.txt > /dev/null
 ```
