@@ -72,6 +72,7 @@ class PRL(Trainer):
         self.config.ensure_param("display_refresh_interval", 1.0) # Re-show images while waiting for touch
         self.config.ensure_param("incorrect_led_secs", 3.0) # Duration to show incorrect LED
         self.config.ensure_param("reversal_consecutive_corrects", 5) # Consecutive correct trials required to reverse
+        self.config.ensure_param("auto_start_first_trial", True)  # If True, start first trial without initiation
 
 
         # Local variables used by the trainer during the training session and not set in the config file.
@@ -216,7 +217,11 @@ class PRL(Trainer):
             self.current_trial = 0
             self.consecutive_correct = 0
             self.pending_reversal = False
-            self.state = PRLState.INITIATION_READY
+            # Optionally start the first trial immediately without initiation
+            if bool(self.config["auto_start_first_trial"]):
+                self.state = PRLState.START_TRIAL
+            else:
+                self.state = PRLState.INITIATION_READY
 
         elif self.state == PRLState.INITIATION_READY:
             # INITIATION_READY state, waiting for trial initiation beam break.
