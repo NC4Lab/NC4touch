@@ -3,6 +3,7 @@ import subprocess
 import time
 import threading
 import shutil
+import glob
 import urllib.request
 import urllib.error
 from helpers import get_ip_address
@@ -18,6 +19,7 @@ class Camera:
     def __init__(self, device: str = "/dev/video0", stream_port: int = 8080):
         """Initialize the Camera."""
         self.device = device
+        self.active_device = None
 
         self.network_stream = None
         self.stream_port = stream_port
@@ -26,6 +28,73 @@ class Camera:
 
         # Start the video capture
         self.start_video_stream()
+
+    def _list_video_devices(self):
+        """Return sorted /dev/video* nodes currently present on the system."""
+        return sorted(glob.glob("/dev/video*"))
+
+    def _try_load_v4l2_compat(self):
+        """Try to load Raspberry Pi's V4L2 compatibility module for CSI cameras."""
+        if shutil.which("modprobe") is None:
+            return False
+
+        try:
+            result = subprocess.run(
+                ["modprobe", "bcm2835-v4l2"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except Exception as e:
+            logger.warning("Unable to run modprobe bcm2835-v4l2: %s", e)
+            return False
+
+        if result.returncode != 0:
+            logger.warning(
+                "modprobe bcm2835-v4l2 failed (code %s): %s",
+                result.returncode,
+                (result.stderr or "").strip(),
+            )
+            return False
+
+        # Allow the kernel a moment to create device nodes.
+        time.sleep(0.3)
+        return True
+
+    def _resolve_video_device(self):
+        """Resolve configured device to a usable /dev/video node when possible."""
+        configured = str(self.device).strip() if self.device is not None else ""
+        configured_lower = configured.lower() if configured else ""
+        devices = self._list_video_devices()
+
+        if configured and configured_lower != "auto" and os.path.exists(configured):
+            return configured
+
+        # Try to expose V4L2 nodes for CSI cameras on Raspberry Pi systems.
+        if not devices and self._try_load_v4l2_compat():
+            devices = self._list_video_devices()
+
+        if configured and configured_lower != "auto" and configured in devices:
+            return configured
+
+        if devices:
+            fallback = devices[0]
+            if configured and configured_lower != "auto" and configured != fallback:
+                logger.warning(
+                    "Configured camera device %s not found; falling back to %s",
+                    configured,
+                    fallback,
+                )
+            elif configured_lower == "auto":
+                logger.info("Auto-selected camera device %s", fallback)
+            return fallback
+
+        logger.error(
+            "No V4L2 camera device found. Checked configured device '%s' and /dev/video*. "
+            "On Pi4 CSI cameras, enable V4L2 compatibility (bcm2835-v4l2) or use a USB UVC camera.",
+            configured or "<empty>",
+        )
+        return None
     
     def __del__(self):
         """Clean up resources when the Camera object is deleted."""
@@ -77,9 +146,16 @@ class Camera:
             self.network_stream = None
             return
 
+        resolved_device = self._resolve_video_device()
+        if resolved_device is None:
+            self.network_stream = None
+            return
+
+        self.active_device = resolved_device
+
         cmd = [
             "ustreamer",
-            f"--device={self.device}",
+            f"--device={self.active_device}",
             "--host=0.0.0.0",
             f"--port={self.stream_port}",
             "--sink=demo::ustreamer::sink",
@@ -107,7 +183,7 @@ class Camera:
                 "Failed to start ustreamer on %s:%s for device %s. Error: %s",
                 "0.0.0.0",
                 self.stream_port,
-                self.device,
+                self.active_device,
                 stderr.strip()[:400],
             )
             self.network_stream = None
@@ -133,7 +209,7 @@ class Camera:
         value = "1" if enabled else "0"
         try:
             result = subprocess.run(
-                ["v4l2-ctl", "-d", self.device, f"--set-ctrl={control_name}={value}"],
+                ["v4l2-ctl", "-d", self.active_device or self.device, f"--set-ctrl={control_name}={value}"],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -148,7 +224,7 @@ class Camera:
                 "Unable to set %s=%s on %s. %s",
                 control_name,
                 value,
-                self.device,
+                self.active_device or self.device,
                 stderr,
             )
             return False
@@ -162,13 +238,13 @@ class Camera:
 
         try:
             result = subprocess.run(
-                ["v4l2-ctl", "-d", self.device, "--list-ctrls"],
+                ["v4l2-ctl", "-d", self.active_device or self.device, "--list-ctrls"],
                 capture_output=True,
                 text=True,
                 check=False,
             )
         except Exception as e:
-            logger.warning(f"Unable to inspect camera controls on {self.device}: {e}")
+            logger.warning(f"Unable to inspect camera controls on {self.active_device or self.device}: {e}")
             return None
 
         controls_text = result.stdout or ""
@@ -183,7 +259,7 @@ class Camera:
             logger.debug(
                 "Using autofocus control '%s' for device %s",
                 self._autofocus_control_name,
-                self.device,
+                self.active_device or self.device,
             )
 
         return self._autofocus_control_name
