@@ -88,7 +88,9 @@ The physical chamber does not need the Raspberry Pi desktop environment. For day
 
 ### Disable the Desktop
 
-Use Raspberry Pi's configuration tool to boot to a text console:
+The WebUI's Pygame display manager requires an X server to render to the physical touchscreen. To boot cleanly without showing a desktop environment:
+
+1. Use Raspberry Pi's configuration tool:
 
 ```bash
 sudo raspi-config
@@ -97,24 +99,39 @@ sudo raspi-config
 Choose:
 
 ```text
-System Options -> Boot / Auto Login -> Console Autologin
+System Options -> Boot / Auto Login -> Desktop Autologin
 ```
 
-Then reboot:
+This boots to the graphical target with X running, but keeps the session clean.
+
+2. Disable the desktop panel and file manager by editing `/etc/xdg/lxsession/LXDE-pi/autostart`:
+
+```bash
+sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+```
+
+Comment out the desktop UI components:
+
+```bash
+# @lxpanel --profile LXDE-pi
+# @pcmanfm --desktop --profile LXDE-pi
+@xscreensaver -no-splash
+```
+
+3. Reboot:
 
 ```bash
 sudo reboot
 ```
 
-This keeps the Pi in console mode while still allowing SSH access and remote development. The chamber display will be controlled by NC4Touch during task execution instead of by the Raspberry Pi desktop.
+This configuration:
+- Boots to the graphical desktop (X11 server runs)
+- Skips the panel and file manager
+- Leaves the physical display clear for WebUI stimuli
+- Allows SSH access and remote development
+- Enables Pygame to render fullscreen stimuli on the touchscreen
 
-If you need to force console mode from the boot command line, add these options to `/boot/firmware/cmdline.txt` on Raspberry Pi OS Bookworm, or `/boot/cmdline.txt` on older installs. Keep the file as a single line:
-
-```text
-systemd.unit=multi-user.target autologin-user=nc4 nosplash
-```
-
-Use the actual chamber username for `autologin-user`. For the setup above, that is usually `nc4touch`.
+**Important:** Do not use `systemd.unit=multi-user.target` in `/boot/cmdline.txt`, as it disables the X server entirely, breaking Pygame display rendering.
 
 ### Start the WebUI Manually
 
