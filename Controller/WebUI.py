@@ -1,5 +1,6 @@
 # Create a WebUI using NiceGUI that replicates the functionality of TUI
 import os
+import re
 from nicegui import ui
 import logging
 from collections import deque
@@ -11,30 +12,64 @@ from file_picker import file_picker
 session_logger = logging.getLogger('session_logger')
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+SESSION_LOG_LINE_RE = re.compile(r'^\[(?P<meta>.*):(?P<level>[A-Z]+)\]\s(?P<message>.*)$')
 
-class LogElementHandler(logging.Handler):
-    """Logging handler that buffers records and filters what is shown in the UI."""
 
-    def __init__(self, element: ui.log, level: int = logging.DEBUG) -> None:
-        super().__init__(logging.NOTSET)
+class LogElementHandler:
+    """Follow the active session log file and mirror it into the UI log widget."""
+
+    def __init__(self, element: ui.log, log_file: str, level: int = logging.DEBUG) -> None:
         self.element = element
+        self.log_file = log_file
         self.visible_level = level
         self.records = deque(maxlen=2000)
+        self._file_offset = 0
+        self._file_signature = None
 
-    def emit(self, record: logging.LogRecord) -> None:
+    def _parse_line(self, line: str) -> tuple[int, str]:
+        match = SESSION_LOG_LINE_RE.match(line)
+        if match:
+            level_name = match.group('level')
+            message = match.group('message')
+            level = getattr(logging, level_name, logging.INFO)
+            return level, f"[{level_name}] {message}"
+
+        return logging.INFO, line
+
+    def _append_line(self, level: int, message: str) -> None:
+        self.records.append((level, message))
+        if level >= self.visible_level:
+            self.element.push(message)
+
+    def refresh(self) -> None:
         try:
-            message = self.format(record)
-            self.records.append((record.levelno, message))
-            if record.levelno >= self.visible_level:
-                self.element.push(message)
+            stat_result = os.stat(self.log_file)
+        except FileNotFoundError:
+            return
+
+        file_signature = (stat_result.st_dev, stat_result.st_ino)
+        if file_signature != self._file_signature or stat_result.st_size < self._file_offset:
+            self._file_signature = file_signature
+            self._file_offset = 0
+
+        try:
+            with open(self.log_file, 'r', encoding='utf-8', errors='replace') as log_stream:
+                log_stream.seek(self._file_offset)
+                while True:
+                    line = log_stream.readline()
+                    if not line:
+                        break
+                    level, message = self._parse_line(line.rstrip('\n'))
+                    self._append_line(level, message)
+                self._file_offset = log_stream.tell()
         except Exception:
-            self.handleError(record)
+            logger.exception("Unable to refresh session log view from %s", self.log_file)
 
     def set_visible_level(self, level: int) -> None:
         self.visible_level = level
-        self.refresh()
+        self.rebuild()
 
-    def refresh(self) -> None:
+    def rebuild(self) -> None:
         try:
             self.element.clear()
         except Exception:
@@ -173,6 +208,9 @@ class WebUI:
                         linear-gradient(180deg, #020617 0%, #0f172a 55%, #111827 100%);
                     color: var(--text-main);
                     -webkit-touch-callout: none;
+                }
+                body, .page-shell, .page-shell * {
+                    -webkit-user-drag: none;
                 }
                 .page-shell {
                     min-height: 100vh;
@@ -318,7 +356,24 @@ class WebUI:
                 }
             </style>
             <script>
-                document.addEventListener('contextmenu', event => event.preventDefault());
+                const blockSecondaryPointerActions = event => {
+                    if (event.button === 2 || event.ctrlKey) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                };
+
+                const blockBrowserMenu = event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                };
+
+                document.addEventListener('contextmenu', blockBrowserMenu, true);
+                document.addEventListener('auxclick', blockSecondaryPointerActions, true);
+                document.addEventListener('mousedown', blockSecondaryPointerActions, true);
+                document.addEventListener('pointerdown', blockSecondaryPointerActions, true);
+                document.addEventListener('selectstart', blockBrowserMenu, true);
+                document.addEventListener('dragstart', blockBrowserMenu, true);
             </script>
             """
         )
@@ -410,11 +465,9 @@ class WebUI:
                     with ui.card().classes('glass-card w-full q-mt-md'):
                         ui.label('Session Log').classes('card-title')
                         self.log_view = ui.log(max_lines=250).classes('w-full').style('height: 340px;')
-                        self.log_handler = LogElementHandler(self.log_view)
-                        formatter = logging.Formatter('[%(levelname)s] %(message)s')
-                        self.log_handler.setFormatter(formatter)
-                        session_logger.addHandler(self.log_handler)
-                        ui.context.client.on_disconnect(lambda: session_logger.removeHandler(self.log_handler))
+                        self.log_handler = LogElementHandler(self.log_view, self.session.session_log_file)
+                        self.log_handler.refresh()
+                        ui.timer(0.5, self.log_handler.refresh)
 
                         with ui.row().classes('w-full q-gutter-sm items-center q-mt-sm'):
                             ui.label('Level:').classes('text-sm')
