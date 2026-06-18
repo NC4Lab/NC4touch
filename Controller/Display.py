@@ -766,7 +766,15 @@ class DisplayManager:
         self._clear_now(zone)
 
     def _run_xset(self, *args):
-        display = os.environ.get("DISPLAY")
+        env = os.environ.copy()
+        display = env.get("DISPLAY") or ":0"
+        env["DISPLAY"] = display
+
+        if not env.get("XAUTHORITY"):
+            xauthority = os.path.join(os.path.expanduser("~"), ".Xauthority")
+            if os.path.exists(xauthority):
+                env["XAUTHORITY"] = xauthority
+
         if not display:
             logger.warning("DISPLAY is not set; cannot change display power state")
             return False
@@ -778,7 +786,7 @@ class DisplayManager:
                 capture_output=True,
                 text=True,
                 timeout=1.5,
-                env=os.environ.copy(),
+                env=env,
             )
         except Exception as exc:
             logger.warning("Unable to run xset %s: %s", " ".join(args), exc)

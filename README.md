@@ -157,13 +157,15 @@ For regular chamber use, install a systemd service so the WebUI starts after boo
 ```ini
 [Unit]
 Description=NC4Touch WebUI
-After=network-online.target
-Wants=network-online.target
+After=network-online.target graphical.target display-manager.service
+Wants=network-online.target graphical.target
 
 [Service]
 Type=simple
 User=nc4touch
 WorkingDirectory=/mnt/shared/code/NC4Touch
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/nc4touch/.Xauthority
 ExecStart=/mnt/shared/code/NC4Touch/scripts/start_webUI.sh
 Restart=on-failure
 RestartSec=5

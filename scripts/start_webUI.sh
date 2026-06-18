@@ -3,6 +3,11 @@
 set -euo pipefail
 
 export UV_PROJECT_ENVIRONMENT=~/.nc4touch_uv_env
+export DISPLAY="${DISPLAY:-:0}"
+
+if [[ -z "${XAUTHORITY:-}" && -f "${HOME}/.Xauthority" ]]; then
+	export XAUTHORITY="${HOME}/.Xauthority"
+fi
 
 if ! pgrep -x pigpiod >/dev/null 2>&1; then
 	if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
