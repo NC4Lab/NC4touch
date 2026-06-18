@@ -82,4 +82,23 @@ The camera module starts and manages the live video stream used by the WebUI. It
 
 The configuration system is the glue that keeps the chamber, trainers, and WebUI aligned. It stores chamber parameters such as pin assignments, display geometry, camera device paths, and default brightness values, while also remembering which settings were explicitly supplied versus filled in by defaults. This makes it possible to run the same code across physical and virtual setups without rewriting every caller. Most components read their settings from the shared chamber configuration, so behavior stays consistent from startup through training.
 
+## Pi-Level / Headless Mode
+
+The physical chamber does not need the Raspberry Pi desktop environment. For day-to-day use, it is cleaner to boot straight to the console and start the WebUI from a shell or service instead of launching a graphical session.
+
+To do that, keep the Pi in multi-user mode with the desktop disabled, for example by using the boot option already shown earlier in this document:
+
+```text
+systemd.unit=multi-user.target autologin-user=nc4 nosplash
+```
+
+Then start the launcher from SSH or a local tty:
+
+```bash
+cd /mnt/shared/code/NC4Touch
+./scripts/start_webUI.sh
+```
+
+In this mode, the chamber display is controlled directly by the application, the touchscreen screens stay tied to task execution, and no separate desktop interface is shown on the Pi itself.
+
    
