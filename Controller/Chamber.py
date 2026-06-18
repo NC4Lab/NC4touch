@@ -3,6 +3,8 @@
 # Manu Madhav
 # 2025
 
+import os
+
 from pigpio_compat import pigpio
 
 from LED import LED
@@ -41,16 +43,17 @@ class Chamber:
         self.config.ensure_param("pigpio_port", 8888)
 
         # Single-display config
-        # Note: DSI-2 is physically 480x1920 but has a 270-degree transform applied,
-        # so xrandr/pygame see it as 1920x480. We use the xrandr dimensions for pygame.
+        # Default to auto-detect unless a connector name/index is provided explicitly.
+        display_output_name = os.environ.get("NC4TOUCH_DISPLAY_OUTPUT_NAME")
+        display_output_index = os.environ.get("NC4TOUCH_DISPLAY_OUTPUT_INDEX")
         self.config.ensure_param("display_width", 1920)
         self.config.ensure_param("display_height", 480)
         self.config.ensure_param("display_image_folder", "../data/images")
         self.config.ensure_param("display_zone_widths", [320, 320, 320])
         self.config.ensure_param("display_zone_gaps", None)
         self.config.ensure_param("display_center_layout", True)
-        self.config.ensure_param("display_output_name", "DSI-2")
-        self.config.ensure_param("display_output_index", None)
+        self.config.ensure_param("display_output_name", display_output_name or None)
+        self.config.ensure_param("display_output_index", display_output_index or None)
         self.config.ensure_param("display_window_mode", "fullscreen")
         self.config.ensure_param("display_image_border_color", [255, 255, 255])
         self.config.ensure_param("display_image_border_width", 1)
@@ -149,6 +152,13 @@ class Chamber:
     def display_command(self, zone, command):
         zone_name = self._normalize_zone(zone)
         if zone_name == "all":
+            normalized_command = str(command).strip().upper() if command is not None else ""
+            if normalized_command in {"OFF", "SCREENOFF", "BACKLIGHTOFF"}:
+                self.display.set_display_power(False)
+                return
+            if normalized_command in {"ON", "SCREENON", "BACKLIGHTON"}:
+                self.display.set_display_power(True)
+                return
             for device in self.display_devices.values():
                 device.send_command(command)
             return
@@ -166,6 +176,18 @@ class Chamber:
             self.display.clear(DisplayZone.ALL)
             return
         self.display.clear(zone_name)
+
+    def display_blank(self, zone="all"):
+        self.display_clear(zone)
+
+    def display_power(self, enabled):
+        return self.display.set_display_power(enabled)
+
+    def display_power_on(self):
+        return self.display_power(True)
+
+    def display_power_off(self):
+        return self.display_power(False)
 
     def display_was_touched(self, zone):
         zone_name = self._normalize_zone(zone)

@@ -15,6 +15,10 @@ import logging
 logger = logging.getLogger(f"session_logger.{__name__}")
 
 
+def _normalize_output_name(name):
+    return re.sub(r"[^a-z0-9]", "", str(name or "").strip().lower())
+
+
 class DisplayZone:
     LEFT = "left"
     MIDDLE = "middle"
@@ -71,6 +75,7 @@ class DisplayManager:
         self.screen = pygame.display.set_mode((self.width, self.height), flags, display=self.display_index)
         self.screen.fill((0, 0, 0))
         pygame.display.flip()
+        self._display_powered = True
 
         self._owner_thread_id = threading.get_ident()
         self._pending_ops = deque()
@@ -146,7 +151,15 @@ class DisplayManager:
                     display_name,
                     detected,
                 )
-            logger.warning("Display '%s' not found or has incorrect resolution", display_name)
+            available_outputs = self._list_available_outputs()
+            if available_outputs:
+                logger.warning(
+                    "Display '%s' not found or has incorrect resolution. Available outputs: %s",
+                    display_name,
+                    ", ".join(available_outputs),
+                )
+            else:
+                logger.warning("Display '%s' not found or has incorrect resolution", display_name)
 
         # Try to find a display with the correct 480x1920 or 1920x480 resolution
         correct_index = self._detect_display_by_correct_resolution()
@@ -179,6 +192,43 @@ class DisplayManager:
 
         return None
 
+    def _output_name_matches(self, output_name, target):
+        candidate = str(output_name or "").strip().lower()
+        if not candidate or not target:
+            return False
+
+        if candidate == target:
+            return True
+
+        normalized_candidate = _normalize_output_name(candidate)
+        normalized_target = _normalize_output_name(target)
+        if normalized_candidate and normalized_candidate == normalized_target:
+            return True
+
+        return normalized_candidate.endswith(normalized_target)
+
+    def _list_available_outputs(self):
+        try:
+            result = subprocess.run(
+                ["xrandr", "--listmonitors"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=1.5,
+            )
+        except Exception:
+            return []
+
+        if result.returncode != 0:
+            return []
+
+        outputs = []
+        for line in result.stdout.splitlines():
+            match = re.match(r"\s*\d+:.*\s([A-Za-z0-9_.-]+)\s*$", line)
+            if match:
+                outputs.append(match.group(1))
+        return outputs
+
     def _detect_with_xrandr(self, target):
         try:
             result = subprocess.run(
@@ -200,7 +250,7 @@ class DisplayManager:
                 continue
             idx = int(match.group(1))
             output_name = match.group(2).lower()
-            if output_name == target:
+            if self._output_name_matches(output_name, target):
                 return idx
         return None
 
@@ -223,7 +273,7 @@ class DisplayManager:
         for line in result.stdout.splitlines():
             if not line.startswith(" ") and line.strip():
                 output_name = line.split()[0].strip().lower()
-                if output_name == target:
+                if self._output_name_matches(output_name, target):
                     return idx
                 idx += 1
         return None
@@ -482,7 +532,7 @@ class DisplayManager:
         for raw_line in result.stdout.splitlines():
             line = raw_line.rstrip("\n")
             if line and not line.startswith(" "):
-                if current_name == target and position is not None and mode is not None:
+                if self._output_name_matches(current_name, target) and position is not None and mode is not None:
                     return self._wlr_geometry(position, mode, transform)
 
                 current_name = line.split()[0].strip().lower()
@@ -515,7 +565,7 @@ class DisplayManager:
                     w_str, h_str = mode_token.split("x", 1)
                     mode = (int(w_str), int(h_str))
 
-        if current_name == target and position is not None and mode is not None:
+        if self._output_name_matches(current_name, target) and position is not None and mode is not None:
             return self._wlr_geometry(position, mode, transform)
 
         return None
@@ -697,6 +747,8 @@ class DisplayManager:
         self._show_image_now(zone, image_name)
 
     def _clear_now(self, zone=DisplayZone.ALL):
+        self.set_display_power(True)
+
         if zone == DisplayZone.ALL:
             self.screen.fill((0, 0, 0))
             pygame.display.flip()
@@ -711,6 +763,53 @@ class DisplayManager:
             self._enqueue_op("clear", zone)
             return
         self._clear_now(zone)
+
+    def _run_xset(self, *args):
+        display = os.environ.get("DISPLAY")
+        if not display:
+            logger.warning("DISPLAY is not set; cannot change display power state")
+            return False
+
+        try:
+            result = subprocess.run(
+                ["xset", *args],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=1.5,
+                env=os.environ.copy(),
+            )
+        except Exception as exc:
+            logger.warning("Unable to run xset %s: %s", " ".join(args), exc)
+            return False
+
+        if result.returncode != 0:
+            stderr = (result.stderr or result.stdout or "").strip()
+            logger.warning("xset %s failed: %s", " ".join(args), stderr)
+            return False
+
+        return True
+
+    def set_display_power(self, enabled):
+        enabled = bool(enabled)
+
+        if enabled == self._display_powered:
+            return True
+
+        if enabled:
+            if self._run_xset("dpms", "force", "on"):
+                self._display_powered = True
+                return True
+            return False
+
+        self.screen.fill((0, 0, 0))
+        pygame.display.flip()
+
+        if self._run_xset("dpms", "force", "off"):
+            self._display_powered = False
+            return True
+
+        return False
 
     def process_events(self):
         if not self._is_owner_thread():
@@ -801,9 +900,18 @@ class DisplayZoneDevice:
                 self.display.show_image(self.zone, self._loaded_image)
             return
 
-        if cmd in {"BLACK", "OFF", "CLEAR"}:
+        if cmd in {"BLACK", "CLEAR"}:
             self._loaded_image = None
             self.display.clear(self.zone)
+            return
+
+        if cmd in {"OFF", "SCREENOFF", "BACKLIGHTOFF"}:
+            self._loaded_image = None
+            self.display.set_display_power(False)
+            return
+
+        if cmd in {"ON", "SCREENON", "BACKLIGHTON"}:
+            self.display.set_display_power(True)
             return
 
         if cmd.startswith("DISPLAY:"):
