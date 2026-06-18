@@ -1,4 +1,5 @@
 # Create a WebUI using NiceGUI that replicates the functionality of TUI
+import json
 import os
 import re
 from nicegui import ui
@@ -12,6 +13,7 @@ from file_picker import file_picker
 session_logger = logging.getLogger('session_logger')
 logger = logging.getLogger(f"session_logger.{__name__}")
 
+WEBUI_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webui_settings.json")
 SESSION_LOG_LINE_RE = re.compile(r'^\[(?P<meta>.*):(?P<level>[A-Z]+)\]\s(?P<message>.*)$')
 
 
@@ -88,6 +90,7 @@ class WebUI:
         self.virtual_mode = bool(virtual_mode)
         self.chamber_name = self.derive_chamber_name(self.ip)
         self.syncing_video_recording_toggle = False
+        self.webui_settings = self.load_webui_settings()
 
         ui.run(
             host=self.ip if self.ip else '0.0.0.0',
@@ -99,9 +102,30 @@ class WebUI:
         logger.info("Initializing WebUI...")
         session_config = {"chamber_name": self.chamber_name} if self.chamber_name else {}
         session_config["virtual_mode"] = self.virtual_mode
+        session_config["auto_record_video"] = self.webui_settings.get("auto_record_video", True)
         self.session = Session(session_config=session_config)
         if self.virtual_mode:
             logger.info("WebUI started in virtual mode; using virtual chamber and camera fallback.")
+
+    def load_webui_settings(self):
+        try:
+            with open(WEBUI_SETTINGS_FILE, "r", encoding="utf-8") as settings_stream:
+                settings = json.load(settings_stream)
+        except FileNotFoundError:
+            return {}
+        except Exception:
+            logger.exception("Unable to load WebUI settings from %s", WEBUI_SETTINGS_FILE)
+            return {}
+
+        return settings if isinstance(settings, dict) else {}
+
+    def save_webui_settings(self):
+        try:
+            with open(WEBUI_SETTINGS_FILE, "w", encoding="utf-8") as settings_stream:
+                json.dump(self.webui_settings, settings_stream, indent=2, sort_keys=True)
+                settings_stream.write("\n")
+        except Exception:
+            logger.exception("Unable to save WebUI settings to %s", WEBUI_SETTINGS_FILE)
 
     def _best_host(self):
         try:
@@ -188,6 +212,12 @@ class WebUI:
             self.session.start_video_recording()
         else:
             self.session.stop_video_recording()
+
+    def toggle_auto_recording(self, enabled: bool):
+        logger.info("WebUI: automatic video recording toggled %s", "on" if enabled else "off")
+        self.session.set_auto_record_video(enabled)
+        self.webui_settings["auto_record_video"] = bool(enabled)
+        self.save_webui_settings()
 
     def adjust_house_led_brightness(self, value):
         """Adjust house LED brightness based on slider value."""
@@ -490,6 +520,11 @@ class WebUI:
                             with ui.row().classes('w-full q-gutter-sm q-mt-sm'):
                                 self.start_priming_button = ui.button('Prime', on_click=self.start_priming).classes('col')
                                 self.stop_priming_button = ui.button('Stop Prime', on_click=self.stop_priming).classes('col')
+                            self.auto_recording_toggle = ui.switch(
+                                'Auto record sessions',
+                                value=bool(self.session.config["auto_record_video"]),
+                                on_change=lambda e: self.toggle_auto_recording(bool(e.value)),
+                            ).classes('q-mt-sm')
 
                     with ui.card().classes('glass-card log-card w-full'):
                         ui.label('Session Log').classes('card-title')

@@ -54,6 +54,7 @@ class Session:
         self.config.ensure_param("chamber_name", "Chamber0")
         self.config.ensure_param("session_start_time", None)
         self.config.ensure_param("virtual_mode", False)  # Enable virtual chamber for testing
+        self.config.ensure_param("auto_record_video", True)
         
         # Initialize directories in case they don't exist
         os.makedirs(self.config["data_dir"], exist_ok=True)
@@ -150,7 +151,10 @@ class Session:
                           "data_dir": self.config["data_dir"]}
         self.trainer.config.update_with_dict(trainer_config)
 
-        self.start_video_recording()
+        if self.config["auto_record_video"]:
+            self.start_video_recording()
+        else:
+            logger.info("Automatic video recording is disabled for this session.")
         try:
             self.trainer.start_training()
         except Exception:
@@ -192,7 +196,8 @@ class Session:
                 self.trainer.stop_training()
             except Exception:
                 logger.exception("Trainer cleanup failed while finishing session.")
-        self.stop_video_recording()
+        if self.is_video_recording:
+            self.stop_video_recording()
         self.training_active = False
         logger.info("Training session ended (%s).", reason)
     
@@ -201,6 +206,13 @@ class Session:
             self.stop_video_recording()
         else:
             self.start_video_recording()
+
+    def set_auto_record_video(self, enabled):
+        self.config["auto_record_video"] = bool(enabled)
+        logger.info(
+            "Automatic video recording %s.",
+            "enabled" if self.config["auto_record_video"] else "disabled",
+        )
 
     def stop_video_recording(self):
         if self.is_video_recording:
