@@ -85,7 +85,17 @@ class VirtualDisplayDevice:
             self._current_image = None
             self._current_image_path = None
             self._loaded_image = None
+            self._display_enabled = True
             logger.debug(f"[{self.id}] Display cleared (BLACK)")
+        elif command in {"OFF", "SCREENOFF", "BACKLIGHTOFF"}:
+            self._current_image = None
+            self._current_image_path = None
+            self._loaded_image = None
+            self._display_enabled = False
+            logger.debug(f"[{self.id}] Display powered off")
+        elif command in {"ON", "SCREENON", "BACKLIGHTON"}:
+            self._display_enabled = True
+            logger.debug(f"[{self.id}] Display powered on")
         elif command.startswith("DISPLAY:"):
             # Legacy support: DISPLAY:path displays directly
             image_path = command.split(":", 1)[1]

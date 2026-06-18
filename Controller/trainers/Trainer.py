@@ -199,6 +199,8 @@ class Trainer(ABC):
         self.chamber.house_led.deactivate()
         self.chamber.buzzer.deactivate()
         self.chamber.beambreak.deactivate()
+        if hasattr(self.chamber, "display_power_off"):
+            self.chamber.display_power_off()
         self.close_data_file()
 
     # ---- Helper methods ----

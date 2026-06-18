@@ -167,6 +167,11 @@ class VirtualChamber:
     def display_command(self, zone, command):
         zone_name = self._normalize_zone(zone)
         if zone_name == "all":
+            normalized_command = str(command).strip().upper() if command is not None else ""
+            if normalized_command in {"OFF", "ON", "SCREENOFF", "SCREENON", "BACKLIGHTOFF", "BACKLIGHTON"}:
+                for display_device in self.display_devices_all:
+                    display_device.send_command(normalized_command)
+                return
             for display_device in self.display_devices_all:
                 display_device.send_command(command)
             return
@@ -184,6 +189,19 @@ class VirtualChamber:
             self.display_command("all", "BLACK")
             return
         self.display_command(zone_name, "BLACK")
+
+    def display_blank(self, zone="all"):
+        self.display_clear(zone)
+
+    def display_power(self, enabled):
+        command = "ON" if enabled else "OFF"
+        self.display_command("all", command)
+
+    def display_power_on(self):
+        return self.display_power(True)
+
+    def display_power_off(self):
+        return self.display_power(False)
 
     def display_was_touched(self, zone):
         zone_name = self._normalize_zone(zone)
