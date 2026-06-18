@@ -87,6 +87,7 @@ class WebUI:
         self.video_port = video_port
         self.virtual_mode = bool(virtual_mode)
         self.chamber_name = self.derive_chamber_name(self.ip)
+        self.syncing_video_recording_toggle = False
 
         ui.run(
             host=self.ip if self.ip else '0.0.0.0',
@@ -130,6 +131,14 @@ class WebUI:
     def update_state(self):
         """Periodically update the state of the UI elements based on the session state."""
         self.house_led_brightness_slider.set_value(100.0 * self.session.chamber.house_led.brightness / 255.0)
+        if hasattr(self, "video_recording_toggle"):
+            desired_value = 1 if self.session.is_video_recording else 0
+            if self.video_recording_toggle.value != desired_value:
+                self.syncing_video_recording_toggle = True
+                try:
+                    self.video_recording_toggle.set_value(desired_value)
+                finally:
+                    self.syncing_video_recording_toggle = False
 
     def set_log_level(self, level_name: str):
         level_name = (level_name or "INFO").upper()
@@ -172,6 +181,8 @@ class WebUI:
             logger.info("Virtual camera does not support focus locking.")
 
     def toggle_video_recording(self, enabled: bool):
+        if self.syncing_video_recording_toggle:
+            return
         logger.info("WebUI: video recording toggled %s", "on" if enabled else "off")
         if enabled:
             self.session.start_video_recording()
@@ -465,7 +476,7 @@ class WebUI:
                         with ui.row().classes('w-full q-gutter-sm'):
                             self.reinitialize_camera_button = ui.button('Reinit', on_click=self.reinitialize_camera).classes('col')
                             self.focus_camera_button = ui.button('Focus', on_click=self.lock_camera_focus).classes('col')
-                            self.video_recording_toggle = ui.toggle({0: 'Rec Off', 1: 'Rec On'}, value=False, on_change=lambda e: self.toggle_video_recording(bool(e.value))).classes('col')
+                            self.video_recording_toggle = ui.toggle({0: 'Rec Off', 1: 'Rec On'}, value=0, on_change=lambda e: self.toggle_video_recording(bool(e.value))).classes('col')
 
                         ui.label('House LED (0-100%)').classes('field-label')
                         self.house_led_brightness_slider = ui.slider(min=0, max=100, value=0, on_change=lambda e: self.adjust_house_led_brightness(e.value)).classes('w-control')

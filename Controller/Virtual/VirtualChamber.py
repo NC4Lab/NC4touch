@@ -30,9 +30,11 @@ class VirtualCamera:
 
     def start_recording(self, filename):
         logger.info(f"Virtual Camera: recording to {filename}")
+        return True
 
     def stop_recording(self):
         logger.info("Virtual Camera: recording stopped")
+        return True
 
 
 class VirtualChamber:

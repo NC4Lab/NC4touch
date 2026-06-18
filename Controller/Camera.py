@@ -4,6 +4,7 @@ import time
 import threading
 import shutil
 import glob
+import shlex
 import urllib.request
 import urllib.error
 from helpers import get_ip_address
@@ -303,23 +304,34 @@ class Camera:
     def start_recording(self, output_file: str = "/mnt/shared/output.ts"):
         """Start recording the video stream."""
         if not self.video_recorder:
-            cmd = f"ustreamer-dump --sink=demo::ustreamer::sink --output - | ffmpeg -use_wallclock_as_timestamps 1 -i pipe: -c:v libx264 {output_file}"
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            cmd = f"ustreamer-dump --sink=demo::ustreamer::sink --output - | ffmpeg -use_wallclock_as_timestamps 1 -i pipe: -c:v libx264 {shlex.quote(output_file)}"
             logger.debug(f"Starting recording with command: {cmd}")
             # Start the video recorder
             self.video_recorder = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
             logger.info(f"Recording started: {output_file}")
+            return True
         else:
             logger.warning("Recording is already in progress.")
+            return False
     
     def stop_recording(self):
         """Stop recording the video stream."""
         if self.video_recorder:
             # Stop the video recorder
             os.killpg(os.getpgid(self.video_recorder.pid), subprocess.signal.SIGTERM)
+            try:
+                self.video_recorder.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                logger.warning("Recording process did not exit after SIGTERM; killing it.")
+                os.killpg(os.getpgid(self.video_recorder.pid), subprocess.signal.SIGKILL)
+                self.video_recorder.wait(timeout=2)
             self.video_recorder = None
             logger.info("Recording stopped.")
+            return True
         else:
             logger.warning("No recording in progress.")
+            return False
 
     def lock_focus(self):
         """Backward-compatible alias for one-shot autofocus then lock."""

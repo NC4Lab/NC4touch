@@ -102,6 +102,8 @@ class Session:
 
         # Video Recording
         self.is_video_recording = False
+        self.training_active = False
+        self.current_video_file = None
     
     def __del__(self):
         """Clean up the session by stopping timers and copying log files."""
@@ -135,6 +137,9 @@ class Session:
         if not isinstance(self.trainer, Trainer):
             logger.error("Trainer is not an instance of Trainer.")
             return
+        if self.training_active:
+            logger.warning("Training session is already running.")
+            return
         
         trainer_config = {"rodent_name": self.config["rodent_name"],
                           "chamber_name": self.config["chamber_name"],
@@ -144,7 +149,16 @@ class Session:
                           "trainer_seq_file": self.config["trainer_seq_file"],
                           "data_dir": self.config["data_dir"]}
         self.trainer.config.update_with_dict(trainer_config)
-        self.trainer.start_training()
+
+        self.start_video_recording()
+        try:
+            self.trainer.start_training()
+        except Exception:
+            logger.exception("Unable to start trainer; stopping recording.")
+            self.stop_video_recording()
+            return
+
+        self.training_active = True
 
         self.session_timer.cancel()
         self.session_timer = threading.Timer(self.config["run_interval"], self.run_training)
@@ -153,9 +167,34 @@ class Session:
     
     def run_training(self):
         self.session_timer.cancel()
-        self.trainer.run_training()
+        try:
+            self.trainer.run_training()
+        except Exception:
+            logger.exception("Training loop failed; stopping session and recording.")
+            self.finish_training("error", stop_trainer=True)
+            return
+
+        if self.training_active and self.trainer_is_idle():
+            self.finish_training("trainer idle", stop_trainer=True)
+            return
+
         self.session_timer = threading.Timer(self.config["run_interval"], self.run_training)
         self.session_timer.start()
+
+    def trainer_is_idle(self):
+        trainer_state = getattr(self.trainer, "state", None)
+        return getattr(trainer_state, "name", None) == "IDLE"
+
+    def finish_training(self, reason="complete", stop_trainer=False):
+        self.session_timer.cancel()
+        if stop_trainer and self.trainer:
+            try:
+                self.trainer.stop_training()
+            except Exception:
+                logger.exception("Trainer cleanup failed while finishing session.")
+        self.stop_video_recording()
+        self.training_active = False
+        logger.info("Training session ended (%s).", reason)
     
     def toggle_video_recording(self):
         if self.is_video_recording:
@@ -165,9 +204,10 @@ class Session:
 
     def stop_video_recording(self):
         if self.is_video_recording:
-            self.chamber.camera.stop_recording()
+            if self.chamber.camera.stop_recording():
+                logger.info("Recording saved: %s", self.current_video_file)
             self.is_video_recording = False
-            logger.info("Recording stopped.")
+            self.current_video_file = None
         else:
             logger.warning("No recording in progress to stop.")
     
@@ -181,11 +221,17 @@ class Session:
                         
             video_file = os.path.join(video_dir, f"{datetime_str}_{chamber_name}_{rodent_name}.ts")
 
-            self.chamber.camera.start_recording(video_file)
-            self.is_video_recording = True
-            logger.info(f"Recording started to: {video_file}")
+            if self.chamber.camera.start_recording(video_file):
+                self.is_video_recording = True
+                self.current_video_file = video_file
+                logger.info(f"Recording started to: {video_file}")
+                return True
+
+            logger.error("Recording did not start.")
+            return False
         else:
             logger.warning("Recording is already in progress.")
+            return False
     
     def set_iti_duration(self, iti_duration):
         if isinstance(iti_duration, int) and iti_duration > 0:
@@ -260,7 +306,7 @@ class Session:
         if self.trainer:
             self.session_timer.cancel()
             self.trainer.stop_training()
-            logger.info("Training session ended.")
+            self.finish_training("manual stop")
         else:
             logger.warning("No training session to stop.")
 
