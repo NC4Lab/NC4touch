@@ -263,7 +263,7 @@ class InitialTouch(Trainer):
         elif self.state == InitialTouchState.ITI_START:
             # ITI_START state, preparing for the inter-trial interval
             self.iti_start_time = current_time
-            logger.info("Starting inter-trial interval...")
+            logger.info("Starting inter-trial interval for trial %s.", self.current_trial)
             self.write_event("ITIStart", self.current_trial)
             self.chamber.house_led.set_brightness(50)
             self.state = InitialTouchState.ITI
@@ -272,10 +272,17 @@ class InitialTouch(Trainer):
             # ITI state, waiting for the inter-trial interval to complete
             if current_time - self.iti_start_time >= self.config["iti_duration"]:
                 # ITI completed, move to start trial state
-                logger.info("Inter-trial interval completed.")
+                logger.info("Inter-trial interval ended for trial %s.", self.current_trial)
+                self.write_event("ITIEnd", self.current_trial)
                 self.write_event("ITIComplete", self.current_trial)
-                self.current_trial += 1
-                self.state = InitialTouchState.START_TRIAL
+                self.state = InitialTouchState.END_TRIAL
+
+        elif self.state == InitialTouchState.END_TRIAL:
+            # END_TRIAL state, finalizing the trial before advancing.
+            logger.info("Ending trial %s.", self.current_trial)
+            self.write_event("EndTrial", self.current_trial)
+            self.current_trial += 1
+            self.state = InitialTouchState.START_TRIAL
 
         elif self.state == InitialTouchState.END_TRAINING:
             # End the training session

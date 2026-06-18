@@ -13,7 +13,7 @@ from file_picker import file_picker
 session_logger = logging.getLogger('session_logger')
 logger = logging.getLogger(f"session_logger.{__name__}")
 
-WEBUI_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webui_settings.json")
+WEBUI_SETTINGS_FILE = os.path.join(os.path.expanduser("~"), ".config", "nc4touch", "webui_settings.json")
 SESSION_LOG_LINE_RE = re.compile(r'^\[(?P<meta>.*):(?P<level>[A-Z]+)\]\s(?P<message>.*)$')
 
 
@@ -121,6 +121,7 @@ class WebUI:
 
     def save_webui_settings(self):
         try:
+            os.makedirs(os.path.dirname(WEBUI_SETTINGS_FILE), exist_ok=True)
             with open(WEBUI_SETTINGS_FILE, "w", encoding="utf-8") as settings_stream:
                 json.dump(self.webui_settings, settings_stream, indent=2, sort_keys=True)
                 settings_stream.write("\n")
