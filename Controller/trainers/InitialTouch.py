@@ -63,6 +63,7 @@ class InitialTouch(Trainer):
         logger.info("Starting training session...")
 
         self.chamber.default_state()
+        self.clear_images()
 
         # Open sequence file
         trainer_seq_file = os.path.join(self.config["trainer_seq_dir"], self.config["trainer_seq_file"])
@@ -134,12 +135,15 @@ class InitialTouch(Trainer):
             self.write_event("StartTraining", 1)
             self.chamber.house_led.activate()
             self.current_trial = 0
+            self.clear_images()
             # Start by delivering a large reward
             self.state = InitialTouchState.LARGE_REWARD_START
 
         elif self.state == InitialTouchState.LARGE_REWARD_START:
             # Load images for the current trial during reward
             # self.load_images(self.current_trial - 1)
+
+            self.clear_images()
 
             # DELIVER_REWARD_START state, preparing to deliver the reward
             self.reward_start_time = current_time
@@ -283,6 +287,7 @@ class InitialTouch(Trainer):
     def stop_training(self):
         # Stop the training session
         logger.info("Stopping training session...")
+        self.clear_images()
         self.chamber.reward.stop()
         self.chamber.back_led.deactivate()
         self.chamber.front_led.deactivate()
