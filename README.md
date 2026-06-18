@@ -86,19 +86,90 @@ The configuration system is the glue that keeps the chamber, trainers, and WebUI
 
 The physical chamber does not need the Raspberry Pi desktop environment. For day-to-day use, it is cleaner to boot straight to the console and start the WebUI from a shell or service instead of launching a graphical session.
 
-To do that, keep the Pi in multi-user mode with the desktop disabled, for example by using the boot option already shown earlier in this document:
+### Disable the Desktop
+
+Use Raspberry Pi's configuration tool to boot to a text console:
+
+```bash
+sudo raspi-config
+```
+
+Choose:
+
+```text
+System Options -> Boot / Auto Login -> Console Autologin
+```
+
+Then reboot:
+
+```bash
+sudo reboot
+```
+
+This keeps the Pi in console mode while still allowing SSH access and remote development. The chamber display will be controlled by NC4Touch during task execution instead of by the Raspberry Pi desktop.
+
+If you need to force console mode from the boot command line, add these options to `/boot/firmware/cmdline.txt` on Raspberry Pi OS Bookworm, or `/boot/cmdline.txt` on older installs. Keep the file as a single line:
 
 ```text
 systemd.unit=multi-user.target autologin-user=nc4 nosplash
 ```
 
-Then start the launcher from SSH or a local tty:
+Use the actual chamber username for `autologin-user`. For the setup above, that is usually `nc4touch`.
+
+### Start the WebUI Manually
+
+After the Pi boots, SSH into it and run:
 
 ```bash
 cd /mnt/shared/code/NC4Touch
 ./scripts/start_webUI.sh
 ```
 
-In this mode, the chamber display is controlled directly by the application, the touchscreen screens stay tied to task execution, and no separate desktop interface is shown on the Pi itself.
+The WebUI runs on the Pi and can be opened from another computer on the same network at:
+
+```text
+http://<pi-ip-address>:8081
+```
+
+The live camera stream uses port `8080`.
+
+### Start the WebUI Automatically
+
+For regular chamber use, install a systemd service so the WebUI starts after boot. Create `/etc/systemd/system/nc4touch-webui.service`:
+
+```ini
+[Unit]
+Description=NC4Touch WebUI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nc4touch
+WorkingDirectory=/mnt/shared/code/NC4Touch
+ExecStart=/mnt/shared/code/NC4Touch/scripts/start_webUI.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then enable and start it:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable nc4touch-webui.service
+sudo systemctl start nc4touch-webui.service
+```
+
+Check status and logs with:
+
+```bash
+sudo systemctl status nc4touch-webui.service
+journalctl -u nc4touch-webui.service -f
+```
+
+In this mode, the Pi has no separate desktop UI. NC4Touch owns the chamber display during tasks, while operators control the chamber through the WebUI from another machine.
 
    
