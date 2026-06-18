@@ -9,16 +9,16 @@ import time
 ADDR = 0x5D
 
 # --- Aggressive Sensitivity Tuning ---
-NEW_TOUCH_THRESHOLD = 14    # 0x8053 (User requested)
-NEW_LEAVE_THRESHOLD = 8    # 0x8054 (User requested)
-NEW_NOISE_REDUCTION = 4    # 0x8052 (User requested)
+NEW_TOUCH_THRESHOLD = 22    # 0x8053 (User requested)
+NEW_LEAVE_THRESHOLD = 14    # 0x8054 (User requested)
+NEW_NOISE_REDUCTION = 5   # 0x8052 (User requested)
 # NEW_LARGE_TOUCH     = 5    # 0x8051 (User requested)
-NEW_NORMAL_FILTER   = 3    # 0x8050
+NEW_NORMAL_FILTER   = 5    # 0x8050
 
 # --- Hardware Gain & Integration Time ---
 NEW_REFRESH_RATE    = 10   # 0x8056 (10ms; allows more integration time for weak signals)
 # NEW_DAC_GAIN        = 0x00 # 0x806A (Set to 0 for maximum DAC range)
-NEW_PGA_GAIN        = 0x05 # 0x806C (Bits 0-2: Set PGA to max gear)
+NEW_PGA_GAIN        = 0x04 # 0x806C (Bits 0-2: Set PGA to max gear)
 NEW_DUMP_SHIFT      = 0x01 # 0x806D (Digital multiplier: 0x02 = 4x signal boost)
 
 
