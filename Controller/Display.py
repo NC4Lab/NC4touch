@@ -731,6 +731,7 @@ class DisplayManager:
             return None
 
     def _show_image_now(self, zone, image_name):
+        self._set_display_power_now(True)
         zone_rect = self.zones[zone]
         img = self._load_image(image_name, target_size=(zone_rect.width, zone_rect.height))
         if img is not None:
@@ -747,7 +748,7 @@ class DisplayManager:
         self._show_image_now(zone, image_name)
 
     def _clear_now(self, zone=DisplayZone.ALL):
-        self.set_display_power(True)
+        self._set_display_power_now(True)
 
         if zone == DisplayZone.ALL:
             self.screen.fill((0, 0, 0))
@@ -790,7 +791,7 @@ class DisplayManager:
 
         return True
 
-    def set_display_power(self, enabled):
+    def _set_display_power_now(self, enabled):
         enabled = bool(enabled)
 
         if enabled == self._display_powered:
@@ -810,6 +811,13 @@ class DisplayManager:
             return True
 
         return False
+
+    def set_display_power(self, enabled):
+        if not self._is_owner_thread():
+            self._enqueue_op("display_power", bool(enabled))
+            return True
+
+        return self._set_display_power_now(enabled)
 
     def process_events(self):
         if not self._is_owner_thread():
@@ -849,6 +857,8 @@ class DisplayManager:
                 self._show_image_now(*args)
             elif op_name == "clear":
                 self._clear_now(*args)
+            elif op_name == "display_power":
+                self._set_display_power_now(*args)
 
     def clear_touch_states(self, drain_events=True):
         """Clear latched touch flags, optionally draining pending pygame touch events."""

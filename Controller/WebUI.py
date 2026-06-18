@@ -104,6 +104,7 @@ class WebUI:
         session_config["virtual_mode"] = self.virtual_mode
         session_config["auto_record_video"] = self.webui_settings.get("auto_record_video", True)
         self.session = Session(session_config=session_config)
+        self.session.set_display_power(False)
         if self.virtual_mode:
             logger.info("WebUI started in virtual mode; using virtual chamber and camera fallback.")
 

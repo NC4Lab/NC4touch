@@ -129,6 +129,7 @@ class VirtualChamber:
 
         # Virtual chamber state tracking
         self._state_history = []
+        self._display_powered = True
 
         logger.info("Virtual Chamber initialized successfully")
         logger.info(f"  - 3 Virtual display zones (L/M/R)")
@@ -194,8 +195,11 @@ class VirtualChamber:
         self.display_clear(zone)
 
     def display_power(self, enabled):
+        self._display_powered = bool(enabled)
+        logger.info("Virtual Chamber: display power %s", "ON" if self._display_powered else "OFF")
         command = "ON" if enabled else "OFF"
         self.display_command("all", command)
+        return True
 
     def display_power_on(self):
         return self.display_power(True)

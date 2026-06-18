@@ -151,6 +151,7 @@ class Session:
                           "data_dir": self.config["data_dir"]}
         self.trainer.config.update_with_dict(trainer_config)
 
+        self.set_display_power(True)
         if self.config["auto_record_video"]:
             self.start_video_recording()
         else:
@@ -198,8 +199,22 @@ class Session:
                 logger.exception("Trainer cleanup failed while finishing session.")
         if self.is_video_recording:
             self.stop_video_recording()
+        self.set_display_power(False)
         self.training_active = False
         logger.info("Training session ended (%s).", reason)
+
+    def set_display_power(self, enabled):
+        if hasattr(self.chamber, "display_power"):
+            return self.chamber.display_power(bool(enabled))
+
+        if enabled and hasattr(self.chamber, "display_power_on"):
+            return self.chamber.display_power_on()
+
+        if not enabled and hasattr(self.chamber, "display_power_off"):
+            return self.chamber.display_power_off()
+
+        logger.warning("Chamber does not expose display power control.")
+        return False
     
     def toggle_video_recording(self):
         if self.is_video_recording:
