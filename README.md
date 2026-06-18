@@ -82,15 +82,15 @@ The camera module starts and manages the live video stream used by the WebUI. It
 
 The configuration system is the glue that keeps the chamber, trainers, and WebUI aligned. It stores chamber parameters such as pin assignments, display geometry, camera device paths, and default brightness values, while also remembering which settings were explicitly supplied versus filled in by defaults. This makes it possible to run the same code across physical and virtual setups without rewriting every caller. Most components read their settings from the shared chamber configuration, so behavior stays consistent from startup through training.
 
-## Pi-Level / Headless Mode
+## Pi-Level / Minimal Display Mode
 
-The physical chamber does not need the Raspberry Pi desktop environment. For day-to-day use, it is cleaner to boot straight to the console and start the WebUI from a shell or service instead of launching a graphical session.
+The physical chamber does not need the full Raspberry Pi desktop interface, but it does need a graphical session. The display manager uses Pygame and `xrandr` to render stimulus images on the touchscreen, so booting into pure multi-user console mode can prevent images from displaying.
 
-### Disable the Desktop
+The recommended setup is a minimal LXDE-pi session: X is running, but the panel, desktop file manager, and screensaver are disabled for the chamber user.
 
-The WebUI's Pygame display manager requires an X server to render to the physical touchscreen. To boot cleanly without showing a desktop environment:
+### Use Desktop Autologin
 
-1. Use Raspberry Pi's configuration tool:
+Use Raspberry Pi's configuration tool:
 
 ```bash
 sudo raspi-config
@@ -102,23 +102,35 @@ Choose:
 System Options -> Boot / Auto Login -> Desktop Autologin
 ```
 
-This boots to the graphical target with X running, but keeps the session clean.
+This boots to the graphical target with X running, which Pygame needs.
 
-2. Disable the desktop panel and file manager by editing `/etc/xdg/lxsession/LXDE-pi/autostart`:
+### Disable LXDE Session Components Per Pi
+
+Create a per-user LXDE autostart override. This is better than editing `/etc/xdg/lxsession/LXDE-pi/autostart` because the code directory is shared, while each chamber/Pi can keep its own local desktop behavior.
 
 ```bash
-sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+mkdir -p ~/.config/lxsession/LXDE-pi
+cp /etc/xdg/lxsession/LXDE-pi/autostart ~/.config/lxsession/LXDE-pi/autostart
+nano ~/.config/lxsession/LXDE-pi/autostart
 ```
 
-Comment out the desktop UI components:
+Comment out or remove the desktop UI components:
 
 ```bash
 # @lxpanel --profile LXDE-pi
 # @pcmanfm --desktop --profile LXDE-pi
-@xscreensaver -no-splash
+# @xscreensaver -no-splash
 ```
 
-3. Reboot:
+Add display power-management disables so the chamber display does not blank during long sessions:
+
+```bash
+@xset s off
+@xset -dpms
+@xset s noblank
+```
+
+Then reboot:
 
 ```bash
 sudo reboot
@@ -127,11 +139,12 @@ sudo reboot
 This configuration:
 - Boots to the graphical desktop (X11 server runs)
 - Skips the panel and file manager
+- Disables the screensaver/display blanking
 - Leaves the physical display clear for WebUI stimuli
 - Allows SSH access and remote development
 - Enables Pygame to render fullscreen stimuli on the touchscreen
 
-**Important:** Do not use `systemd.unit=multi-user.target` in `/boot/cmdline.txt`, as it disables the X server entirely, breaking Pygame display rendering.
+**Important:** Do not use `systemd.unit=multi-user.target` in `/boot/cmdline.txt` for chamber operation. It disables the graphical session entirely, which can break Pygame image rendering.
 
 ### Start the WebUI Manually
 
