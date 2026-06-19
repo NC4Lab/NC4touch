@@ -12,8 +12,12 @@ logger = logging.getLogger(f"session_logger.{__name__}")
 
 class Trainer(ABC):
     # Base trainer class for running training sessions
+    CONTROLLER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DEFAULT_SEQUENCE_DIR = os.path.join(CONTROLLER_DIR, "sequences")
+    DEFAULT_SEQUENCE_FILE = "sequences.csv"
+    SESSION_CONTEXT_KEYS = {"rodent_name", "data_dir", "trainer_seq_dir", "trainer_seq_file"}
 
-    def __init__(self, chamber, trainer_config = {}):
+    def __init__(self, chamber, trainer_config = None):
         # Accept both Chamber and VirtualChamber
         try:
             from Virtual.VirtualChamber import VirtualChamber
@@ -26,8 +30,9 @@ class Trainer(ABC):
             raise ValueError("chamber must be an instance of Chamber or VirtualChamber")
 
         self.chamber = chamber
-        # Trainers are runtime-configured via Session/WebUI.
-        self.config = Config(config=trainer_config)
+        # Trainer behavior is defined by hardcoded defaults in each trainer.
+        # Only session metadata is accepted from callers.
+        self.config = Config(config=self._session_context(trainer_config))
 
         # Ensure required parameters are set in the config
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
@@ -57,6 +62,14 @@ class Trainer(ABC):
         self.config.ensure_param("data_dir", "/mnt/shared/data")
 
         self.data_file = None
+
+    def _session_context(self, context):
+        if not isinstance(context, dict):
+            return {}
+        return {key: value for key, value in context.items() if key in self.SESSION_CONTEXT_KEYS}
+
+    def update_session_context(self, context):
+        self.config.update_with_dict(self._session_context(context))
     
     def read_trainer_seq_file(self, csv_file_path, min_num_columns = 2):
         # Read trial sequence from CSV file

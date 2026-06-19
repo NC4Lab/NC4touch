@@ -23,7 +23,7 @@ class SoundTest(Trainer):
     SoundTest trainer for hardware verification.
     Cycles through hardware activations for 10s each.
     """
-    def __init__(self, chamber, trainer_config={}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber=chamber, trainer_config=trainer_config)
 
         self.config.ensure_param("trainer_name", "SoundTest")

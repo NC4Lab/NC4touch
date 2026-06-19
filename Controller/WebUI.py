@@ -38,10 +38,25 @@ class LogElementHandler:
 
         return logging.INFO, line
 
-    def _append_line(self, level: int, message: str) -> None:
+    def _append_line(self, level: int, message: str) -> bool:
         self.records.append((level, message))
         if level >= self.visible_level:
             self.element.push(message)
+            return True
+        return False
+
+    def _scroll_to_latest(self) -> None:
+        ui.run_javascript(f"""
+            requestAnimationFrame(() => {{
+                const logElement = document.getElementById('c{self.element.id}');
+                if (!logElement) return;
+                const candidates = [logElement, ...logElement.querySelectorAll('*')];
+                const scroller = candidates.find(
+                    element => element.scrollHeight > element.clientHeight
+                ) || logElement;
+                scroller.scrollTop = scroller.scrollHeight;
+            }});
+        """)
 
     def refresh(self) -> None:
         try:
@@ -55,6 +70,7 @@ class LogElementHandler:
             self._file_offset = 0
 
         try:
+            pushed_visible_line = False
             with open(self.log_file, 'r', encoding='utf-8', errors='replace') as log_stream:
                 log_stream.seek(self._file_offset)
                 while True:
@@ -62,8 +78,10 @@ class LogElementHandler:
                     if not line:
                         break
                     level, message = self._parse_line(line.rstrip('\n'))
-                    self._append_line(level, message)
+                    pushed_visible_line = self._append_line(level, message) or pushed_visible_line
                 self._file_offset = log_stream.tell()
+            if pushed_visible_line:
+                self._scroll_to_latest()
         except Exception:
             logger.exception("Unable to refresh session log view from %s", self.log_file)
 
@@ -80,6 +98,7 @@ class LogElementHandler:
         for record_level, message in self.records:
             if record_level >= self.visible_level:
                 self.element.push(message)
+        self._scroll_to_latest()
 
 
 class WebUI:
@@ -551,9 +570,6 @@ class WebUI:
 
                         ui.label('Rodent Name').classes('field-label')
                         self.rodent_name_input = ui.input(self.session.config["rodent_name"], on_change=lambda e: self.session.set_rodent_name(e.value)).classes('w-control')
-
-                        ui.label('ITI Duration (s)').classes('field-label')
-                        self.iti_duration_input = ui.input(str(self.session.config["iti_duration"]), on_change=lambda e: self.session.set_iti_duration(int(e.value))).classes('w-control')
 
                         ui.label('Trainer').classes('field-label')
                         self.trainer_select = ui.select(get_trainers(), value=self.session.config["trainer_name"], on_change=lambda e: self.session.set_trainer_name(e.value)).classes('w-control')

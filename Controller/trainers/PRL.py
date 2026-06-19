@@ -54,14 +54,9 @@ class PRL(Trainer):
     State machine:
     IDLE -> START_TRAINING -> INITIATION_READY -> WAIT_FOR_TRIAL_INITIATION -> START_TRIAL -> WAIT_FOR_TOUCH -> CORRECT/ERROR -> DELIVER_REWARD_START -> DELIVERING_REWARD -> POST_REWARD -> ITI_START -> ITI -> END_TRIAL -> END_TRAINING
     """
-    def __init__(self, chamber, trainer_config = {}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber=chamber, trainer_config=trainer_config)
 
-        # Initialize the trainer configuration.
-        # All variables used by the trainer are recommended to be set in the config file.
-        # This allows for easy modification of the trainer parameters without changing the code.
-        # The trainer will also reinitialize with these parameters.
-        # self.config.ensure_param("param_name", default_value)  # Example of setting a parameter
         self.config.ensure_param("trainer_name", "ProbabilisticReversalLearning")  # Name of the trainer
         self.config.ensure_param("num_trials", 60)  # Number of trials to run
         self.config.ensure_param("high_reward_probability", 1)  # Probability of high reward
@@ -76,7 +71,6 @@ class PRL(Trainer):
         self.config.ensure_param("require_initiation", True)  # If False, skip initiation for all trials
 
 
-        # Local variables used by the trainer during the training session and not set in the config file.
         self.config.ensure_param("touch_timeout", 30) # Timeout for waiting for touch
         self.config.ensure_param("trial_to_reverse", 99) # Trial at which to reverse reward probabilities
         self.reward_start_time = time.time()

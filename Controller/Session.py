@@ -43,7 +43,6 @@ class Session:
         # Construct session config from the provided runtime dictionary and defaults.
         self.config.ensure_param("trainer_name", "DoNothingTrainer")
         self.config.ensure_param("rodent_name", "TestRodent")
-        self.config.ensure_param("iti_duration", 10)
         self.config.ensure_param("trainer_seq_dir", os.path.join(code_dir, "sequences"))
         self.config.ensure_param("trainer_seq_file", "sequences.csv")
         # Use env vars for data_dir and video_dir (for virtual mode testing), otherwise use defaults
@@ -142,14 +141,13 @@ class Session:
             logger.warning("Training session is already running.")
             return
         
-        trainer_config = {"rodent_name": self.config["rodent_name"],
-                          "chamber_name": self.config["chamber_name"],
-                          "trainer_name": self.config["trainer_name"],
-                          "iti_duration": self.config["iti_duration"],
-                          "trainer_seq_dir": self.config["trainer_seq_dir"],
-                          "trainer_seq_file": self.config["trainer_seq_file"],
-                          "data_dir": self.config["data_dir"]}
-        self.trainer.config.update_with_dict(trainer_config)
+        trainer_context = {
+            "rodent_name": self.config["rodent_name"],
+            "trainer_seq_dir": self.config["trainer_seq_dir"],
+            "trainer_seq_file": self.config["trainer_seq_file"],
+            "data_dir": self.config["data_dir"],
+        }
+        self.trainer.update_session_context(trainer_context)
 
         self.set_display_power(True)
         if self.config["auto_record_video"]:
@@ -260,13 +258,6 @@ class Session:
             logger.warning("Recording is already in progress.")
             return False
     
-    def set_iti_duration(self, iti_duration):
-        if isinstance(iti_duration, int) and iti_duration > 0:
-            self.config["iti_duration"] = iti_duration
-            logger.debug(f"ITI Duration set to: {iti_duration} seconds")
-        else:
-            logger.error("Invalid ITI Duration entered. Must be a positive integer.")
-
     def set_trainer_seq_dir(self, trainer_seq_dir):
         if os.path.isdir(trainer_seq_dir):
             self.config["trainer_seq_dir"] = trainer_seq_dir

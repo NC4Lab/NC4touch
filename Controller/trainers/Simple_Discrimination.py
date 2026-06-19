@@ -29,7 +29,7 @@ class SimpleDiscrimination(Trainer):
     CORRECT_IMAGE = "A01"
     INCORRECT_IMAGE = "A02"
 
-    def __init__(self, chamber, trainer_config={}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber, trainer_config)
 
         self.config.ensure_param("trainer_name", "Simple Discrimination")
@@ -40,8 +40,8 @@ class SimpleDiscrimination(Trainer):
         self.config.ensure_param("iti_duration", 10)
         self.config.ensure_param("touch_timeout", 300)
         self.config.ensure_param("session_timeout_minutes", 60)
-        self.config.ensure_param("trainer_seq_dir", "")
-        self.config.ensure_param("trainer_seq_file", "")
+        self.config.ensure_param("trainer_seq_dir", self.DEFAULT_SEQUENCE_DIR)
+        self.config.ensure_param("trainer_seq_file", self.DEFAULT_SEQUENCE_FILE)
         self.config.ensure_param("correct_image", self.CORRECT_IMAGE)
 
         self.state = SDState.IDLE

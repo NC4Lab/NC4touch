@@ -33,7 +33,7 @@ class MustTouch(Trainer):
     the rodent touches the screen showing the configured correct image.
     """
 
-    def __init__(self, chamber, trainer_config={}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber=chamber, trainer_config=trainer_config)
 
         self.config.ensure_param("trainer_name", "MustTouch")
@@ -44,8 +44,8 @@ class MustTouch(Trainer):
         self.config.ensure_param("max_iti_duration", 30)
         self.config.ensure_param("iti_increment", 1)
         self.config.ensure_param("touch_timeout", 120)
-        self.config.ensure_param("trainer_seq_dir", "./scripts")
-        self.config.ensure_param("trainer_seq_file", "seq_file.csv")
+        self.config.ensure_param("trainer_seq_dir", self.DEFAULT_SEQUENCE_DIR)
+        self.config.ensure_param("trainer_seq_file", self.DEFAULT_SEQUENCE_FILE)
         self.config.ensure_param("correct_image", "A01")
 
         self.current_trial = 0

@@ -39,11 +39,9 @@ class PunishIncorrectState(Enum):
 
 
 class PunishIncorrect(Trainer):
-    def __init__(self, chamber, trainer_config = {}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber=chamber, trainer_config=trainer_config)
 
-        # Initialize the trainer configuration.
-        # All configurable parameters should be set here to allow easy modification.
         self.config.ensure_param("trainer_name", "PunishIncorrect")
         self.config.ensure_param("num_trials", 30)             # Total number of trials
         self.config.ensure_param("iti_duration", 10)           # Inter-trial interval duration (seconds)
@@ -52,8 +50,8 @@ class PunishIncorrect(Trainer):
         self.config.ensure_param("punish_duration", 5.0)       # Punishment duration for incorrect response
         self.config.ensure_param("buzzer_duration", 0.5)       # Duration of buzzer during punishment
         self.config.ensure_param("touch_timeout", 300)         # Time allowed for touch response
-        self.config.ensure_param("trainer_seq_dir", "")        # Directory containing sequence file
-        self.config.ensure_param("trainer_seq_file", "")       # Sequence file name
+        self.config.ensure_param("trainer_seq_dir", self.DEFAULT_SEQUENCE_DIR)
+        self.config.ensure_param("trainer_seq_file", self.DEFAULT_SEQUENCE_FILE)
         self.config.ensure_param("correct_image", "A01")       # Image identifier for correct choice
         self.config.ensure_param("initiation_timeout", 300)    # Timeout for trial initiation (seconds)
 

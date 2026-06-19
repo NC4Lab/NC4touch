@@ -25,7 +25,7 @@ class ComplexDiscrimination(Trainer):
     CORRECT_IMAGE = "E01"
     INCORRECT_IMAGE = "D01"
 
-    def __init__(self, chamber, trainer_config={}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber, trainer_config)
 
         self.config.ensure_param("trainer_name", "Complex Discrimination")

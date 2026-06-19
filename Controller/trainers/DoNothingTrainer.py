@@ -17,7 +17,7 @@ class DoNothingTrainer(Trainer):
     """
     A trainer that does nothing. This is useful for testing purposes, and as an example of how to implement a trainer.
     """
-    def __init__(self, chamber, trainer_config = {}):
+    def __init__(self, chamber, trainer_config=None):
         super().__init__(chamber, trainer_config)
         self.trainer_name = "DoNothingTrainer"
         self.state = DoNothingState.IDLE
