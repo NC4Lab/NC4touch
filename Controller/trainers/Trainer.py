@@ -35,7 +35,7 @@ class Trainer(ABC):
         self.config = Config(config=self._session_context(trainer_config))
 
         # Ensure required parameters are set in the config
-        self.config.ensure_param("trainer_name", "DoNothingTrainer")
+        self.config.ensure_param("trainer_name", self.__class__.__name__)
         self.config.ensure_param("rodent_name", "TestRodent")
 
         # House LED
